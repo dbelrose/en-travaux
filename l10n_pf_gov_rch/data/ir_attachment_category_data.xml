@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Catégorie parente : Relevé bancaire -->
+        <record id="attachment_cat_bank_statement" model="ir.attachment.category">
+            <field name="name">Relevé bancaire</field>
+        </record>
+
+        <!-- Catégories filles -->
+        <record id="attachment_cat_bank_cash" model="ir.attachment.category">
+            <field name="name">Numéraire</field>
+            <field name="parent_id" ref="attachment_cat_bank_statement"/>
+        </record>
+
+        <record id="attachment_cat_bank_ccp" model="ir.attachment.category">
+            <field name="name">CCP</field>
+            <field name="parent_id" ref="attachment_cat_bank_statement"/>
+        </record>
+
+        <record id="attachment_cat_bank_paierie" model="ir.attachment.category">
+            <field name="name">Paierie</field>
+            <field name="parent_id" ref="attachment_cat_bank_statement"/>
+        </record>
+
+        <record id="attachment_cat_bank_ieom" model="ir.attachment.category">
+            <field name="name">IEOM</field>
+            <field name="parent_id" ref="attachment_cat_bank_statement"/>
+        </record>
+
+        <record id="attachment_cat_bank_atea" model="ir.attachment.category">
+            <field name="name">Atea</field>
+            <field name="parent_id" ref="attachment_cat_bank_statement"/>
+        </record>
+
+    </data>
+</odoo>
