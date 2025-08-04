@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu principal Booking -->
+    <menuitem id="menu_booking_root"
+              name="Booking.com"
+              sequence="50"/>
+
+    <!-- Sous-menu Réservations -->
+    <menuitem id="menu_booking_reservations"
+              name="Réservations"
+              parent="menu_booking_root"
+              sequence="10"/>
+
+    <!-- Menu Gestion des réservations -->
+    <menuitem id="menu_booking_import_main"
+              name="Gestion des réservations"
+              parent="menu_booking_reservations"
+              action="action_booking_import_main"
+              sequence="10"/>
+
+    <!-- Menu Toutes les lignes de réservation -->
+    <menuitem id="menu_booking_import_lines"
+              name="Toutes les réservations"
+              parent="menu_booking_reservations"
+              action="action_booking_import_line_wizard"
+              sequence="20"/>
+
+    <!-- Sous-menu Import -->
+    <menuitem id="menu_booking_import"
+              name="Import"
+              parent="menu_booking_root"
+              sequence="20"/>
+
+    <!-- Menu Import de fichier -->
+    <menuitem id="menu_booking_import_file"
+              name="Import fichier Excel"
+              parent="menu_booking_import"
+              action="action_booking_import_wizard"
+              sequence="10"/>
+
+    <!-- Menu Saisie manuelle -->
+    <menuitem id="menu_booking_manual_entry"
+              name="Saisie manuelle"
+              parent="menu_booking_import"
+              action="action_booking_manual_wizard"
+              sequence="20"/>
+
+    <!-- Sous-menu Rapports -->
+    <menuitem id="menu_booking_reports"
+              name="Rapports"
+              parent="menu_booking_root"
+              sequence="30"/>
+
+    <!-- Menu Statistiques par propriété -->
+    <menuitem id="menu_booking_stats_property"
+              name="Par propriété"
+              parent="menu_booking_reports"
+              action="action_booking_import_main"
+              sequence="10"/>
+
+    <!-- Menu Statistiques par période -->
+    <menuitem id="menu_booking_stats_period"
+              name="Par période"
+              parent="menu_booking_reports"
+              action="action_booking_import_main"
+              sequence="20"/>
+
+        <menuitem id="menu_booking_line_management"
+              name="Réservations"
+              parent="menu_booking_reports"
+              action="action_booking_import_line"
+              sequence="20"/>
+
+</odoo>

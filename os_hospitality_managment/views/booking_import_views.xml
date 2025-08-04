@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue formulaire simplifiée pour booking.import -->
+    <record id="view_booking_import_form_simplified" model="ir.ui.view">
+        <field name="name">booking.import.form.simplified</field>
+        <field name="model">booking.import</field>
+        <field name="arch" type="xml">
+            <form string="Gestion des réservations Booking">
+                <header>
+                    <!-- Bouton pour ajouter une réservation -->
+                    <button name="%(action_booking_import_line_wizard)d"
+                            string="Ajouter une réservation"
+                            type="action"
+                            class="btn-primary"
+                            context="{'default_import_id': active_id}"/>
+                    
+                    <!-- Boutons pour générer les factures -->
+                    <button name="municipality_invoice"
+                            string="Générer facture mairie"
+                            type="object"
+                            class="btn-secondary"/>
+                    <button name="concierge_invoice"
+                            string="Générer facture concierge"
+                            type="object"
+                            class="btn-secondary"/>
+                    <button name="booking_invoice"
+                            string="Générer facture Booking"
+                            type="object"
+                            class="btn-secondary"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Informations générales">
+                            <field name="import_date" readonly="1"/>
+                            <field name="year" readonly="1"/>
+                            <field name="month" readonly="1"/>
+                            <field name="property_type_id" readonly="1"/>
+                        </group>
+                        <group string="Résumé">
+                            <field name="total_commission" readonly="1" widget="monetary"/>
+                            <field name="periode" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Informations calculées pour la taxe de séjour -->
+                    <group string="Informations calculées" invisible="not line_ids">
+                        <group>
+                            <field name="nom" readonly="1"/>
+                            <field name="adresse" readonly="1"/>
+                            <field name="capacite" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="plus_nuitees_trimestre" readonly="1"/>
+                            <field name="moins_nuitees_trimestre" readonly="1"/>
+                            <field name="nuitees_trimestre" readonly="1"/>
+                            <field name="total" readonly="1"/>
+                            <field name="total_en_toutes_lettres" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Réservations" name="reservations">
+                            <field name="line_ids">
+                                <tree editable="bottom" create="false">
+                                    <field name="partner_id" readonly="1"/>
+                                    <field name="booker_id" optional="hide"/>
+                                    <field name="arrival_date"/>
+                                    <field name="duration_nights"/>
+                                    <field name="pax_nb"/>
+                                    <field name="children"/>
+                                    <field name="payment_status"/>
+                                    <field name="status"/>
+                                    <field name="rate" optional="hide" widget="monetary"/>
+                                    <field name="commission_amount" optional="hide" widget="monetary"/>
+                                    <field name="property_type_id" column_invisible="1"/>
+                                    <button name="%(action_booking_import_line_wizard)d"
+                                            string="Modifier"
+                                            type="action"
+                                            icon="fa-edit"
+                                            context="{
+                                                'default_import_id': parent.id,
+                                                'default_partner_id': partner_id,
+                                                'default_booker_id': booker_id,
+                                                'default_arrival_date': arrival_date,
+                                                'default_duration_nights': duration_nights,
+                                                'default_pax_nb': pax_nb,
+                                                'default_children': children,
+                                                'default_payment_status': payment_status,
+                                                'default_status': status,
+                                                'default_rate': rate,
+                                                'default_commission_amount': commission_amount,
+                                            }"/>
+                                </tree>
+                                <form string="Détail réservation">
+                                    <sheet>
+                                        <group>
+                                            <group string="Client">
+                                                <field name="partner_id"/>
+                                                <field name="booker_id"/>
+                                            </group>
+                                            <group string="Séjour">
+                                                <field name="arrival_date"/>
+                                                <field name="duration_nights"/>
+                                                <field name="pax_nb"/>
+                                                <field name="children"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <group string="Statut">
+                                                <field name="payment_status"/>
+                                                <field name="status"/>
+                                            </group>
+                                            <group string="Financier">
+                                                <field name="rate" widget="monetary"/>
+                                                <field name="commission_amount" widget="monetary"/>
+                                            </group>
+                                        </group>
+                                        <field name="property_type_id" invisible="1"/>
+                                        <field name="import_id" invisible="1"/>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                        
+                        <page string="Détail nuitées par mois" name="nuitees_detail">
+                            <group>
+                                <group string="Mois 1">
+                                    <field name="plus_nuitees_mois1" readonly="1"/>
+                                    <field name="moins_nuitees_mois1" readonly="1"/>
+                                    <field name="nuitees_mois1" readonly="1"/>
+                                    <field name="total_mois1" readonly="1"/>
+                                </group>
+                                <group string="Mois 2">
+                                    <field name="plus_nuitees_mois2" readonly="1"/>
+                                    <field name="moins_nuitees_mois2" readonly="1"/>
+                                    <field name="nuitees_mois2" readonly="1"/>
+                                    <field name="total_mois2" readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Mois 3">
+                                    <field name="plus_nuitees_mois3" readonly="1"/>
+                                    <field name="moins_nuitees_mois3" readonly="1"/>
+                                    <field name="nuitees_mois3" readonly="1"/>
+                                    <field name="total_mois3" readonly="1"/>
+                                </group>
+                                <group string="Total trimestre">
+                                    <field name="plus_nuitees_trimestre" readonly="1"/>
+                                    <field name="moins_nuitees_trimestre" readonly="1"/>
+                                    <field name="nuitees_trimestre" readonly="1"/>
+                                    <field name="total" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue liste pour booking.import -->
+    <record id="view_booking_import_tree" model="ir.ui.view">
+        <field name="name">booking.import.tree</field>
+        <field name="model">booking.import</field>
+        <field name="arch" type="xml">
+            <tree string="Imports Booking" 
+                  decoration-info="total_commission > 0"
+                  decoration-muted="not line_ids">
+                <field name="name"/>
+                <field name="import_date"/>
+                <field name="property_type_id"/>
+                <field name="year"/>
+                <field name="month"/>
+                <field name="periode"/>
+                <field name="total_commission" sum="Total Commission" widget="monetary"/>
+                <field name="total" sum="Total Taxes"/>
+                <field name="line_ids" invisible="1"/>
+                <!-- Boutons d'action rapide -->
+                <button name="%(action_booking_import_line_wizard)d"
+                        string="Ajouter réservation"
+                        type="action"
+                        icon="fa-plus"
+                        context="{'default_import_id': active_id}"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue recherche pour booking.import -->
+    <record id="view_booking_import_search" model="ir.ui.view">
+        <field name="name">booking.import.search</field>
+        <field name="model">booking.import</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher imports">
+                <field name="name"/>
+                <field name="property_type_id"/>
+                <field name="year"/>
+                <field name="month"/>
+                <field name="periode"/>
+                <separator/>
+                <filter string="Avec réservations" name="with_lines"
+                        domain="[('line_ids', '!=', False)]"/>
+                <filter string="Sans réservations" name="without_lines"
+                        domain="[('line_ids', '=', False)]"/>
+                <separator/>
+                <filter string="Cette année" name="current_year"
+                        domain="[('year', '=', context_today().year)]"/>
+                <filter string="Année dernière" name="last_year"
+                        domain="[('year', '=', context_today().year - 1)]"/>
+                <separator/>
+                <group expand="0" string="Regrouper par">
+                    <filter string="Propriété" name="group_property" context="{'group_by': 'property_type_id'}"/>
+                    <filter string="Année" name="group_year" context="{'group_by': 'year'}"/>
+                    <filter string="Mois" name="group_month" context="{'group_by': 'month'}"/>
+                    <filter string="Période" name="group_periode" context="{'group_by': 'periode'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action principale pour booking.import -->
+    <record id="action_booking_import_main" model="ir.actions.act_window">
+        <field name="name">Gestion des réservations Booking</field>
+        <field name="res_model">booking.import</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_booking_import_tree"/>
+        <field name="context">{
+            'search_default_current_year': 1,
+            'search_default_with_lines': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune importation Booking trouvée
+            </p>
+            <p>
+                Utilisez les boutons ci-dessous pour commencer :
+            </p>
+            <p>
+                <a type="action" name="%(action_booking_import_wizard)d" class="btn btn-primary">
+                    Import de fichier Excel
+                </a>
+                <a type="action" name="%(action_booking_manual_wizard)d" class="btn btn-secondary">
+                    Saisie manuelle
+                </a>
+            </p>
+        </field>
+    </record>
+
+    <!-- Vue kanban pour booking.import (optionnelle) -->
+    <record id="view_booking_import_kanban" model="ir.ui.view">
+        <field name="name">booking.import.kanban</field>
+        <field name="model">booking.import</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" create="false">
+                <field name="name"/>
+                <field name="property_type_id"/>
+                <field name="periode"/>
+                <field name="total_commission"/>
+                <field name="total"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <strong><t t-esc="record.name.value"/></strong>
+                                    </div>
+                                    <div class="o_secondary">
+                                        <t t-esc="record.property_type_id.value"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_content">
+                                <div class="o_kanban_card_manage_pane">
+                                    <t t-esc="record.periode.value"/>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_footer">
+                                <div class="o_kanban_card_left_addon">
+                                    Commission: <t t-esc="record.total_commission.value"/> XPF
+                                </div>
+                                <div class="o_kanban_card_right_addon">
+                                    Taxes: <t t-esc="record.total.value"/> XPF
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+</odoo>
