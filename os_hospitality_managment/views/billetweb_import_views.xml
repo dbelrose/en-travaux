@@ -9,21 +9,17 @@
                     <group>
                         <field name="name"
                         />
-<!--                               invisible="not name"-->
                         <field name="import_date"/>
                         <field name="file_name"
                         />
-<!--                               invisible="name"-->
                         <field name="file_data"
                                filename="file_name"
                         />
-<!--                               invisible="name"-->
                         <button name="billetweb_import_action"
                                 type="object"
                                 string="Importer"
                                 class="btn-primary"
                         />
-<!--                                invisible="not file_name"-->
                     </group>
                 </sheet>
             </form>

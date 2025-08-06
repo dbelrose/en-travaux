@@ -1,52 +1,13 @@
 {
-    'name': 'Booking.com Import Manager',
+    'name': 'Booking Manager',
     'version': '17.0.1.0.0',
     'category': 'Accounting/Accounting',
-    'summary': 'Import et gestion des réservations Booking.com avec génération automatique de factures',
-    'description': """
-Booking.com Import Manager
-==========================
-
-Ce module permet de gérer les réservations Booking.com de deux façons :
-
-**Import de fichiers Excel**
-* Import automatique des fichiers exportés depuis Booking.com
-* Prévisualisation des données avant import
-* Validation et nettoyage automatique des données
-
-**Saisie manuelle**
-* Création manuelle d'enregistrements de réservation
-* Interface utilisateur simplifiée
-* Validation des données en temps réel
-
-**Fonctionnalités principales**
-* Calcul automatique des taxes de séjour
-* Génération automatique des factures (mairie, concierge, Booking.com)
-* Gestion des clients et partenaires
-* Rapports et statistiques détaillés
-* Interface mobile-friendly
-
-**Calculs automatiques**
-* Nuitées par trimestre et par mois
-* Taxes de séjour (60 XPF par nuitée adulte)
-* Commissions Booking.com
-* Exemptions pour enfants de 12 ans et moins
-
-**Factures générées**
-* Factures mairie pour taxes de séjour
-* Factures concierge pour commissions
-* Factures Booking.com pour commissions
-
-**Compatibilité**
-* Odoo 16.0+
-* Format Excel Booking.com standard
-* Multi-sociétés
-    """,
+    'summary': 'Booking manager',
+    'description': 'Booking Manager',
     'author': 'OpalSea',
     'website': 'https://opalsea.site',
     'license': 'LGPL-3',
     'depends': [
-        'base',
         'account',
         'product',
         'contacts',
