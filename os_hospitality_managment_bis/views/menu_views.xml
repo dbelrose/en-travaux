@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu principal Booking -->
+    <menuitem id="menu_booking_root"
+              name="Hospitality Management"
+              sequence="50"/>
+
+    <menuitem id="menu_booking_import"
+              name="Booking Import"
+              parent="menu_booking_root"
+              action="action_booking_import"
+              sequence="10"/>
+
+    <menuitem id="menu_booking_import_line"
+              name="Booking Import Line"
+              parent="menu_booking_root"
+              action="action_booking_import_line"
+              sequence="20"/>
+
+    <menuitem id="menu_booking_import_wizard"
+              name="Booking Import Wizard"
+              parent="menu_booking_root"
+              action="action_booking_import_wizard"
+              sequence="30"/>
+
+    <menuitem id="menu_booking_import_line_wizard"
+              name="Booking Import Line Wizard"
+              parent="menu_booking_root"
+              action="action_booking_import_line_wizard"
+              sequence="40"/>
+
+    <menuitem id="menu_booking_month"
+              name="Booking Month"
+              parent="menu_booking_root"
+              action="action_booking_month"
+              sequence="50"/>
+
+    <menuitem id="menu_booking_quarter"
+              name="Booking Quarter"
+              parent="menu_booking_root"
+              action="action_booking_quarter"
+              sequence="60"/>
+
+    <menuitem id="menu_booking_manual_wizard"
+              name="Booking Manual Wizard"
+              parent="menu_booking_root"
+              action="action_booking_manual_wizard"
+              sequence="60"/>
+
+</odoo>
