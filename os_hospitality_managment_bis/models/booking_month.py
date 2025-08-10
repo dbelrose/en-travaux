@@ -228,96 +228,9 @@ class BookingMonth(models.Model):
         self._compute_partner_commissions()
         return True
 
-    def action_generate_municipality_invoice(self):
-        municipality = self.env['res.partner'].search([('name', '=', 'Mairie de Punaauia')], limit=1)
-        if not municipality:
-            raise ValueError("Le fournisseur 'Mairie de Punaauia' n'existe pas !")
-
-        account_id = self.env['account.account'].search([('code', '=', '63513000'),
-                                                         ('company_id', '=', self.env.user.company_id.id)], limit=1).id
-        if not account_id:
-            raise ValueError("Le compte comptable '63513000' n'existe pas !")
-
-        bookings = self.search([])
-        # bookings = self.env['booking.import'].search([])
-
-        invoices_by_ref = {}
-
-        for booking in bookings:
-            trimestre = ((booking.month - 1) // 3) + 1
-            ref = f"{booking.property_type_id.name}-{booking.year}-T{trimestre}"
-            label = f"Taxe de séjour T{trimestre} {booking.year} - {booking.property_type_id.name}"
-
-            # Chercher la facture existante (même ref + même partenaire)
-            existing_invoice = self.env['account.move'].search([
-                ('partner_id', '=', municipality.id),
-                ('ref', '=', ref),
-                ('move_type', '=', 'in_invoice')
-            ], limit=1)
-
-            invoice_date = fields.Date.today()
-            invoice_date_due = fields.Date.add(invoice_date, days=30)  # Échéance à 30 jours
-
-            invoice_vals = {
-                'partner_id': municipality.id,
-                'move_type': 'in_invoice',
-                'invoice_date': invoice_date,
-                'invoice_date_due': invoice_date_due,  # AJOUT DE LA DATE D'ÉCHÉANCE
-                'ref': ref,
-                'state': 'draft',
-                'invoice_line_ids': [],
-            }
-
-            # Identifier les mois déjà facturés (via le nom des lignes)
-            mois_factures = set()
-            if existing_invoice:
-                for line in existing_invoice.invoice_line_ids:
-                    for i in range(1, 4):
-                        mois_key = f"- Trimestre {i}"
-                        if mois_key in line.name and booking.property_type_id.name in line.name:
-                            mois_factures.add(i)
-
-            # Ajouter les nouvelles lignes (mois non encore facturés)
-            for i in range(1, 4):
-                if i in mois_factures:
-                    continue  # ligne déjà facturée
-
-                champ = f'nuitees_mois{i}'
-                try:
-                    qty = int(booking[champ] or 0)
-                except (ValueError, TypeError):
-                    qty = 0
-
-                if qty > 0:
-                    line_vals = (0, 0, {
-                        'name': f"{label} - Mois {i}",
-                        'quantity': qty,
-                        'price_unit': 60.0,
-                        'account_id': account_id,
-                    })
-                    invoice_vals['invoice_line_ids'].append(line_vals)
-
-            if not invoice_vals['invoice_line_ids']:
-                continue  # rien à ajouter
-
-            if existing_invoice:
-                if existing_invoice.state != 'draft':
-                    existing_invoice.button_draft()
-                # Mise à jour de la date d'échéance aussi
-                existing_invoice.write({
-                    'invoice_line_ids': invoice_vals['invoice_line_ids'],
-                    'invoice_date_due': invoice_date_due
-                })
-                invoice = existing_invoice
-            else:
-                invoice = self.env['account.move'].create(invoice_vals)
-
-            invoice.action_post()
-
-        return True
-
     def action_generate_concierge_invoice(self):
         # Compte de charge pour commissions
+        global invoice_date
         account_id = self.env['account.account'].search([('code', '=', '62220000'),
                                                          ('company_id', '=', self.env.user.company_id.id)], limit=1)
         if not account_id:
@@ -328,9 +241,9 @@ class BookingMonth(models.Model):
             raise ValueError("Aucun journal de type 'purchase' trouvé.")
 
         current_company = self.env.user.company_id
-        all_lines = self.env['booking.import.line'].search([])
+        all_lines = self.search([])
 
-        # Regroupement des lignes par propriété + mois d'arrivée
+        # Regroupement des lignes par mois d'arrivée
         factures_groupees = {}
 
         for line in all_lines:
@@ -343,30 +256,14 @@ class BookingMonth(models.Model):
             year = line.arrival_date.year
             key = (year, month)
 
-            # Informations de facturation
-            tarif = getattr(line, 'rate', 0)
-            commission = getattr(line, 'commission_amount', 0)
-
-            try:
-                tarif = float(str(tarif).replace(',', '').replace(' XPF', ''))
-                commission = float(str(commission).replace(',', '').replace(' XPF', ''))
-            except Exception:
-                continue
-
-            nb_adultes = (line.pax_nb or 0) - (line.children or 0)
-            nuitees = (line.duration_nights or 0) * nb_adultes
-            taxe_sejour = nuitees * 60
-
-            base = tarif - commission - taxe_sejour
+            base=self.net_revenue
             if base <= 0:
                 continue
-
-            montant = round(base * 0.20, 0)
 
             facture_line = (0, 0, {
                 'name': f"Commission {property_type.name} - {line.arrival_date.strftime('%d/%m/%Y')}",
                 'quantity': 1,
-                'price_unit': montant,
+                'price_unit': round(base * 0.20, 0),
                 'account_id': account_id.id,
                 'product_uom_id': self.env.ref('uom.product_uom_unit').id,
             })
@@ -386,18 +283,18 @@ class BookingMonth(models.Model):
 
         for key, vals in factures_groupees.items():
             if not self.env['account.move'].search([
-                ('partner_id', '=', vals['partner_id']),
-                ('ref', '=', vals['ref']),
+                ('partner_id', '=', self.concierge_partner_id),
+                ('ref', '=', 'ref'),
                 ('move_type', '=', 'in_invoice')
             ], limit=1):
                 invoice = self.env['account.move'].create({
                     'move_type': 'in_invoice',
-                    'partner_id': vals['partner_id'],
-                    'invoice_date': vals['invoice_date'],
-                    'invoice_date_due': vals['invoice_date_due'],  # AJOUT DE LA DATE D'ÉCHÉANCE
-                    'ref': vals['ref'],
-                    'invoice_origin': "Commissions mensuelles Booking",
-                    'invoice_line_ids': vals['invoice_line_ids'],
+                    'partner_id': self.concierge_partner_id,
+                    'invoice_date': invoice_date,
+                    'invoice_date_due': invoice_date_due,  # AJOUT DE LA DATE D'ÉCHÉANCE
+                    'ref': 'ref',
+                    'invoice_origin': "Commission mensuelle Concierge",
+                    'invoice_line_ids': all_lines,
                     'journal_id': journal.id,
                     'company_id': current_company.id,
                 })
@@ -483,7 +380,6 @@ class BookingMonth(models.Model):
     def action_generate_all_invoices(self):
         self.action_generate_booking_invoice()
         self.action_generate_concierge_invoice()
-        self.action_generate_municipality_invoice()
 
     @api.model
     def create_or_update_month(self, property_type_id, year, month, company_id=None):

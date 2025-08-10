@@ -214,13 +214,19 @@ class BookingQuarter(models.Model):
         self.state = 'declared'
 
     def action_generate_tax_invoice(self):
-        """Génère la facture de taxe de séjour vers la mairie"""
+        """Génère la facture de taxe de séjour vers la mairie - Version robuste"""
         self.ensure_one()
 
         # Rechercher le partenaire mairie
         municipality = self.env['res.partner'].search([('name', '=', 'Mairie de Punaauia')], limit=1)
         if not municipality:
             raise ValueError("Le partenaire 'Mairie de Punaauia' n'existe pas!")
+
+        # S'assurer que le partenaire est configuré comme fournisseur
+        if not municipality.is_company:
+            municipality.write({'is_company': True})
+        if not municipality.supplier_rank:
+            municipality.write({'supplier_rank': 1})
 
         # Compte de charge pour taxes
         account_id = self.env['account.account'].search([
@@ -230,27 +236,31 @@ class BookingQuarter(models.Model):
         if not account_id:
             raise ValueError("Le compte comptable '63513000' n'existe pas!")
 
-        if self.tax_invoice_id:
-            # Mettre à jour la facture existante
-            invoice = self.tax_invoice_id
-            if invoice.state != 'draft':
-                invoice.button_draft()
+        # Journal de factures fournisseur
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'purchase'),
+            ('company_id', '=', self.company_id.id)
+        ], limit=1)
+        if not journal:
+            raise ValueError("Aucun journal de type 'purchase' trouvé!")
 
-            # Supprimer les anciennes lignes
-            invoice.invoice_line_ids.unlink()
-        else:
-            # Créer une nouvelle facture
-            invoice = self.env['account.move'].create({
-                'partner_id': municipality.id,
-                'move_type': 'in_invoice',
-                'invoice_date': fields.Date.today(),
-                'invoice_date_due': fields.Date.add(fields.Date.today(), days=30),
-                'ref': f"Taxe séjour T{self.quarter} {self.year} - {self.property_type_id.name}",
-                'company_id': self.company_id.id,
-            })
-            self.tax_invoice_id = invoice
+        # Vérifier que le journal a un compte de contrepartie
+        if not journal.default_account_id:
+            # Chercher un compte fournisseur par défaut
+            supplier_account = self.env['account.account'].search([
+                ('user_type_id.name', 'ilike', 'payable'),
+                ('company_id', '=', self.company_id.id)
+            ], limit=1)
+            if supplier_account:
+                journal.write({'default_account_id': supplier_account.id})
 
-        # Créer les lignes de facture pour chaque mois avec des montants > 0
+        # Dates avec gestion de la timezone
+        today = fields.Date.context_today(self)
+        invoice_date = today
+        invoice_date_due = fields.Date.add(today, days=30)
+
+        # Préparer les lignes de facture
+        invoice_lines = []
         month_names = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
                        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
 
@@ -260,19 +270,74 @@ class BookingQuarter(models.Model):
             month_num = start_month + i
             month_name = month_names[month_num]
             taxable_nights = getattr(self, f'taxable_nights_month{i + 1}')
-            amount = getattr(self, f'tax_amount_month{i + 1}')
 
             if taxable_nights > 0:
-                self.env['account.move.line'].create({
-                    'move_id': invoice.id,
+                line_vals = (0, 0, {
                     'name': f"Taxe de séjour {month_name} {self.year} - {self.property_type_id.name} ({taxable_nights} nuitées)",
                     'quantity': taxable_nights,
-                    'price_unit': TAXE_SEJOUR,
+                    'price_unit': 60.0,
                     'account_id': account_id.id,
+                    'tax_ids': [(6, 0, [])],  # Pas de taxes
                 })
+                invoice_lines.append(line_vals)
 
-        # Valider la facture
-        invoice.action_post()
+        if not invoice_lines:
+            raise ValueError("Aucune nuitée taxable trouvée pour ce trimestre!")
+
+        # Supprimer l'ancienne facture si elle existe
+        if self.tax_invoice_id:
+            old_invoice = self.tax_invoice_id
+            try:
+                if old_invoice.state == 'posted':
+                    old_invoice.button_draft()
+                old_invoice.unlink()
+            except Exception:
+                pass  # Ignorer les erreurs de suppression
+            self.tax_invoice_id = False
+
+        # Créer la nouvelle facture avec tous les paramètres explicites
+        try:
+            payment_term_30 = self.env.ref('account.account_payment_term_30days')  # ou ton terme perso
+
+            invoice_vals = {
+                'partner_id': municipality.id,
+                'move_type': 'in_invoice',
+                'invoice_date': invoice_date,
+                'ref': f"Taxe séjour T{self.quarter} {self.year} - {self.property_type_id.name}",
+                'narration': f"Déclaration trimestrielle de taxe de séjour - Trimestre {self.quarter} {self.year}",
+                'company_id': self.company_id.id,
+                'journal_id': journal.id,
+                'currency_id': self.company_id.currency_id.id,
+                'invoice_line_ids': invoice_lines,
+                'invoice_incoterm_id': False,
+                'fiscal_position_id': False,
+                'invoice_payment_term_id': payment_term_30.id,
+            }
+
+            # Créer avec contexte spécifique
+            invoice = self.env['account.move'].with_context(
+                default_move_type='in_invoice',
+                move_type='in_invoice',
+                journal_type='purchase',
+                default_journal_id=journal.id
+            ).create(invoice_vals)
+
+            self.tax_invoice_id = invoice
+
+            # Forcer le recalcul des champs automatiques
+            invoice._onchange_partner_id()
+            # invoice._recompute_dynamic_lines()
+
+            # Valider la facture
+            invoice.action_post()
+
+        except Exception as e:
+            # Log détaillé de l'erreur
+            _logger.error(f"Erreur création facture taxe séjour: {str(e)}")
+            _logger.error(f"Partenaire: {municipality.name} (ID: {municipality.id})")
+            _logger.error(f"Journal: {journal.name} (ID: {journal.id})")
+            _logger.error(f"Compte: {account_id.code} - {account_id.name}")
+            raise ValueError(f"Erreur lors de la création de la facture: {str(e)}")
 
         return {
             'type': 'ir.actions.act_window',
