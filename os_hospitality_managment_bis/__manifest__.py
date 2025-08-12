@@ -87,6 +87,7 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
 
         'data/res_partner_category_data.xml',
         'data/res_partner_data.xml',
+        'data/res_partner_relation_type_data.xml',
     ],
     'images': [
         'static/description/icon.png',
