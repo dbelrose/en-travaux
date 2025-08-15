@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================= -->
+    <!-- LISTES DE PRIX SPÉCIFIQUES -->
+    <!-- ========================================= -->
+
+    <!-- Règle de prix pour la taxe de séjour - Municipalité -->
+    <record id="pricelist_item_tourist_tax_municipality" model="product.pricelist.item">
+        <field name="pricelist_id" ref="pricelist_municipality"/>
+        <field name="product_tmpl_id" ref="product_tourist_tax"/>
+        <field name="applied_on">1_product</field>
+        <field name="compute_price">fixed</field>
+        <field name="fixed_price">60.0</field>
+        <field name="min_quantity">1</field>
+    </record>
+
+    <!-- Règle de prix pour la commission conciergerie -->
+    <record id="pricelist_item_concierge_commission" model="product.pricelist.item">
+        <field name="pricelist_id" ref="pricelist_concierge"/>
+        <field name="product_tmpl_id" ref="product_concierge_commission"/>
+        <field name="applied_on">1_product</field>
+        <field name="compute_price">fixed</field>
+        <field name="fixed_price">20.0</field>
+        <field name="min_quantity">1</field>
+    </record>
+</odoo>

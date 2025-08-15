@@ -105,6 +105,48 @@
         </field>
     </record>
 
+    <!-- ========================================= -->
+    <!-- VUES BOOKING.MONTH MISES À JOUR -->
+    <!-- ========================================= -->
+
+    <!-- Vue formulaire booking.month mise à jour -->
+    <record id="view_booking_month_form_updated" model="ir.ui.view">
+        <field name="name">booking.month.form.updated</field>
+        <field name="model">booking.month</field>
+        <field name="inherit_id" ref="view_booking_month_form"/>
+        <field name="arch" type="xml">
+            <!-- Ajout des informations sur les produits paramétrables -->
+            <page string="Commissions partenaires" name="commissions" position="replace">
+                <page string="Commissions partenaires" name="commissions">
+                    <group>
+                        <group string="Configuration Conciergerie">
+                            <field name="concierge_partner_id" readonly="1"/>
+                            <field name="concierge_service_id" readonly="1"/>
+                            <field name="concierge_commission_rate" readonly="1" widget="percentage"/>
+                            <field name="concierge_commission" readonly="1" widget="monetary"/>
+                        </group>
+                    </group>
+                    <separator string="Détails de calcul"/>
+                    <group>
+                        <group string="Base de calcul">
+                            <field name="total_revenue" readonly="1" widget="monetary" string="Chiffre d'affaires"/>
+                            <field name="total_commission_booking" readonly="1" widget="monetary" string="- Commission Booking"/>
+                            <field name="total_tourist_tax" readonly="1" widget="monetary" string="- Taxe de séjour"/>
+                        </group>
+                        <group string="Commission calculée">
+                            <div class="o_form_label">Base de commission:</div>
+                            <div><field name="total_revenue" readonly="1" widget="monetary" nolabel="1"/>
+                                - <field name="total_commission_booking" readonly="1" widget="monetary" nolabel="1"/>
+                                - <field name="total_tourist_tax" readonly="1" widget="monetary" nolabel="1"/>
+                            </div>
+                            <field name="concierge_commission" readonly="1" widget="monetary" string="Commission finale"/>
+                        </group>
+                    </group>
+                </page>
+            </page>
+        </field>
+    </record>
+
     <!-- Vue liste booking.month -->
     <record id="view_booking_month_tree" model="ir.ui.view">
         <field name="name">booking.month.tree</field>

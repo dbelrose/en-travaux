@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+    <!-- ========================================= -->
+    <!-- PRODUITS DE SERVICE -->
+    <!-- ========================================= -->
+
 <odoo noupdate="1">
     <!-- Produit : Taxe de séjour pour Meublé de tourisme -->
     <record id="product_template_tourist_tax_3" model="product.template">
@@ -13,6 +18,7 @@
         <field name="type">service</field>
         <field name="taxes_id" eval="[(6, 0, [ref('account_tax_tourist_tax_3')])]"/>
         <field name="purchase_ok">True</field>
+        <field name="property_account_expense_id" ref="account_tourist_tax"/>
         <field name="sale_ok">True</field>
     </record>
 
@@ -30,7 +36,8 @@
         <field name="taxes_id" eval="[(6, 0, [ref('account_tax_tourist_tax_2')])]"/>
         <field name="purchase_ok">True</field>
         <field name="sale_ok">True</field>
-    </record>
+        <field name="property_account_expense_id" ref="account_tourist_tax"/>
+   </record>
 
     <!-- Produit : Taxe de séjour pour Auberges de jeunesse -->
     <record id="product_template_tourist_tax_4" model="product.template">
@@ -46,6 +53,7 @@
         <field name="taxes_id" eval="[(6, 0, [ref('account_tax_tourist_tax_4')])]"/>
         <field name="purchase_ok">True</field>
         <field name="sale_ok">True</field>
+        <field name="property_account_expense_id" ref="account_tourist_tax"/>
     </record>
 
     <!-- Produit : Taxe de séjour pour Terrains de camping -->
@@ -62,6 +70,7 @@
         <field name="taxes_id" eval="[(6, 0, [ref('account_tax_tourist_tax_5')])]"/>
         <field name="purchase_ok">True</field>
         <field name="sale_ok">True</field>
+        <field name="property_account_expense_id" ref="account_tourist_tax"/>
     </record>
 
     <!-- Produit : Taxe de séjour pour Villages de vacances -->
@@ -78,6 +87,7 @@
         <field name="taxes_id" eval="[(6, 0, [ref('account_tax_tourist_tax_6')])]"/>
         <field name="purchase_ok">True</field>
         <field name="sale_ok">True</field>
+        <field name="property_account_expense_id" ref="account_tourist_tax"/>
     </record>
 
     <!-- Produit : Taxe de séjour pour Autres hébergements à vocation touristique -->
@@ -94,6 +104,41 @@
         <field name="taxes_id" eval="[(6, 0, [ref('account_tax_tourist_tax_7')])]"/>
         <field name="purchase_ok">True</field>
         <field name="sale_ok">True</field>
+        <field name="property_account_expense_id" ref="account_tourist_tax"/>
+    </record>
+
+    <!-- Produit Commission Booking -->
+    <record id="product_booking_commission" model="product.template">
+        <field name="name">Commission Booking.com</field>
+        <field name="default_code">COMMISSION_BOOKING</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="product_category_commissions"/>
+        <field name="list_price">0.0</field>
+        <field name="standard_price">0.0</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="uom_po_id" ref="uom.product_uom_unit"/>
+        <field name="purchase_ok">True</field>
+        <field name="sale_ok">False</field>
+        <field name="can_be_expensed">True</field>
+        <field name="property_account_expense_id" ref="account_commissions"/>
+        <field name="description">Commission versée à Booking.com - Montant variable selon réservation</field>
+    </record>
+
+    <!-- Produit Commission Conciergerie -->
+    <record id="product_concierge_commission" model="product.template">
+        <field name="name">Commission Conciergerie</field>
+        <field name="default_code">COMMISSION_CONCIERGE</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="product_category_commissions"/>
+        <field name="list_price">20.0</field>
+        <field name="standard_price">20.0</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="uom_po_id" ref="uom.product_uom_unit"/>
+        <field name="purchase_ok">True</field>
+        <field name="sale_ok">False</field>
+        <field name="can_be_expensed">True</field>
+        <field name="property_account_expense_id" ref="account_commissions"/>
+        <field name="description">Commission versée au concierge - 20% du montant net (CA - Commission Booking - Taxe séjour)</field>
     </record>
 
 </odoo>

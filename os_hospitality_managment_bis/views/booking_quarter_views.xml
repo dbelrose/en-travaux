@@ -89,6 +89,41 @@
         </field>
     </record>
 
+    <!-- ========================================= -->
+    <!-- VUES BOOKING.QUARTER MISES À JOUR -->
+    <!-- ========================================= -->
+
+    <!-- Vue formulaire booking.quarter mise à jour -->
+    <record id="view_booking_quarter_form_updated" model="ir.ui.view">
+        <field name="name">booking.quarter.form.updated</field>
+        <field name="model">booking.quarter</field>
+        <field name="inherit_id" ref="view_booking_quarter_form"/>
+        <field name="arch" type="xml">
+            <!-- Ajout des informations sur le produit taxe de séjour -->
+            <group string="Établissement" position="after">
+                <group string="Configuration Taxe de séjour">
+                    <field name="tourist_tax_product_id" readonly="1"/>
+                    <field name="tourist_tax_unit_price" readonly="1" widget="monetary" string="Prix unitaire (XPF/nuitée)"/>
+                </group>
+            </group>
+
+            <!-- Mise à jour du détail par mois avec produit -->
+            <page string="Détail par mois" name="monthly_detail" position="attributes">
+                <attribute name="string">Détail par mois (Taxe configurée)</attribute>
+            </page>
+
+            <!-- Ajout d'une note explicative -->
+            <field name="total_tax_words" position="after">
+                <separator string="Configuration"/>
+                <p class="text-muted">
+                    Le calcul de la taxe de séjour utilise le produit configuré ci-dessus.
+                    Pour modifier le tarif, veuillez ajuster le prix du produit ou créer une règle
+                    dans la liste de prix "Tarifs Municipalité".
+                </p>
+            </field>
+        </field>
+    </record>
+
     <!-- Vue liste booking.quarter -->
     <record id="view_booking_quarter_tree" model="ir.ui.view">
         <field name="name">booking.quarter.tree</field>

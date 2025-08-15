@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api
 import logging
 import num2words
 
 _logger = logging.getLogger(__name__)
-
-TAXE_SEJOUR = 60  # Taxe fixe en XPF par nuitée adulte
 
 
 class BookingQuarter(models.Model):
@@ -52,6 +49,11 @@ class BookingQuarter(models.Model):
     taxable_nights_month3 = fields.Integer(string='Nuitées taxables mois 3', compute='_compute_nights_data', store=True)
     total_taxable_nights = fields.Integer(string='Total nuitées taxables', compute='_compute_nights_data', store=True)
 
+    # Produit et prix de la taxe de séjour
+    tourist_tax_product_id = fields.Many2one('product.product', string='Produit taxe de séjour',
+                                             compute='_compute_tax_product', store=True)
+    tourist_tax_unit_price = fields.Float(string='Prix unitaire taxe', compute='_compute_tax_product', store=True)
+
     # Montants des taxes
     tax_amount_month1 = fields.Float(string='Montant taxe mois 1', compute='_compute_tax_amounts', store=True)
     tax_amount_month2 = fields.Float(string='Montant taxe mois 2', compute='_compute_tax_amounts', store=True)
@@ -81,7 +83,7 @@ class BookingQuarter(models.Model):
         for record in self:
             quarter_names = {1: '1er', 2: '2ème', 3: '3ème', 4: '4ème'}
             property_name = record.property_type_id.name if record.property_type_id else 'Sans propriété'
-            record.display_name = f"{quarter_names.get(record.quarter, '')} T{record.quarter} {record.year} - {property_name}"
+            record.display_name = f"{quarter_names.get(int(record.quarter) if record.quarter else 0, '')} T{record.quarter} {record.year} - {property_name}"
 
     @api.depends('property_type_id')
     def _compute_establishment_info(self):
@@ -113,6 +115,44 @@ class BookingQuarter(models.Model):
             record.establishment_name = establishment_name or "Non renseigné"
             record.establishment_address = establishment_address or "Non renseignée"
             record.establishment_capacity = establishment_capacity or "Non renseignée"
+
+    @api.depends('company_id')
+    def _compute_tax_product(self):
+        """Récupère le produit et le prix de la taxe de séjour"""
+        for record in self:
+            # Rechercher le produit "Taxe de séjour"
+            tax_product = self.env['product.product'].search([
+                ('default_code', '=', 'TAXE_SEJOUR'),
+                '|', ('company_id', '=', record.company_id.id), ('company_id', '=', False)
+            ], limit=1)
+
+            if not tax_product:
+                # Fallback : recherche par nom
+                tax_product = self.env['product.product'].search([
+                    ('name', 'ilike', 'taxe de séjour'),
+                    '|', ('company_id', '=', record.company_id.id), ('company_id', '=', False)
+                ], limit=1)
+
+            if tax_product:
+                record.tourist_tax_product_id = tax_product
+                # Récupérer le prix depuis la liste de prix de la municipalité
+                municipality = self._get_municipality_partner()
+                if municipality and municipality.property_product_pricelist:
+                    record.tourist_tax_unit_price = tax_product._get_price_in_pricelist(
+                        municipality.property_product_pricelist
+                    )
+                else:
+                    record.tourist_tax_unit_price = tax_product.list_price
+            else:
+                record.tourist_tax_product_id = False
+                record.tourist_tax_unit_price = 60.0  # Valeur par défaut
+                _logger.warning("Produit 'Taxe de séjour' introuvable, utilisation du prix par défaut (60 XPF)")
+
+    def _get_municipality_partner(self):
+        """Récupère le partenaire municipalité"""
+        return self.env['res.partner'].search([
+            ('name', '=', 'Mairie de Punaauia')
+        ], limit=1)
 
     @api.depends('year', 'quarter', 'property_type_id')
     def _compute_nights_data(self):
@@ -183,12 +223,13 @@ class BookingQuarter(models.Model):
         self.taxable_nights_month3 = 0
         self.total_taxable_nights = 0
 
-    @api.depends('taxable_nights_month1', 'taxable_nights_month2', 'taxable_nights_month3')
+    @api.depends('taxable_nights_month1', 'taxable_nights_month2', 'taxable_nights_month3', 'tourist_tax_unit_price')
     def _compute_tax_amounts(self):
         for record in self:
-            record.tax_amount_month1 = record.taxable_nights_month1 * TAXE_SEJOUR
-            record.tax_amount_month2 = record.taxable_nights_month2 * TAXE_SEJOUR
-            record.tax_amount_month3 = record.taxable_nights_month3 * TAXE_SEJOUR
+            unit_price = record.tourist_tax_unit_price
+            record.tax_amount_month1 = record.taxable_nights_month1 * unit_price
+            record.tax_amount_month2 = record.taxable_nights_month2 * unit_price
+            record.tax_amount_month3 = record.taxable_nights_month3 * unit_price
             record.total_tax_amount = record.tax_amount_month1 + record.tax_amount_month2 + record.tax_amount_month3
 
     @api.depends('total_tax_amount')
@@ -203,6 +244,7 @@ class BookingQuarter(models.Model):
     def action_recalculate(self):
         """Force le recalcul des données"""
         self._compute_nights_data()
+        self._compute_tax_product()
         return True
 
     def action_confirm(self):
@@ -214,11 +256,11 @@ class BookingQuarter(models.Model):
         self.state = 'declared'
 
     def action_generate_tax_invoice(self):
-        """Génère la facture de taxe de séjour vers la mairie - Version robuste"""
+        """Génère la facture de taxe de séjour vers la mairie - Version avec produits paramétrables"""
         self.ensure_one()
 
         # Rechercher le partenaire mairie
-        municipality = self.env['res.partner'].search([('name', '=', 'Mairie de Punaauia')], limit=1)
+        municipality = self._get_municipality_partner()
         if not municipality:
             raise ValueError("Le partenaire 'Mairie de Punaauia' n'existe pas!")
 
@@ -228,13 +270,21 @@ class BookingQuarter(models.Model):
         if not municipality.supplier_rank:
             municipality.write({'supplier_rank': 1})
 
-        # Compte de charge pour taxes
-        account_id = self.env['account.account'].search([
-            ('code', '=', '63513000'),
-            ('company_id', '=', self.company_id.id)
-        ], limit=1)
+        # Vérifier le produit taxe de séjour
+        if not self.tourist_tax_product_id:
+            raise ValueError(
+                "Produit 'Taxe de séjour' introuvable! Veuillez créer un produit avec le code 'TAXE_SEJOUR'.")
+
+        # Compte comptable depuis le produit
+        account_id = self.tourist_tax_product_id.product_tmpl_id._get_product_accounts()['expense']
         if not account_id:
-            raise ValueError("Le compte comptable '63513000' n'existe pas!")
+            # Compte par défaut
+            account_id = self.env['account.account'].search([
+                ('code', '=', '63513000'),
+                ('company_id', '=', self.company_id.id)
+            ], limit=1)
+            if not account_id:
+                raise ValueError("Aucun compte comptable configuré pour la taxe de séjour!")
 
         # Journal de factures fournisseur
         journal = self.env['account.journal'].search([
@@ -244,17 +294,7 @@ class BookingQuarter(models.Model):
         if not journal:
             raise ValueError("Aucun journal de type 'purchase' trouvé!")
 
-        # Vérifier que le journal a un compte de contrepartie
-        if not journal.default_account_id:
-            # Chercher un compte fournisseur par défaut
-            supplier_account = self.env['account.account'].search([
-                ('user_type_id.name', 'ilike', 'payable'),
-                ('company_id', '=', self.company_id.id)
-            ], limit=1)
-            if supplier_account:
-                journal.write({'default_account_id': supplier_account.id})
-
-        # Dates avec gestion de la timezone
+        # Dates
         today = fields.Date.context_today(self)
         invoice_date = today
         invoice_date_due = fields.Date.add(today, days=30)
@@ -273,9 +313,10 @@ class BookingQuarter(models.Model):
 
             if taxable_nights > 0:
                 line_vals = (0, 0, {
+                    'product_id': self.tourist_tax_product_id.id,
                     'name': f"Taxe de séjour {month_name} {self.year} - {self.property_type_id.name} ({taxable_nights} nuitées)",
                     'quantity': taxable_nights,
-                    'price_unit': 60.0,
+                    'price_unit': self.tourist_tax_unit_price,
                     'account_id': account_id.id,
                     'tax_ids': [(6, 0, [])],  # Pas de taxes
                 })
@@ -295,9 +336,13 @@ class BookingQuarter(models.Model):
                 pass  # Ignorer les erreurs de suppression
             self.tax_invoice_id = False
 
-        # Créer la nouvelle facture avec tous les paramètres explicites
+        # Créer la nouvelle facture
         try:
-            payment_term_30 = self.env.ref('account.account_payment_term_30days')  # ou ton terme perso
+            payment_term_30 = self.env.ref('account.account_payment_term_30days', raise_if_not_found=False)
+            if not payment_term_30:
+                payment_term_30 = self.env['account.payment.term'].search([
+                    ('name', 'ilike', '30')
+                ], limit=1)
 
             invoice_vals = {
                 'partner_id': municipality.id,
@@ -311,7 +356,7 @@ class BookingQuarter(models.Model):
                 'invoice_line_ids': invoice_lines,
                 'invoice_incoterm_id': False,
                 'fiscal_position_id': False,
-                'invoice_payment_term_id': payment_term_30.id,
+                'invoice_payment_term_id': payment_term_30.id if payment_term_30 else False,
             }
 
             # Créer avec contexte spécifique
@@ -326,7 +371,6 @@ class BookingQuarter(models.Model):
 
             # Forcer le recalcul des champs automatiques
             invoice._onchange_partner_id()
-            # invoice._recompute_dynamic_lines()
 
             # Valider la facture
             invoice.action_post()
@@ -336,7 +380,7 @@ class BookingQuarter(models.Model):
             _logger.error(f"Erreur création facture taxe séjour: {str(e)}")
             _logger.error(f"Partenaire: {municipality.name} (ID: {municipality.id})")
             _logger.error(f"Journal: {journal.name} (ID: {journal.id})")
-            _logger.error(f"Compte: {account_id.code} - {account_id.name}")
+            _logger.error(f"Produit: {self.tourist_tax_product_id.name} (ID: {self.tourist_tax_product_id.id})")
             raise ValueError(f"Erreur lors de la création de la facture: {str(e)}")
 
         return {
@@ -371,3 +415,15 @@ class BookingQuarter(models.Model):
             quarter_record.action_recalculate()
 
         return quarter_record
+
+
+class ProductProduct(models.Model):
+    _inherit = 'product.product'
+
+    def _get_price_in_pricelist(self, pricelist):
+        """Récupère le prix du produit dans une liste de prix donnée"""
+        if not pricelist:
+            return self.list_price
+
+        price = pricelist._get_product_price(self, 1.0)
+        return price if price else self.list_price

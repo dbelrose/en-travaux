@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================= -->
+    <!-- CONFIGURATION DES LISTES DE PRIX -->
+    <!-- ========================================= -->
+
+    <!-- Vue liste des listes de prix hospitality -->
+    <record id="view_hospitality_pricelists_tree" model="ir.ui.view">
+        <field name="name">hospitality.pricelists.tree</field>
+        <field name="model">product.pricelist</field>
+        <field name="arch" type="xml">
+            <tree string="Listes de prix Hospitality" create="true" edit="true">
+                <field name="name"/>
+                <field name="currency_id"/>
+                <field name="company_id"/>
+                <field name="active"/>
+                <button name="action_view_pricelist_items"
+                        string="Voir règles"
+                        type="object"
+                        icon="fa-list"
+                        class="btn-primary"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action pour les listes de prix hospitality -->
+    <record id="action_hospitality_pricelists" model="ir.actions.act_window">
+        <field name="name">Listes de prix Hospitality</field>
+        <field name="res_model">product.pricelist</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('name', 'in', ['Tarifs Municipalité', 'Tarifs Conciergerie'])]</field>
+        <field name="view_id" ref="view_hospitality_pricelists_tree"/>
+    </record>
+
+</odoo>
