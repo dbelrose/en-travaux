@@ -6,7 +6,7 @@
 
     <!-- Compte pour commissions -->
     <record id="account_commissions" model="account.account">
-        <field name="code">62220000</field>
+        <field name="code">62220001</field>
         <field name="name">Commissions sur ventes</field>
         <field name="account_type">expense_direct_cost</field>
         <field name="reconcile">False</field>
@@ -14,7 +14,7 @@
 
     <!-- Compte pour taxes de séjour -->
     <record id="account_tourist_tax" model="account.account">
-        <field name="code">63513000</field>
+        <field name="code">63513001</field>
         <field name="name">Taxes de séjour</field>
         <field name="account_type">expense</field>
         <field name="reconcile">False</field>

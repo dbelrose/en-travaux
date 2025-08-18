@@ -63,6 +63,7 @@ class BookingMonth(models.Model):
     # État des factures
     booking_invoice_id = fields.Many2one('account.move', string='Facture Booking.com')
     concierge_invoice_id = fields.Many2one('account.move', string='Facture concierge')
+    tourist_tax_invoice_id = fields.Many2one('account.move', string='Facture concierge')
 
     invoice_state = fields.Selection([
         ('none', 'Aucune facture'),
@@ -459,25 +460,6 @@ class BookingMonth(models.Model):
                     record.display_name = f"{record.month:02d}/{record.year} - {record.property_type_id.name or 'Sans propriété'}"
             else:
                 record.display_name = "Vue mensuelle incomplète"
-
-    def _compute_concierge_service(self):
-        for record in self:
-            if concierge_service:
-                record.concierge_service_id = concierge_service
-                # Récupérer le taux depuis la liste de prix du concierge
-                concierge_partner = record._get_concierge_partner()
-                if concierge_partner and concierge_partner.property_product_pricelist:
-                    # Le prix du service représente le pourcentage (ex: 20.0 pour 20%)
-                    rate = concierge_service._get_price_in_pricelist(
-                        concierge_partner.property_product_pricelist
-                    )
-                    record.concierge_commission_rate = rate
-                else:
-                    record.concierge_commission_rate = concierge_service.list_price
-            else:
-                record.concierge_service_id = False
-                record.concierge_commission_rate = 20.0  # Valeur par défaut 20%
-                _logger.warning("Produit 'Commission conciergerie' introuvable, utilisation du taux par défaut (20%)")
 
     @api.depends('year', 'month', 'property_type_id')
     def _compute_reservation_stats(self):
@@ -901,6 +883,7 @@ class BookingMonth(models.Model):
                 # Récupérer le taux depuis la liste de prix du concierge
                 concierge_partner = record._get_concierge_partner()
                 if concierge_partner and concierge_partner.property_product_pricelist:
+                    # Le prix du service représente le pourcentage (ex: 20.0 pour 20%)
                     rate = concierge_service._get_price_in_pricelist(
                         concierge_partner.property_product_pricelist
                     )
@@ -909,7 +892,7 @@ class BookingMonth(models.Model):
                     record.concierge_commission_rate = concierge_service.list_price
             else:
                 record.concierge_service_id = False
-                record.concierge_commission_rate = 20.0  # Valeur par défaut
+                record.concierge_commission_rate = 20.0  # Valeur par défaut 20%
                 _logger.warning(f"Produit 'Commission conciergerie' introuvable pour {record.display_name}")
 
     @api.depends('company_id')
@@ -1043,24 +1026,24 @@ class BookingMonth(models.Model):
             else:
                 record.concierge_commission = 0.0
 
-    @api.depends('concierge_commission_base')
-    def _compute_additional_commissions(self):
-        """Calcule les commissions additionnelles (extensible)"""
-        for record in self:
-            # Commission marketing (exemple : 2% du CA brut)
-            if record.total_revenue > 0:
-                record.marketing_commission = record.total_revenue * 0.02
-            else:
-                record.marketing_commission = 0.0
-
-            # Frais de gestion (exemple : 5% de la base concierge)
-            if record.concierge_commission_base > 0:
-                record.management_fee = record.concierge_commission_base * 0.05
-            else:
-                record.management_fee = 0.0
+    # @api.depends('concierge_commission_base')
+    # def _compute_additional_commissions(self):
+    #     """Calcule les commissions additionnelles (extensible)"""
+    #     for record in self:
+    #         # Commission marketing (exemple : 2% du CA brut)
+    #         if record.total_revenue > 0:
+    #             record.marketing_commission = record.total_revenue * 0.02
+    #         else:
+    #             record.marketing_commission = 0.0
+    #
+    #         # Frais de gestion (exemple : 5% de la base concierge)
+    #         if record.concierge_commission_base > 0:
+    #             record.management_fee = record.concierge_commission_base * 0.05
+    #         else:
+    #             record.management_fee = 0.0
 
     @api.depends('total_revenue', 'total_commission_booking', 'total_tourist_tax',
-                 'concierge_commission', 'marketing_commission', 'management_fee')
+                 'concierge_commission')
     def _compute_net_revenue(self):
         """Calcule les revenus nets et marges"""
         for record in self:
@@ -1069,9 +1052,7 @@ class BookingMonth(models.Model):
             # Coûts totaux
             record.total_costs = (record.total_commission_booking +
                                   record.total_tourist_tax +
-                                  record.concierge_commission +
-                                  record.marketing_commission +
-                                  record.management_fee)
+                                  record.concierge_commission)
 
             # Revenu net
             record.net_revenue = record.gross_revenue - record.total_costs
@@ -1195,7 +1176,7 @@ class BookingMonth(models.Model):
             record._compute_channel_revenue()
             record._compute_concierge_service()
             record._compute_partner_commissions()
-            record._compute_additional_commissions()
+            # record._compute_additional_commissions()
             record._compute_net_revenue()
             record._compute_invoice_state()
 

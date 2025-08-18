@@ -119,7 +119,7 @@
         <field name="uom_po_id" ref="uom.product_uom_unit"/>
         <field name="purchase_ok">True</field>
         <field name="sale_ok">False</field>
-        <field name="can_be_expensed">True</field>
+<!--        <field name="can_be_expensed">True</field>-->
         <field name="property_account_expense_id" ref="account_commissions"/>
         <field name="description">Commission versée à Booking.com - Montant variable selon réservation</field>
     </record>
@@ -136,7 +136,7 @@
         <field name="uom_po_id" ref="uom.product_uom_unit"/>
         <field name="purchase_ok">True</field>
         <field name="sale_ok">False</field>
-        <field name="can_be_expensed">True</field>
+<!--        <field name="can_be_expensed">True</field>-->
         <field name="property_account_expense_id" ref="account_commissions"/>
         <field name="description">Commission versée au concierge - 20% du montant net (CA - Commission Booking - Taxe séjour)</field>
     </record>
