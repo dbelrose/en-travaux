@@ -5,3 +5,4 @@ from . import booking_month
 from . import booking_quarter
 from . import booking_reservation_wizard
 from . import hospitality_config_wizard
+from . import hospitality_management_common

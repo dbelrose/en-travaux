@@ -16,6 +16,7 @@
                 <field name="list_price" widget="monetary"/>
                 <field name="property_account_expense_id"/>
                 <field name="active"/>
+                <field name="currency_id" invisible="1"/>
                 <button name="action_view_pricelist_rules"
                         string="Listes de prix"
                         type="object"
@@ -49,7 +50,7 @@
                             <field name="list_price" widget="monetary"/>
                             <field name="standard_price" widget="monetary"/>
                             <field name="property_account_expense_id"/>
-                            <field name="can_be_expensed"/>
+<!--                            <field name="can_be_expensed"/>-->
                         </group>
                     </group>
 
@@ -63,20 +64,20 @@
                         <field name="description" nolabel="1" placeholder="Description du service..."/>
                     </group>
 
-                    <notebook>
-                        <page string="Listes de prix" name="pricelists">
-                            <!-- Affichage des règles de prix -->
-                            <field name="item_ids" context="{'default_product_tmpl_id': active_id}">
-                                <tree editable="bottom">
-                                    <field name="pricelist_id"/>
-                                    <field name="fixed_price" widget="monetary"/>
-                                    <field name="date_start"/>
-                                    <field name="date_end"/>
-                                    <field name="min_quantity"/>
-                                </tree>
-                            </field>
-                        </page>
-                    </notebook>
+<!--                    <notebook>-->
+<!--                        <page string="Listes de prix" name="pricelists">-->
+<!--                            &lt;!&ndash; Affichage des règles de prix &ndash;&gt;-->
+<!--                            <field name="item_ids" context="{'default_product_tmpl_id': active_id}">-->
+<!--                                <tree editable="bottom">-->
+<!--                                    <field name="pricelist_id"/>-->
+<!--                                    <field name="fixed_price" widget="monetary"/>-->
+<!--                                    <field name="date_start"/>-->
+<!--                                    <field name="date_end"/>-->
+<!--                                    <field name="min_quantity"/>-->
+<!--                                </tree>-->
+<!--                            </field>-->
+<!--                        </page>-->
+<!--                    </notebook>-->
                 </sheet>
             </form>
         </field>
@@ -92,8 +93,8 @@
             'default_type': 'service',
             'default_purchase_ok': True,
             'default_sale_ok': False,
-            'default_can_be_expensed': True
         }</field>
+<!--            'default_can_be_expensed': True-->
         <field name="view_id" ref="view_hospitality_service_products_tree"/>
     </record>
 </odoo>

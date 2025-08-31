@@ -54,7 +54,8 @@ class BookingImportLine(models.Model):
 
     # Informations financières
     rate = fields.Float(string='Tarif (XPF)', digits='Product Price')
-    commission_amount = fields.Float(string='Commission (XPF)', digits='Product Price')
+    commission_amount = fields.Monetary(string='Commission (XPF)', digits='Product Price', 
+                                        currency_field='company_currency_id')
     commission_rate = fields.Float(string='Taux commission (%)', compute='_compute_commission_rate', store=True)
 
     # Nuitées calculées
@@ -63,7 +64,8 @@ class BookingImportLine(models.Model):
     total_nights = fields.Integer(string='Total nuitées', compute='_compute_nights', store=True)
 
     # Montant taxe de séjour
-    tax_amount = fields.Float(string='Taxe de séjour (XPF)', compute='_compute_tax_amount', store=True)
+    tax_amount = fields.Monetary(string='Taxe de séjour (XPF)', compute='_compute_tax_amount', 
+                                 currency_field='company_currency_id', store=True)
 
     # Métadonnées
     create_date = fields.Datetime(string='Date de création', readonly=True)
@@ -76,6 +78,8 @@ class BookingImportLine(models.Model):
         related='import_id.company_id',
         store=True
     )
+
+    company_currency_id = fields.Many2one('res.currency', string="Company Currency",  related='company_id.currency_id')
 
     @api.depends('partner_id', 'arrival_date', 'property_type_id')
     def _compute_display_name(self):

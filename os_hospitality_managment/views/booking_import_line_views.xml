@@ -59,7 +59,9 @@
                 <field name="payment_status"/>
                 <field name="status"/>
                 <field name="rate" optional="hide" sum="Total Rate"/>
-                <field name="commission_amount" optional="hide" sum="Total Commission"/>
+                <field name="commission_amount" optional="hide" sum="Total Commission" widget="monetary"/>
+                <field name="company_currency_id" invisible="1"/>
+
             </tree>
         </field>
     </record>

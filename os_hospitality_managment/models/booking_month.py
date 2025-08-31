@@ -38,12 +38,30 @@ class BookingMonth(models.Model):
     total_nights = fields.Integer(string='Total nuitées', compute='_compute_reservation_stats', store=True)
     total_guests = fields.Integer(string='Total voyageurs', compute='_compute_reservation_stats', store=True)
     average_stay = fields.Float(string='Durée moyenne séjour', compute='_compute_reservation_stats', store=True)
+    average_rate = fields.Monetary(string='Tarif moyen', compute='_compute_reservation_stats',
+                                   currency_field='company_currency_id', store=True)
 
     # Données financières
-    total_revenue = fields.Float(string='Chiffre d\'affaires total', compute='_compute_financial_data', store=True)
-    total_commission_booking = fields.Float(string='Commission Booking.com', compute='_compute_financial_data',
-                                            store=True)
-    total_tourist_tax = fields.Float(string='Taxe de séjour', compute='_compute_financial_data', store=True)
+    gross_revenue = fields.Monetary(string='Chiffre d\'affaires période', compute='_compute_net_revenue',
+                                    currency_field='company_currency_id', store=True)
+    total_costs = fields.Monetary(string='Coût de revient total', compute='_compute_net_revenue',
+                                  currency_field='company_currency_id', store=True)
+    profit_margin = fields.Monetary(string='Bénéfice', compute='_compute_net_revenue',
+                                    currency_field='company_currency_id', store=True)
+
+    revenue_booking_com = fields.Monetary(string='Chiffre d\'affaires Booking', compute='_compute_channel_revenue',
+                                          currency_field='company_currency_id', store=True)
+    revenue_direct = fields.Monetary(string='Chiffre d\'affaires direct', compute='_compute_channel_revenue',
+                                     currency_field='company_currency_id', store=True)
+    revenue_other_channels = fields.Monetary(string='Autre chiffre d\'affaires', compute='_compute_channel_revenue',
+                                             currency_field='company_currency_id', store=True)
+
+    total_revenue = fields.Monetary(string='Chiffre d\'affaires total', compute='_compute_financial_data',
+                                    currency_field='company_currency_id', store=True)
+    total_commission_booking = fields.Monetary(string='Commission Booking.com', compute='_compute_financial_data',
+                                               currency_field='company_currency_id', store=True)
+    total_tourist_tax = fields.Monetary(string='Taxe de séjour', compute='_compute_financial_data',
+                                        currency_field='company_currency_id', store=True)
 
     # Produit et paramètres de commission concierge
     concierge_service_id = fields.Many2one('product.product', string='Service conciergerie',
@@ -52,29 +70,45 @@ class BookingMonth(models.Model):
                                              compute='_compute_concierge_service', store=True)
 
     # Commissions partenaires (calculées)
-    concierge_commission = fields.Float(string='Commission concierge', compute='_compute_partner_commissions',
-                                        store=True)
+    concierge_commission_base = fields.Monetary(string='Base commission concierge',
+                                                compute='_compute_partner_commissions',
+                                                currency_field='company_currency_id', store=True)
+    concierge_commission = fields.Monetary(string='Commission concierge', compute='_compute_partner_commissions',
+                                           currency_field='company_currency_id', store=True)
     concierge_partner_id = fields.Many2one('res.partner', string='Partenaire concierge',
-                                           compute='_compute_partner_info', store=True)
+                                           compute='_compute_concierge_partner_id', store=True)
 
     # Revenus nets
-    net_revenue = fields.Float(string='Revenu net', compute='_compute_net_revenue', store=True)
+    net_revenue = fields.Monetary(string='Revenu net', compute='_compute_net_revenue',
+                                  currency_field='company_currency_id', store=True)
 
     # État des factures
     booking_invoice_id = fields.Many2one('account.move', string='Facture Booking.com')
-    concierge_invoice_id = fields.Many2one('account.move', string='Facture concierge')
+    concierge_invoice_id = fields.Many2one('account.move', string='Facture fournisseur concierge')
+    concierge_client_invoice_id = fields.Many2one('account.move', string='Facture client concierge')
     tourist_tax_invoice_id = fields.Many2one('account.move', string='Facture concierge')
 
     invoice_state = fields.Selection([
         ('none', 'Aucune facture'),
-        ('booking_only', 'Booking seulement'),
-        ('concierge_only', 'Concierge seulement'),
-        ('both', 'Toutes les factures'),
+        ('partial', 'Partiel'),
+        ('complete', 'Toutes les factures'),
     ], string='État facturation', compute='_compute_invoice_state', store=True)
 
     # Dates de période
     period_start = fields.Date(string='Début période', compute='_compute_period_dates', store=True)
     period_end = fields.Date(string='Fin période', compute='_compute_period_dates', store=True)
+    last_calculation_date = fields.Date(string='Date de calcul', compute='action_recalculate', store=True)
+
+    calculation_user_id = fields.Many2one('res.users', string='Calculé par')
+
+    # État
+    state = fields.Selection([
+        ('draft', 'Brouillon'),
+        ('calculated', 'Calculé'),
+        ('posted', 'Publié')
+    ], string='État', default='draft')
+
+    company_currency_id = fields.Many2one('res.currency', string="Company Currency",  related='company_id.currency_id')
 
     # Contrainte d'unicité
     _sql_constraints = [
@@ -82,6 +116,14 @@ class BookingMonth(models.Model):
          'unique(year, month, property_type_id, company_id)',
          'Une seule vue mensuelle par mois et par type d\'hébergement!')
     ]
+
+    @api.depends('company_id')
+    def _compute_company_currency(self):
+        for rec in self:
+            if not rec.company_id:
+                rec.company_currency = self.env.company.currency_id
+            else:
+                rec.company_currency = rec.company_id.currency_id
 
     @api.depends('property_type_id')
     def _compute_concierge_partner_id(self):
@@ -93,17 +135,21 @@ class BookingMonth(models.Model):
 
             # Récupérer le type de relation "Concierge" via external ID
             try:
-                concierge_relation_base = self.env.ref('os_hospitality_managment_bis.relation_type_concierge')
+                concierge_relation_base = self.env.ref('os_hospitality_managment.relation_type_concierge')
+                _logger.info(f"concierge_relation_base {concierge_relation_base.id}")
                 # Rechercher le type de sélection correspondant (côté concierge -> propriété)
                 concierge_relation_type = self.env['res.partner.relation.type.selection'].search([
                     ('type_id', '=', concierge_relation_base.id),
                     ('is_inverse', '=', False)  # Concierge vers Société
                 ], limit=1)
+                _logger.info(f"concierge_relation_type {concierge_relation_type.id}")
+
             except ValueError:
                 # Fallback si l'external ID n'existe pas
                 concierge_relation_type = self.env['res.partner.relation.type.selection'].search([
                     ('name', 'ilike', 'Concierge')
                 ], limit=1)
+                _logger.info(f"Fallback : concierge_relation_type {concierge_relation_type.id}")
 
             if not concierge_relation_type:
                 continue
@@ -116,260 +162,263 @@ class BookingMonth(models.Model):
                 ('type_selection_id', '=', concierge_relation_type.id),
                 ('active', '=', True)  # Seulement les relations actives
             ], limit=1)
+            _logger.info(f"relation {relation.id}")
 
             if relation:
                 record.concierge_partner_id = relation.this_partner_id
+                _logger.info(f"concierge {record.concierge_partner_id.id}")
             else:
                 # Fallback : utiliser le partenaire de la société comme avant
                 record.concierge_partner_id = record.property_type_id.company_id.partner_id
+                _logger.info(f"Fallback : concierge {record.concierge_partner_id.id}")
 
-    def _generate_customer_concierge_invoices(self, monthly_records, month_name_fr, invoice_date, invoice_date_due):
-        """Génère les factures client concierge dans chaque société propriétaire"""
+    # def _generate_customer_concierge_invoices(self, monthly_records, month_name_fr, invoice_date, invoice_date_due):
+    #     """Génère les factures client concierge dans chaque société propriétaire"""
+    #
+    #     # Regrouper les enregistrements par société propriétaire
+    #     companies_data = {}
+    #
+    #     for monthly_record in monthly_records:
+    #         if monthly_record.concierge_commission > 0 and monthly_record.property_type_id.company_id:
+    #             property_company = monthly_record.property_type_id.company_id
+    #
+    #             if property_company.id not in companies_data:
+    #                 companies_data[property_company.id] = {
+    #                     'company': property_company,
+    #                     'records': [],
+    #                     'total_commission': 0
+    #                 }
+    #
+    #             companies_data[property_company.id]['records'].append(monthly_record)
+    #             companies_data[property_company.id]['total_commission'] += monthly_record.concierge_commission
+    #
+    #     # Créer une facture client dans chaque société propriétaire
+    #     for company_data in companies_data.values():
+    #         try:
+    #             self._create_customer_concierge_invoice(
+    #                 company_data['company'],
+    #                 company_data['records'],
+    #                 month_name_fr,
+    #                 invoice_date,
+    #                 invoice_date_due,
+    #                 company_data['total_commission']
+    #             )
+    #         except Exception as e:
+    #             _logger.warning(f"Erreur création facture client concierge pour {company_data['company'].name}: {e}")
 
-        # Regrouper les enregistrements par société propriétaire
-        companies_data = {}
+    # def _create_customer_concierge_invoice(self, property_company, monthly_records, month_name_fr, invoice_date,
+    #                                        invoice_date_due, total_commission):
+    #     """Crée une facture client concierge dans la société propriétaire"""
+    #
+    #     # Vérifier que la facture n'existe pas déjà
+    #     ref = f"Commission concierge {self.month:02d} {self.year}"
+    #
+    #     existing_customer_invoice = self.env['account.move'].search([
+    #         ('partner_id', '=', self.company_id.partner_id.id),  # La société actuelle comme client
+    #         ('ref', '=', ref),
+    #         ('move_type', '=', 'out_invoice'),
+    #         ('company_id', '=', property_company.id)  # Dans la société propriétaire
+    #     ], limit=1)
+    #
+    #     if existing_customer_invoice:
+    #         return existing_customer_invoice
+    #
+    #     # Compte de produit pour commissions dans la société propriétaire
+    #     revenue_account = self.env['account.account'].search([
+    #         ('code', '=like', '701%'),  # Compte de vente
+    #         ('company_id', '=', property_company.id)
+    #     ], limit=1)
+    #
+    #     if not revenue_account:
+    #         # Utiliser le compte de vente par défaut
+    #         revenue_account = self.env['account.account'].search([
+    #             ('user_type_id.name', 'ilike', 'income'),
+    #             ('company_id', '=', property_company.id)
+    #         ], limit=1)
+    #
+    #     if not revenue_account:
+    #         _logger.warning(f"Aucun compte de produit trouvé pour la société {property_company.name}")
+    #         return False
+    #
+    #     # Journal de vente dans la société propriétaire
+    #     sale_journal = self.env['account.journal'].search([
+    #         ('type', '=', 'sale'),
+    #         ('company_id', '=', property_company.id)
+    #     ], limit=1)
+    #
+    #     if not sale_journal:
+    #         _logger.warning(f"Aucun journal de vente trouvé pour la société {property_company.name}")
+    #         return False
+    #
+    #     # Préparer les lignes de facture
+    #     invoice_lines = []
+    #
+    #     for monthly_record in monthly_records:
+    #         if monthly_record.concierge_commission > 0:
+    #             reservations = monthly_record._get_month_reservations(monthly_record)
+    #
+    #             line_name = (f"Commission concierge {monthly_record.property_type_id.name} - "
+    #                          f"{month_name_fr} {self.year} "
+    #                          f"({len(reservations)} réservations)")
+    #
+    #             line_vals = (0, 0, {
+    #                 'name': line_name,
+    #                 'quantity': 1,
+    #                 'price_unit': monthly_record.concierge_commission,
+    #                 'account_id': revenue_account.id,
+    #                 'tax_ids': [(6, 0, [])],  # Pas de taxes
+    #             })
+    #             invoice_lines.append(line_vals)
+    #
+    #     # Créer la facture client
+    #     customer_invoice_vals = {
+    #         'partner_id': self.company_id.partner_id.id,  # La société actuelle comme client
+    #         'move_type': 'out_invoice',
+    #         'invoice_date': invoice_date,
+    #         'invoice_date_due': invoice_date_due,
+    #         'ref': ref,
+    #         'narration': f"Facture commission concierge pour {month_name_fr} {self.year}",
+    #         'company_id': property_company.id,
+    #         'journal_id': sale_journal.id,
+    #         'currency_id': property_company.currency_id.id,
+    #         'invoice_line_ids': invoice_lines,
+    #     }
+    #
+    #     customer_invoice = self.env['account.move'].with_context(
+    #         default_move_type='out_invoice',
+    #         move_type='out_invoice',
+    #         journal_type='sale'
+    #     ).with_company(property_company.id).create(customer_invoice_vals)
+    #
+    #     # Forcer le recalcul et valider
+    #     customer_invoice._onchange_partner_id()
+    #     customer_invoice.action_post()
+    #
+    #     return customer_invoice
 
-        for monthly_record in monthly_records:
-            if monthly_record.concierge_commission > 0 and monthly_record.property_type_id.company_id:
-                property_company = monthly_record.property_type_id.company_id
+    # def _generate_customer_booking_invoices(self, monthly_records, month_name_fr, invoice_date, invoice_date_due):
+    #     """Génère les factures client Booking.com dans chaque société propriétaire"""
+    #
+    #     # Regrouper les enregistrements par société propriétaire
+    #     companies_data = {}
+    #
+    #     for monthly_record in monthly_records:
+    #         if monthly_record.total_commission_booking > 0 and monthly_record.property_type_id.company_id:
+    #             property_company = monthly_record.property_type_id.company_id
+    #
+    #             if property_company.id not in companies_data:
+    #                 companies_data[property_company.id] = {
+    #                     'company': property_company,
+    #                     'records': [],
+    #                     'total_commission': 0
+    #                 }
+    #
+    #             companies_data[property_company.id]['records'].append(monthly_record)
+    #             companies_data[property_company.id]['total_commission'] += monthly_record.total_commission_booking
+    #
+    #     # Créer une facture client dans chaque société propriétaire
+    #     for company_data in companies_data.values():
+    #         try:
+    #             self._create_customer_booking_invoice(
+    #                 company_data['company'],
+    #                 company_data['records'],
+    #                 month_name_fr,
+    #                 invoice_date,
+    #                 invoice_date_due,
+    #                 company_data['total_commission']
+    #             )
+    #         except Exception as e:
+    #             _logger.warning(f"Erreur création facture client Booking pour {company_data['company'].name}: {e}")
 
-                if property_company.id not in companies_data:
-                    companies_data[property_company.id] = {
-                        'company': property_company,
-                        'records': [],
-                        'total_commission': 0
-                    }
-
-                companies_data[property_company.id]['records'].append(monthly_record)
-                companies_data[property_company.id]['total_commission'] += monthly_record.concierge_commission
-
-        # Créer une facture client dans chaque société propriétaire
-        for company_data in companies_data.values():
-            try:
-                self._create_customer_concierge_invoice(
-                    company_data['company'],
-                    company_data['records'],
-                    month_name_fr,
-                    invoice_date,
-                    invoice_date_due,
-                    company_data['total_commission']
-                )
-            except Exception as e:
-                _logger.warning(f"Erreur création facture client concierge pour {company_data['company'].name}: {e}")
-
-    def _create_customer_concierge_invoice(self, property_company, monthly_records, month_name_fr, invoice_date,
-                                           invoice_date_due, total_commission):
-        """Crée une facture client concierge dans la société propriétaire"""
-
-        # Vérifier que la facture n'existe pas déjà
-        ref = f"Commission concierge {month_name_fr} {self.year}"
-
-        existing_customer_invoice = self.env['account.move'].search([
-            ('partner_id', '=', self.company_id.partner_id.id),  # La société actuelle comme client
-            ('ref', '=', ref),
-            ('move_type', '=', 'out_invoice'),
-            ('company_id', '=', property_company.id)  # Dans la société propriétaire
-        ], limit=1)
-
-        if existing_customer_invoice:
-            return existing_customer_invoice
-
-        # Compte de produit pour commissions dans la société propriétaire
-        revenue_account = self.env['account.account'].search([
-            ('code', '=like', '701%'),  # Compte de vente
-            ('company_id', '=', property_company.id)
-        ], limit=1)
-
-        if not revenue_account:
-            # Utiliser le compte de vente par défaut
-            revenue_account = self.env['account.account'].search([
-                ('user_type_id.name', 'ilike', 'income'),
-                ('company_id', '=', property_company.id)
-            ], limit=1)
-
-        if not revenue_account:
-            _logger.warning(f"Aucun compte de produit trouvé pour la société {property_company.name}")
-            return False
-
-        # Journal de vente dans la société propriétaire
-        sale_journal = self.env['account.journal'].search([
-            ('type', '=', 'sale'),
-            ('company_id', '=', property_company.id)
-        ], limit=1)
-
-        if not sale_journal:
-            _logger.warning(f"Aucun journal de vente trouvé pour la société {property_company.name}")
-            return False
-
-        # Préparer les lignes de facture
-        invoice_lines = []
-
-        for monthly_record in monthly_records:
-            if monthly_record.concierge_commission > 0:
-                reservations = monthly_record._get_month_reservations(monthly_record)
-
-                line_name = (f"Commission concierge {monthly_record.property_type_id.name} - "
-                             f"{month_name_fr} {self.year} "
-                             f"({len(reservations)} réservations)")
-
-                line_vals = (0, 0, {
-                    'name': line_name,
-                    'quantity': 1,
-                    'price_unit': monthly_record.concierge_commission,
-                    'account_id': revenue_account.id,
-                    'tax_ids': [(6, 0, [])],  # Pas de taxes
-                })
-                invoice_lines.append(line_vals)
-
-        # Créer la facture client
-        customer_invoice_vals = {
-            'partner_id': self.company_id.partner_id.id,  # La société actuelle comme client
-            'move_type': 'out_invoice',
-            'invoice_date': invoice_date,
-            'invoice_date_due': invoice_date_due,
-            'ref': ref,
-            'narration': f"Facture commission concierge pour {month_name_fr} {self.year}",
-            'company_id': property_company.id,
-            'journal_id': sale_journal.id,
-            'currency_id': property_company.currency_id.id,
-            'invoice_line_ids': invoice_lines,
-        }
-
-        customer_invoice = self.env['account.move'].with_context(
-            default_move_type='out_invoice',
-            move_type='out_invoice',
-            journal_type='sale'
-        ).with_company(property_company.id).create(customer_invoice_vals)
-
-        # Forcer le recalcul et valider
-        customer_invoice._onchange_partner_id()
-        customer_invoice.action_post()
-
-        return customer_invoice
-
-    def _generate_customer_booking_invoices(self, monthly_records, month_name_fr, invoice_date, invoice_date_due):
-        """Génère les factures client Booking.com dans chaque société propriétaire"""
-
-        # Regrouper les enregistrements par société propriétaire
-        companies_data = {}
-
-        for monthly_record in monthly_records:
-            if monthly_record.total_commission_booking > 0 and monthly_record.property_type_id.company_id:
-                property_company = monthly_record.property_type_id.company_id
-
-                if property_company.id not in companies_data:
-                    companies_data[property_company.id] = {
-                        'company': property_company,
-                        'records': [],
-                        'total_commission': 0
-                    }
-
-                companies_data[property_company.id]['records'].append(monthly_record)
-                companies_data[property_company.id]['total_commission'] += monthly_record.total_commission_booking
-
-        # Créer une facture client dans chaque société propriétaire
-        for company_data in companies_data.values():
-            try:
-                self._create_customer_booking_invoice(
-                    company_data['company'],
-                    company_data['records'],
-                    month_name_fr,
-                    invoice_date,
-                    invoice_date_due,
-                    company_data['total_commission']
-                )
-            except Exception as e:
-                _logger.warning(f"Erreur création facture client Booking pour {company_data['company'].name}: {e}")
-
-    def _create_customer_booking_invoice(self, property_company, monthly_records, month_name_fr, invoice_date,
-                                         invoice_date_due, total_commission):
-        """Crée une facture client Booking.com dans la société propriétaire"""
-
-        # Vérifier que la facture n'existe pas déjà
-        ref = f"Commission Booking.com {month_name_fr} {self.year}"
-
-        existing_customer_invoice = self.env['account.move'].search([
-            ('partner_id', '=', self.company_id.partner_id.id),  # La société actuelle comme client
-            ('ref', '=', ref),
-            ('move_type', '=', 'out_invoice'),
-            ('company_id', '=', property_company.id)  # Dans la société propriétaire
-        ], limit=1)
-
-        if existing_customer_invoice:
-            return existing_customer_invoice
-
-        # Compte de produit pour commissions dans la société propriétaire
-        revenue_account = self.env['account.account'].search([
-            ('code', '=like', '701%'),  # Compte de vente
-            ('company_id', '=', property_company.id)
-        ], limit=1)
-
-        if not revenue_account:
-            # Utiliser le compte de vente par défaut
-            revenue_account = self.env['account.account'].search([
-                ('user_type_id.name', 'ilike', 'income'),
-                ('company_id', '=', property_company.id)
-            ], limit=1)
-
-        if not revenue_account:
-            _logger.warning(f"Aucun compte de produit trouvé pour la société {property_company.name}")
-            return False
-
-        # Journal de vente dans la société propriétaire
-        sale_journal = self.env['account.journal'].search([
-            ('type', '=', 'sale'),
-            ('company_id', '=', property_company.id)
-        ], limit=1)
-
-        if not sale_journal:
-            _logger.warning(f"Aucun journal de vente trouvé pour la société {property_company.name}")
-            return False
-
-        # Préparer les lignes de facture
-        invoice_lines = []
-
-        for monthly_record in monthly_records:
-            if monthly_record.total_commission_booking > 0:
-                reservations = monthly_record._get_month_reservations(monthly_record)
-
-                line_name = (f"Commission Booking.com {monthly_record.property_type_id.name} - "
-                             f"{month_name_fr} {self.year} "
-                             f"({len(reservations)} réservations)")
-
-                line_vals = (0, 0, {
-                    'name': line_name,
-                    'quantity': 1,
-                    'price_unit': monthly_record.total_commission_booking,
-                    'account_id': revenue_account.id,
-                    'tax_ids': [(6, 0, [])],  # Pas de taxes
-                })
-                invoice_lines.append(line_vals)
-
-        # Créer la facture client
-        customer_invoice_vals = {
-            'partner_id': self.company_id.partner_id.id,  # La société actuelle comme client
-            'move_type': 'out_invoice',
-            'invoice_date': invoice_date,
-            'invoice_date_due': invoice_date_due,
-            'ref': ref,
-            'narration': f"Facture commission Booking.com pour {month_name_fr} {self.year}",
-            'company_id': property_company.id,
-            'journal_id': sale_journal.id,
-            'currency_id': property_company.currency_id.id,
-            'invoice_line_ids': invoice_lines,
-        }
-
-        customer_invoice = self.env['account.move'].with_context(
-            default_move_type='out_invoice',
-            move_type='out_invoice',
-            journal_type='sale'
-        ).with_company(property_company.id).create(customer_invoice_vals)
-
-        # Forcer le recalcul et valider
-        customer_invoice._onchange_partner_id()
-        customer_invoice.action_post()
-
-        return customer_invoice
+    # def _create_customer_booking_invoice(self, property_company, monthly_records, month_name_fr, invoice_date,
+    #                                      invoice_date_due, total_commission):
+    #     """Crée une facture client Booking.com dans la société propriétaire"""
+    #
+    #     # Vérifier que la facture n'existe pas déjà
+    #     ref = f"Commission Booking.com {month_name_fr} {self.year}"
+    #
+    #     existing_customer_invoice = self.env['account.move'].search([
+    #         ('partner_id', '=', self.company_id.partner_id.id),  # La société actuelle comme client
+    #         ('ref', '=', ref),
+    #         ('move_type', '=', 'out_invoice'),
+    #         ('company_id', '=', property_company.id)  # Dans la société propriétaire
+    #     ], limit=1)
+    #
+    #     if existing_customer_invoice:
+    #         return existing_customer_invoice
+    #
+    #     # Compte de produit pour commissions dans la société propriétaire
+    #     revenue_account = self.env['account.account'].search([
+    #         ('code', '=like', '701%'),  # Compte de vente
+    #         ('company_id', '=', property_company.id)
+    #     ], limit=1)
+    #
+    #     if not revenue_account:
+    #         # Utiliser le compte de vente par défaut
+    #         revenue_account = self.env['account.account'].search([
+    #             ('user_type_id.name', 'ilike', 'income'),
+    #             ('company_id', '=', property_company.id)
+    #         ], limit=1)
+    #
+    #     if not revenue_account:
+    #         _logger.warning(f"Aucun compte de produit trouvé pour la société {property_company.name}")
+    #         return False
+    #
+    #     # Journal de vente dans la société propriétaire
+    #     sale_journal = self.env['account.journal'].search([
+    #         ('type', '=', 'sale'),
+    #         ('company_id', '=', property_company.id)
+    #     ], limit=1)
+    #
+    #     if not sale_journal:
+    #         _logger.warning(f"Aucun journal de vente trouvé pour la société {property_company.name}")
+    #         return False
+    #
+    #     # Préparer les lignes de facture
+    #     invoice_lines = []
+    #
+    #     for monthly_record in monthly_records:
+    #         if monthly_record.total_commission_booking > 0:
+    #             reservations = monthly_record._get_month_reservations(monthly_record)
+    #
+    #             line_name = (f"Commission Booking.com {monthly_record.property_type_id.name} - "
+    #                          f"{month_name_fr} {self.year} "
+    #                          f"({len(reservations)} réservations)")
+    #
+    #             line_vals = (0, 0, {
+    #                 'name': line_name,
+    #                 'quantity': 1,
+    #                 'price_unit': monthly_record.total_commission_booking,
+    #                 'account_id': revenue_account.id,
+    #                 'tax_ids': [(6, 0, [])],  # Pas de taxes
+    #             })
+    #             invoice_lines.append(line_vals)
+    #
+    #     # Créer la facture client
+    #     customer_invoice_vals = {
+    #         'partner_id': self.company_id.partner_id.id,  # La société actuelle comme client
+    #         'move_type': 'out_invoice',
+    #         'invoice_date': invoice_date,
+    #         'invoice_date_due': invoice_date_due,
+    #         'ref': ref,
+    #         'narration': f"Facture commission Booking.com pour {month_name_fr} {self.year}",
+    #         'company_id': property_company.id,
+    #         'journal_id': sale_journal.id,
+    #         'currency_id': property_company.currency_id.id,
+    #         'invoice_line_ids': invoice_lines,
+    #     }
+    #
+    #     customer_invoice = self.env['account.move'].with_context(
+    #         default_move_type='out_invoice',
+    #         move_type='out_invoice',
+    #         journal_type='sale'
+    #     ).with_company(property_company.id).create(customer_invoice_vals)
+    #
+    #     # Forcer le recalcul et valider
+    #     customer_invoice._onchange_partner_id()
+    #     customer_invoice.action_post()
+    #
+    #     return customer_invoice
 
     def action_generate_all_invoices(self):
         """Génère toutes les factures mensuelles globales (Booking.com et concierge)"""
@@ -400,16 +449,16 @@ class BookingMonth(models.Model):
         except Exception as e:
             results.append(f"Erreur facture Booking.com: {str(e)}")
 
-        # Générer la facture concierge si nécessaire
+        # Générer les factures concierge si nécessaire
         try:
             total_concierge_commission = sum(record.concierge_commission for record in monthly_records)
             has_concierge_invoice = any(record.concierge_invoice_id for record in monthly_records)
 
             if total_concierge_commission > 0 and not has_concierge_invoice:
-                self.action_generate_concierge_invoice()
+                self.action_generate_both_concierge_invoices()
                 results.append("Factures concierge (fournisseur + clients) créées")
             elif has_concierge_invoice:
-                results.append("Facture concierge globale existe déjà")
+                results.append("Factures concierge existent déjà")
             else:
                 results.append("Aucune commission concierge à facturer")
 
@@ -454,10 +503,10 @@ class BookingMonth(models.Model):
         for record in self:
             if record.month and record.year and record.property_type_id:
                 try:
-                    month_name = datetime(1900, record.month, 1).strftime('%B').capitalize()
-                    record.display_name = f"{month_name} {record.year} - {record.property_type_id.name}"
+                    # month_name = datetime(1900, record.month, 1).strftime('%B').capitalize()
+                    record.display_name = f"{record.month:02d}/{record.year} {record.property_type_id.name}"
                 except (ValueError, AttributeError):
-                    record.display_name = f"{record.month:02d}/{record.year} - {record.property_type_id.name or 'Sans propriété'}"
+                    record.display_name = f"{record.month:02d}/{record.year} {record.property_type_id.name or 'Sans propriété'}"
             else:
                 record.display_name = "Vue mensuelle incomplète"
 
@@ -509,10 +558,10 @@ class BookingMonth(models.Model):
             else:
                 record.concierge_commission = 0.0
 
-    @api.depends('property_type_id')
-    def _compute_partner_info(self):
-        for record in self:
-            record.concierge_partner_id = record._get_concierge_partner()
+    # @api.depends('property_type_id')
+    # def _compute_partner_info(self):
+    #     for record in self:
+    #         record.concierge_partner_id = record._get_concierge_partner()
 
     @api.depends('total_revenue', 'total_commission_booking', 'total_tourist_tax', 'concierge_commission')
     def _compute_net_revenue(self):
@@ -522,20 +571,20 @@ class BookingMonth(models.Model):
                                   record.total_tourist_tax -
                                   record.concierge_commission)
 
-    @api.depends('booking_invoice_id', 'concierge_invoice_id')
-    def _compute_invoice_state(self):
-        for record in self:
-            has_booking = bool(record.booking_invoice_id)
-            has_concierge = bool(record.concierge_invoice_id)
-
-            if has_booking and has_concierge:
-                record.invoice_state = 'both'
-            elif has_booking:
-                record.invoice_state = 'booking_only'
-            elif has_concierge:
-                record.invoice_state = 'concierge_only'
-            else:
-                record.invoice_state = 'none'
+    # @api.depends('booking_invoice_id', 'concierge_invoice_id')
+    # def _compute_invoice_state(self):
+    #     for record in self:
+    #         has_booking = bool(record.booking_invoice_id)
+    #         has_concierge = bool(record.concierge_invoice_id)
+    #
+    #         if has_booking and has_concierge:
+    #             record.invoice_state = 'both'
+    #         elif has_booking:
+    #             record.invoice_state = 'booking_only'
+    #         elif has_concierge:
+    #             record.invoice_state = 'concierge_only'
+    #         else:
+    #             record.invoice_state = 'none'
 
     def action_generate_concierge_invoice(self):
         """Génère la facture concierge avec produit paramétrable"""
@@ -572,12 +621,11 @@ class BookingMonth(models.Model):
             raise ValueError("Aucun journal de type 'purchase' trouvé!")
 
         # Dates
-        today = fields.Date.context_today(self)
-        invoice_date = today
-        invoice_date_due = fields.Date.add(today, days=30)
+        invoice_date = first_day_of_next_month(date(self.year, self.month, 1))
+        invoice_date_due = fields.Date.add(invoice_date, days=30)
 
         # Référence de la facture
-        ref = f"Commission {self.property_type_id.company_id.name} - {self.month:02d}/{self.year}"
+        ref = f"Commission concierge {self.month:02d}/{self.year}"
 
         # Vérifier si la facture existe déjà
         existing_invoice = self.env['account.move'].search([
@@ -603,7 +651,7 @@ class BookingMonth(models.Model):
         # Créer la ligne de facture
         invoice_lines = [(0, 0, {
             'product_id': self.concierge_service_id.id,
-            'name': f"Commission conciergerie {self.month_name} {self.year} - {self.property_type_id.name} ({self.concierge_commission_rate}%)",
+            'name': f"{self.concierge_service_id.name} {self.month:02d}/{self.year} {self.property_type_id.name} ({self.concierge_commission_rate}%)",
             'quantity': 1,
             'price_unit': round(self.concierge_commission, 2),
             'account_id': account_id.id,
@@ -710,7 +758,7 @@ class BookingMonth(models.Model):
 
             if montant > 0:
                 line_data = {
-                    'name': f"Commission {reservation.property_type_id.name} - {reservation.arrival_date.strftime('%d/%m/%Y')}",
+                    'name': f"{reservation.property_type_id.name} {reservation.arrival_date.strftime('%d/%m/%Y')}",
                     'quantity': 1,
                     'price_unit': montant,
                     'account_id': account_id.id,
@@ -724,9 +772,9 @@ class BookingMonth(models.Model):
 
                 # Date de facture (premier jour du mois suivant)
                 invoice_date = first_day_of_next_month(reservation.arrival_date)
-                invoice_date_due = fields.Date.add(invoice_date, days=30)
+                invoice_date_due = fields.Date.add(invoice_date, days=15)
 
-                ref = f"Commission {reservation.property_type_id.company_id.name} - {month:02d}/{year}"
+                ref = f"Commission plateforme {month:02d}/{year}"
 
                 factures_groupees.setdefault(key, {
                     'partner_id': partner_booking.id,
@@ -756,7 +804,7 @@ class BookingMonth(models.Model):
                         'invoice_date': vals['invoice_date'],
                         'invoice_date_due': vals['invoice_date_due'],
                         'ref': vals['ref'],
-                        'invoice_origin': "Commissions mensuelles Booking",
+                        'invoice_origin': "Commission mensuelle Booking",
                         'invoice_line_ids': vals['invoice_line_ids'],
                         'journal_id': journal.id,
                         'company_id': self.env.user.company_id.id,
@@ -881,7 +929,8 @@ class BookingMonth(models.Model):
             if concierge_service:
                 record.concierge_service_id = concierge_service
                 # Récupérer le taux depuis la liste de prix du concierge
-                concierge_partner = record._get_concierge_partner()
+                concierge_partner = record.concierge_partner_id
+                # concierge_partner = record._get_concierge_partner()
                 if concierge_partner and concierge_partner.property_product_pricelist:
                     # Le prix du service représente le pourcentage (ex: 20.0 pour 20%)
                     rate = concierge_service._get_price_in_pricelist(
@@ -902,11 +951,11 @@ class BookingMonth(models.Model):
             booking_service = record._get_service_product('COMMISSION_BOOKING')
             record.booking_service_id = booking_service
 
-    @api.depends('property_type_id')
-    def _compute_partner_info(self):
-        """Calcule les informations des partenaires"""
-        for record in self:
-            record.concierge_partner_id = record._get_concierge_partner()
+    # @api.depends('property_type_id')
+    # def _compute_partner_info(self):
+    #     """Calcule les informations des partenaires"""
+    #     for record in self:
+    #         record.concierge_partner_id = record._get_concierge_partner()
 
     @api.depends('year', 'month', 'property_type_id')
     def _compute_reservation_stats(self):
@@ -919,7 +968,7 @@ class BookingMonth(models.Model):
             reservations = record._get_month_reservations()
 
             record.total_reservations = len(reservations)
-            record.reservation_count = len(reservations)
+            # record.reservation_count = len(reservations)
 
             if reservations:
                 # Calculs de base
@@ -938,20 +987,6 @@ class BookingMonth(models.Model):
                 record.total_guests = 0
                 record.average_stay = 0.0
                 record.average_rate = 0.0
-
-    @api.depends('total_nights', 'days_in_month', 'property_type_id')
-    def _compute_occupancy_stats(self):
-        """Calcule les statistiques d'occupation"""
-        for record in self:
-            if record.days_in_month > 0 and record.property_type_id:
-                # Capacité théorique (approximative)
-                theoretical_capacity = record.days_in_month  # Simplifié : 1 unité par jour
-                if record.total_nights > 0:
-                    record.occupancy_rate = (record.total_nights / theoretical_capacity) * 100
-                else:
-                    record.occupancy_rate = 0.0
-            else:
-                record.occupancy_rate = 0.0
 
     @api.depends('year', 'month', 'property_type_id')
     def _compute_financial_data(self):
@@ -1098,17 +1133,6 @@ class BookingMonth(models.Model):
             else:
                 record.invoice_state = 'none'
 
-    def _compute_reservations(self):
-        """Calcule la liste des réservations (pour affichage)"""
-        for record in self:
-            record.reservation_ids = record._get_month_reservations()
-
-    @api.depends('reservation_ids')
-    def _compute_reservation_count(self):
-        """Calcule le nombre de réservations"""
-        for record in self:
-            record.reservation_count = len(record.reservation_ids)
-
     # ========================================
     # MÉTHODES UTILITAIRES
     # ========================================
@@ -1124,11 +1148,11 @@ class BookingMonth(models.Model):
             '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
         ], limit=1)
 
-    def _get_concierge_partner(self):
-        """Récupère le partenaire concierge"""
-        if self.property_type_id and self.property_type_id.company_id:
-            return self.property_type_id.company_id.partner_id
-        return False
+    # def _get_concierge_partner(self):
+    #     """Récupère le partenaire concierge"""
+    #     if self.property_type_id and self.property_type_id.company_id:
+    #         return self.property_type_id.company_id.partner_id
+    #     return False
 
     def _get_month_reservations(self):
         """Récupère toutes les réservations du mois pour cette propriété"""
@@ -1149,7 +1173,7 @@ class BookingMonth(models.Model):
         self.total_guests = 0
         self.average_stay = 0.0
         self.average_rate = 0.0
-        self.reservation_count = 0
+        # self.reservation_count = 0
 
     def _reset_financial_data(self):
         """Remet à zéro les données financières"""
@@ -1210,3 +1234,369 @@ class BookingMonth(models.Model):
         for record in self:
             record.state = 'draft'
         return True
+
+    @api.depends('year', 'month')
+    def _compute_days_in_month(self):
+        """Calcule le nombre de jours dans le mois"""
+        for record in self:
+            if record.year and record.month:
+                try:
+                    if record.month == 12:
+                        next_month = datetime(record.year + 1, 1, 1)
+                    else:
+                        next_month = datetime(record.year, record.month + 1, 1)
+                    current_month = datetime(record.year, record.month, 1)
+                    days_count = (next_month - current_month).days
+                    # Pas de champ days_in_month défini, on peut l'ignorer ou l'utiliser dans les calculs
+                except ValueError:
+                    days_count = 30  # Valeur par défaut
+            else:
+                days_count = 30
+
+    def _compute_reservations(self):
+        """Calcule la liste des réservations (pour affichage)"""
+        for record in self:
+            # Cette méthode peut rester vide si reservation_ids n'est pas défini
+            pass
+
+    @api.depends('reservation_ids')
+    def _compute_reservation_count(self):
+        """Calcule le nombre de réservations"""
+        for record in self:
+            # Si reservation_ids n'existe pas, utiliser une autre méthode
+            reservations = record._get_month_reservations()
+            # Pas de champ reservation_count défini, on peut l'ignorer ou l'utiliser localement
+
+    @api.depends('total_nights', 'property_type_id')  # Suppression de days_in_month
+    def _compute_occupancy_stats(self):
+        """Calcule les statistiques d'occupation"""
+        for record in self:
+            if record.year and record.month and record.property_type_id:
+                # Calculer le nombre de jours dans le mois
+                try:
+                    if record.month == 12:
+                        next_month = datetime(record.year + 1, 1, 1)
+                    else:
+                        next_month = datetime(record.year, record.month + 1, 1)
+                    current_month = datetime(record.year, record.month, 1)
+                    days_in_month = (next_month - current_month).days
+
+                    # Capacité théorique (approximative)
+                    theoretical_capacity = days_in_month  # Simplifié : 1 unité par jour
+                    if record.total_nights > 0 and theoretical_capacity > 0:
+                        occupancy_rate = (record.total_nights / theoretical_capacity) * 100
+                    else:
+                        occupancy_rate = 0.0
+                except ValueError:
+                    occupancy_rate = 0.0
+            else:
+                occupancy_rate = 0.0
+
+    def action_generate_concierge_client_invoice(self):
+        """Génère la facture client chez le fournisseur concierge"""
+        self.ensure_one()
+
+        # Vérifications préalables
+        if not self.concierge_invoice_id:
+            raise ValueError("La facture fournisseur doit être créée avant la facture client!")
+
+        if not self.concierge_partner_id:
+            raise ValueError("Partenaire concierge introuvable!")
+
+        if not self.concierge_service_id:
+            raise ValueError("Produit 'Commission conciergerie' introuvable!")
+
+        if self.concierge_commission <= 0:
+            raise ValueError("Aucune commission concierge à facturer pour cette période!")
+
+        # Récupérer la société du concierge
+        # concierge_company = None
+
+        # 1. Vérifier si le partenaire concierge a une société liée
+        # if hasattr(self.concierge_partner_id, 'company_id') and self.concierge_partner_id.company_id:
+        #     concierge_company = self.concierge_partner_id.company_id
+
+        # 2. Chercher une société dont le partenaire correspond au concierge
+        # if not concierge_company:
+        concierge_company = self.env['res.company'].search([
+            ('partner_id', '=', self.concierge_partner_id.id)
+        ], limit=1)
+
+        # 3. Chercher par nom si le partenaire concierge est partagé
+        if not concierge_company:
+            concierge_company = self.env['res.company'].search([
+                ('name', '=', self.concierge_partner_id.name)
+            ], limit=1)
+
+        if not concierge_company:
+            raise ValueError(
+                "Impossible de déterminer la société du concierge! Vérifiez la configuration du partenaire concierge.")
+
+        # Basculer vers la société du concierge
+        current_company = self.env.user.company_id
+
+        try:
+            # Créer la facture dans la société du concierge
+            invoice_vals = self._prepare_concierge_client_invoice_vals(concierge_company, current_company)
+
+            # Exécuter dans le contexte de la société concierge
+            concierge_invoice = self.with_context(
+                allowed_company_ids=[concierge_company.id],
+                force_company=concierge_company.id
+            ).sudo().env['account.move'].create(invoice_vals)
+
+            # Sauvegarder la référence
+            self.concierge_client_invoice_id = concierge_invoice
+
+            # Valider la facture client
+            concierge_invoice.action_post()
+
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.move',
+                'view_mode': 'form',
+                'res_id': concierge_invoice.id,
+                'target': 'new',
+                'context': {
+                    'allowed_company_ids': [concierge_company.id],
+                    'force_company': concierge_company.id
+                }
+            }
+
+        except Exception as e:
+            raise ValueError(f"Erreur lors de la création de la facture client: {str(e)}")
+
+    def _prepare_concierge_client_invoice_vals(self, concierge_company, client_company):
+        """Prépare les valeurs pour la facture client concierge"""
+
+        # Rechercher le produit commission (partagé ou spécifique à la société concierge)
+        concierge_service = self.env['product.product'].search([
+            ('default_code', '=', 'COMMISSION_CONCIERGE'),
+            '|',
+            ('company_id', '=', concierge_company.id),
+            ('company_id', '=', False)  # Produit partagé entre toutes les sociétés
+        ], limit=1)
+
+        if not concierge_service:
+            # Utiliser le même produit que dans la facture fournisseur s'il est partagé
+            if self.concierge_service_id.company_id in (False, concierge_company):
+                concierge_service = self.concierge_service_id
+            else:
+                # Créer le produit s'il n'existe pas
+                concierge_service = self._create_concierge_service_product(concierge_company)
+
+        # Compte comptable depuis le produit dans la société concierge
+        accounts = concierge_service.product_tmpl_id.with_company(concierge_company.id)._get_product_accounts()
+        account_id = accounts.get('income')
+
+        if not account_id:
+            # Compte par défaut dans la société concierge
+            account_id = self.sudo().env['account.account'].search([
+                ('code', '=like', '7%'),
+                ('account_type', '=', 'income'),
+                ('company_id', '=', concierge_company.id)
+            ], limit=1)
+
+        if not account_id:
+            raise ValueError("Aucun compte comptable de vente configuré dans la société concierge!")
+
+        # Journal de ventes dans la société concierge
+        journal = self.sudo().env['account.journal'].search([
+            ('type', '=', 'sale'),
+            ('company_id', '=', concierge_company.id)
+        ], limit=1)
+
+        if not journal:
+            raise ValueError("Aucun journal de vente trouvé dans la société concierge!")
+
+        # Partenaire client : rechercher le partenaire de la société cliente
+        # Il peut être partagé (company_id = False) ou spécifique
+        client_partner = self.env['res.partner'].search([
+            ('is_company', '=', True),
+            ('name', '=', client_company.name),
+            '|',
+            ('company_id', '=', concierge_company.id),
+            ('company_id', '=', False)  # Partenaire partagé
+        ], limit=1)
+
+        if not client_partner:
+            # Créer le partenaire client dans la société concierge si nécessaire
+            client_partner = self._create_client_partner(client_company, concierge_company)
+
+        # Dates
+        invoice_date = first_day_of_next_month(date(self.year, self.month, 1))
+        invoice_date_due = fields.Date.add(invoice_date, days=30)
+
+        # Référence de la facture
+        ref = f"Commission concierge {self.month:02d}/{self.year}"
+
+        # Vérifier si la facture existe déjà
+        existing_invoice = self.sudo().env['account.move'].search([
+            ('partner_id', '=', client_partner.id),
+            ('ref', '=', ref),
+            ('move_type', '=', 'out_invoice'),
+            ('company_id', '=', concierge_company.id)
+        ], limit=1)
+
+        if existing_invoice:
+            raise ValueError(f"Une facture client existe déjà avec la référence: {ref}")
+
+        # Ligne de facture
+        invoice_lines = [(0, 0, {
+            'product_id': concierge_service.id,
+            'name': f"{self.concierge_service_id.name} {self.month:02d}/{self.year} {self.property_type_id.name} ({self.concierge_commission_rate}%)",
+            'quantity': 1,
+            'price_unit': round(self.concierge_commission, 2),
+            'account_id': account_id.id,
+            'tax_ids': self._get_concierge_taxes(concierge_company, client_partner, concierge_service),
+        })]
+
+        # Conditions de paiement
+        payment_term_30 = self.env.ref('account.account_payment_term_30days', raise_if_not_found=False)
+
+        # Déterminer la position fiscale pour la facture
+        fiscal_position = None
+        if client_partner.property_account_position_id:
+            fiscal_position = client_partner.property_account_position_id
+        else:
+            w_fiscal_position = self.sudo().env['account.fiscal.position'].with_company(concierge_company.id)
+            fiscal_position = w_fiscal_position._get_fiscal_position(partner=client_partner)
+            
+        return {
+            'partner_id': client_partner.id,
+            'move_type': 'out_invoice',
+            'invoice_date': invoice_date,
+            'invoice_date_due': invoice_date_due,
+            'ref': ref,
+            'invoice_origin': f"Commission mensuelle Concierge - {self.month_name} {self.year}",
+            'invoice_line_ids': invoice_lines,
+            'journal_id': journal.id,
+            'company_id': concierge_company.id,
+            'currency_id': concierge_company.currency_id.id,
+            'invoice_payment_term_id': payment_term_30.id if payment_term_30 else False,
+            'fiscal_position_id': fiscal_position.id if fiscal_position else False,
+        }
+
+    def _create_client_partner(self, client_company, concierge_company):
+        """Crée le partenaire client dans la société concierge"""
+        partner_vals = {
+            'name': client_company.name,
+            'is_company': True,
+            'customer_rank': 1,
+            'supplier_rank': 0,
+            'company_id': False,  # Créer comme partenaire partagé
+            'street': client_company.street,
+            'street2': client_company.street2,
+            'city': client_company.city,
+            'zip': client_company.zip,
+            'country_id': client_company.country_id.id if client_company.country_id else False,
+            'phone': client_company.phone,
+            'email': client_company.email,
+            'vat': client_company.vat,
+        }
+
+        return self.env['res.partner'].create(partner_vals)
+
+    def _create_concierge_service_product(self, concierge_company):
+        """Crée le produit commission concierge partagé entre les sociétés"""
+
+        # Catégorie de produits services (recherche partagée)
+        service_category = self.env['product.category'].search([
+            ('name', '=', 'Services'),
+            '|',
+            ('company_id', '=', concierge_company.id),
+            ('company_id', '=', False)
+        ], limit=1)
+
+        if not service_category:
+            service_category = self.env['product.category'].search([
+                ('company_id', '=', False)  # Catégorie partagée
+            ], limit=1)
+
+        product_vals = {
+            'name': 'Commission concierge',
+            'default_code': 'COMMISSION_CONCIERGE',
+            'type': 'service',
+            'categ_id': service_category.id if service_category else False,
+            'sale_ok': True,
+            'purchase_ok': True,  # Permet l'achat et la vente
+            'company_id': False,  # Produit partagé entre toutes les sociétés
+        }
+
+        return self.env['product.product'].create(product_vals)
+
+    def _get_concierge_taxes(self, concierge_company, client_partner, concierge_service):
+        """Récupère les taxes applicables dans la société concierge en tenant compte de la position fiscale"""
+
+        # 1. Déterminer la position fiscale du client
+        fiscal_position = None
+
+        # Position fiscale spécifique du partenaire
+        if client_partner.property_account_position_id:
+            fiscal_position = client_partner.property_account_position_id
+        else:
+            w_fiscal_position = self.sudo().env['account.fiscal.position'].with_company(concierge_company.id)
+            fiscal_position = w_fiscal_position._get_fiscal_position(partner=client_partner)
+            
+        # 2. Récupérer les taxes par défaut du produit
+        product_taxes = concierge_service.taxes_id.filtered(
+            lambda t: t.company_id == concierge_company
+        )
+
+        # Si pas de taxes sur le produit, prendre les taxes de vente par défaut
+        if not product_taxes:
+            product_taxes = self.sudo().env['account.tax'].search([
+                ('type_tax_use', '=', 'sale'),
+                ('company_id', '=', concierge_company.id),
+                ('active', '=', True)
+            ], limit=1)
+
+        # 3. Appliquer la position fiscale si elle existe
+        if fiscal_position and product_taxes:
+            # Mapper les taxes selon la position fiscale
+            mapped_taxes = fiscal_position.map_tax(product_taxes)
+            return [(6, 0, mapped_taxes.ids)] if mapped_taxes else [(6, 0, [])]
+
+        # 4. Retourner les taxes du produit ou taxes par défaut
+        if product_taxes:
+            return [(6, 0, product_taxes.ids)]
+        else:
+            return [(6, 0, [])]  # Pas de taxes
+
+    def action_generate_both_concierge_invoices(self):
+        """Génère les deux factures : fournisseur (société cliente) et client (société concierge)"""
+        # Créer d'abord la facture fournisseur
+        self.action_generate_concierge_invoice()
+
+        # Puis créer la facture client
+        return self.action_generate_concierge_client_invoice()
+
+    def _get_fiscal_position_manual(self, partner, company):
+        """Recherche manuelle de la position fiscale appropriée"""
+
+        # Rechercher les positions fiscales de la société concierge
+        fiscal_positions = self.sudo().env['account.fiscal.position'].search([
+            ('company_id', '=', company.id),
+            ('auto_apply', '=', True)
+        ])
+
+        # Logique de sélection basée sur le pays et l'état
+        for fp in fiscal_positions:
+            # Position fiscale par pays
+            if fp.country_id and partner.country_id:
+                if fp.country_id == partner.country_id:
+                    # Vérifier l'état si spécifié
+                    if fp.state_ids:
+                        if partner.state_id and partner.state_id in fp.state_ids:
+                            return fp
+                    else:
+                        # Pas d'état spécifié, le pays suffit
+                        return fp
+
+            # Position fiscale par groupe de pays
+            elif fp.country_group_id and partner.country_id:
+                if partner.country_id in fp.country_group_id.country_ids:
+                    return fp
+
+        # Aucune position fiscale trouvée
+        return None

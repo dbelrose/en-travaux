@@ -65,10 +65,16 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
     'data': [
         # Sécurité
         'security/ir.model.access.csv',
-        
+
+        # Product views
+        'views/product_template_views.xml',
+        'views/product_pricelist_views.xml',
+        'views/product_pricelist_item_views.xml',
+
         # Vues des wizards
         'views/booking_wizards_views.xml',
-        
+        'views/hospitality_config_wizard_views.xml',
+
         # Vues des modèles principaux
         'views/booking_import_views.xml',
         'views/booking_month_views.xml',
@@ -80,6 +86,7 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
         'views/menu_views.xml',
         
         # Données initiales
+        'data/account_account_data.xml',
         'data/account_tax_group_data.xml',
         'data/account_tax_data.xml',
         'data/product_category_data.xml',
@@ -89,8 +96,8 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
         'data/res_partner_data.xml',
         'data/res_partner_relation_type_data.xml',
 
-        'data/product_pricelist_data.xml'
-        'data/product_pricelist_item_data.xml'
+        'data/product_pricelist_data.xml',
+        'data/product_pricelist_item_data.xml',
     ],
     'images': [
         'static/description/icon.png',

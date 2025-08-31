@@ -16,12 +16,12 @@
                             type="object"
                             class="btn-secondary"/>
                     <button name="action_generate_booking_invoice"
-                            string="Facture Booking"
+                            string="Facture Booking.com"
                             type="object"
                             class="btn-primary"
                             invisible="total_commission_booking &lt;= 0"/>
-                    <button name="action_generate_concierge_invoice"
-                            string="Facture Concierge"
+                    <button name="action_generate_both_concierge_invoices"
+                            string="Factures concierge"
                             type="object"
                             class="btn-primary"
                             invisible="concierge_commission &lt;= 0"/>
@@ -116,7 +116,7 @@
         <field name="inherit_id" ref="view_booking_month_form"/>
         <field name="arch" type="xml">
             <!-- Ajout des informations sur les produits paramétrables -->
-            <page string="Commissions partenaires" name="commissions" position="replace">
+            <page name="commissions" position="replace">
                 <page string="Commissions partenaires" name="commissions">
                     <group>
                         <group string="Configuration Conciergerie">
@@ -163,6 +163,7 @@
                 <field name="concierge_commission" sum="Total commission concierge" widget="monetary"/>
                 <field name="net_revenue" sum="Total net" widget="monetary"/>
                 <field name="invoice_state" widget="badge"/>
+                <field name="company_currency_id" invisible="1"/>
                 <button name="action_generate_all_invoices"
                         string="Générer factures"
                         type="object"

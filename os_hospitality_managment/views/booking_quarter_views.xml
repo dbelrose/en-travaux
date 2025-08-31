@@ -38,7 +38,7 @@
                             <field name="quarter"/>
                             <field name="property_type_id" options="{'no_create': True}"/>
                         </group>
-                        <group string="Établissement">
+                        <group string="Établissement" name="establishment">
                             <field name="establishment_name" readonly="1"/>
                             <field name="establishment_address" readonly="1"/>
                             <field name="establishment_capacity" readonly="1"/>
@@ -100,7 +100,7 @@
         <field name="inherit_id" ref="view_booking_quarter_form"/>
         <field name="arch" type="xml">
             <!-- Ajout des informations sur le produit taxe de séjour -->
-            <group string="Établissement" position="after">
+            <group name="establishment" position="after">
                 <group string="Configuration Taxe de séjour">
                     <field name="tourist_tax_product_id" readonly="1"/>
                     <field name="tourist_tax_unit_price" readonly="1" widget="monetary" string="Prix unitaire (XPF/nuitée)"/>
@@ -108,7 +108,7 @@
             </group>
 
             <!-- Mise à jour du détail par mois avec produit -->
-            <page string="Détail par mois" name="monthly_detail" position="attributes">
+            <page name="monthly_detail" position="attributes">
                 <attribute name="string">Détail par mois (Taxe configurée)</attribute>
             </page>
 
@@ -136,6 +136,7 @@
                 <field name="property_type_id"/>
                 <field name="total_taxable_nights"/>
                 <field name="total_tax_amount" sum="Total taxes" widget="monetary"/>
+                <field name="company_currency_id" invisible="1"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
                        decoration-success="state == 'confirmed'"

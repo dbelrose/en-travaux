@@ -82,6 +82,7 @@
                                     <field name="rate" optional="hide" widget="monetary"/>
                                     <field name="commission_amount" optional="hide" widget="monetary"/>
                                     <field name="tax_amount" optional="hide" widget="monetary"/>
+                                    <field name="company_currency_id" invisible="1"/>
                                     <button name="action_edit" 
                                             string="Modifier"
                                             type="object"

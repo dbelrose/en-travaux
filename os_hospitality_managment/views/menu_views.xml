@@ -1,61 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Menu principal Booking -->
-    <menuitem id="menu_booking_root"
+    <menuitem id="menu_hospitality_root"
               name="Hospitality Management"
-              sequence="50"/>
+              sequence="50"
+              web_icon="os_hospitality_managment,static/description/icon.png"/>
 
     <menuitem id="menu_booking_import"
               name="Booking Import"
-              parent="menu_booking_root"
+              parent="menu_hospitality_root"
               action="action_booking_import"
               sequence="10"/>
 
     <menuitem id="menu_booking_import_line"
               name="Booking Import Line"
-              parent="menu_booking_root"
+              parent="menu_hospitality_root"
               action="action_booking_import_line"
               sequence="20"/>
 
     <menuitem id="menu_booking_import_wizard"
               name="Booking Import Wizard"
-              parent="menu_booking_root"
+              parent="menu_hospitality_root"
               action="action_booking_import_wizard"
               sequence="30"/>
 
     <menuitem id="menu_booking_import_line_wizard"
               name="Booking Import Line Wizard"
-              parent="menu_booking_root"
+              parent="menu_hospitality_root"
               action="action_booking_import_line_wizard"
               sequence="40"/>
 
     <menuitem id="menu_booking_month"
               name="Booking Month"
-              parent="menu_booking_root"
+              parent="menu_hospitality_root"
               action="action_booking_month"
               sequence="50"/>
 
     <menuitem id="menu_booking_quarter"
               name="Booking Quarter"
-              parent="menu_booking_root"
+              parent="menu_hospitality_root"
               action="action_booking_quarter"
               sequence="60"/>
 
     <menuitem id="menu_booking_manual_wizard"
               name="Booking Manual Wizard"
-              parent="menu_booking_root"
+              parent="menu_hospitality_root"
               action="action_booking_manual_wizard"
               sequence="60"/>
-
-    <!-- ========================================= -->
-    <!-- MENU HOSPITALITY MANAGEMENT COMPLET -->
-    <!-- ========================================= -->
-
-    <!-- Menu principal -->
-    <menuitem id="menu_hospitality_root"
-              name="Hospitality"
-              sequence="10"
-              web_icon="os_hospitality_managment_bis,static/description/icon.png"/>
 
     <!-- ========================================= -->
     <!-- SOUS-MENU RÉSERVATIONS -->
@@ -145,9 +136,9 @@
             'default_type': 'service',
             'default_purchase_ok': True,
             'default_sale_ok': False,
-            'default_can_be_expensed': True,
             'default_categ_id': %(product_category_commissions)d
         }</field>
+<!--            'default_can_be_expensed': True,-->
         <field name="view_id" ref="view_hospitality_service_products_form"/>
     </record>
 

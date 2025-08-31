@@ -1,8 +1,17 @@
 from odoo import models, fields, api
+from datetime import date
 import logging
 import num2words
+# from hospitality_management_common import first_day_of_next_month as fdonm
 
 _logger = logging.getLogger(__name__)
+
+
+def first_day_of_next_month(input_date):
+    if input_date.month == 12:
+        return date(input_date.year + 1, 1, 1)
+    else:
+        return date(input_date.year, input_date.month + 1, 1)
 
 
 class BookingQuarter(models.Model):
@@ -52,13 +61,18 @@ class BookingQuarter(models.Model):
     # Produit et prix de la taxe de séjour
     tourist_tax_product_id = fields.Many2one('product.product', string='Produit taxe de séjour',
                                              compute='_compute_tax_product', store=True)
-    tourist_tax_unit_price = fields.Float(string='Prix unitaire taxe', compute='_compute_tax_product', store=True)
+    tourist_tax_unit_price = fields.Monetary(string='Prix unitaire taxe', compute='_compute_tax_product',
+                                             currency_field='company_currency_id', store=True)
 
     # Montants des taxes
-    tax_amount_month1 = fields.Float(string='Montant taxe mois 1', compute='_compute_tax_amounts', store=True)
-    tax_amount_month2 = fields.Float(string='Montant taxe mois 2', compute='_compute_tax_amounts', store=True)
-    tax_amount_month3 = fields.Float(string='Montant taxe mois 3', compute='_compute_tax_amounts', store=True)
-    total_tax_amount = fields.Float(string='Total taxes à payer', compute='_compute_tax_amounts', store=True)
+    tax_amount_month1 = fields.Monetary(string='Montant taxe mois 1', compute='_compute_tax_amounts',  
+                                        currency_field='company_currency_id', store=True)
+    tax_amount_month2 = fields.Monetary(string='Montant taxe mois 2', compute='_compute_tax_amounts',  
+                                        currency_field='company_currency_id', store=True)
+    tax_amount_month3 = fields.Monetary(string='Montant taxe mois 3', compute='_compute_tax_amounts',  
+                                        currency_field='company_currency_id', store=True)
+    total_tax_amount = fields.Monetary(string='Total taxes à payer', compute='_compute_tax_amounts',
+                                       currency_field='company_currency_id', store=True)
     total_tax_words = fields.Char(string='Total en lettres', compute='_compute_tax_words', store=True)
 
     # Statut de la déclaration
@@ -70,6 +84,8 @@ class BookingQuarter(models.Model):
 
     # Référence vers la facture de taxe de séjour
     tax_invoice_id = fields.Many2one('account.move', string='Facture taxe de séjour')
+
+    company_currency_id = fields.Many2one('res.currency', string="Company Currency",  related='company_id.currency_id')
 
     # Contrainte d'unicité
     _sql_constraints = [
@@ -122,7 +138,7 @@ class BookingQuarter(models.Model):
         for record in self:
             # Rechercher le produit "Taxe de séjour"
             tax_product = self.env['product.product'].search([
-                ('default_code', '=', 'TAXE_SEJOUR'),
+                ('default_code', '=', 'TDSMDT'),
                 '|', ('company_id', '=', record.company_id.id), ('company_id', '=', False)
             ], limit=1)
 
@@ -295,9 +311,9 @@ class BookingQuarter(models.Model):
             raise ValueError("Aucun journal de type 'purchase' trouvé!")
 
         # Dates
-        today = fields.Date.context_today(self)
-        invoice_date = today
-        invoice_date_due = fields.Date.add(today, days=30)
+        # invoice_date = fdonm(date(self.year, self.quarter * 3, 1))
+        invoice_date = first_day_of_next_month(date(self.year, int(self.quarter) * 3, 1))
+        invoice_date_due = fields.Date.add(invoice_date, days=30)
 
         # Préparer les lignes de facture
         invoice_lines = []
@@ -348,6 +364,7 @@ class BookingQuarter(models.Model):
                 'partner_id': municipality.id,
                 'move_type': 'in_invoice',
                 'invoice_date': invoice_date,
+                'invoice_date_due': invoice_date_due,
                 'ref': f"Taxe séjour T{self.quarter} {self.year} - {self.property_type_id.name}",
                 'narration': f"Déclaration trimestrielle de taxe de séjour - Trimestre {self.quarter} {self.year}",
                 'company_id': self.company_id.id,
