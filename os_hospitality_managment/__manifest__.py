@@ -54,6 +54,7 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
         'l10n_pf',
         'os_base',
         'product',
+        'web',
     ],
     'external_dependencies': {
         'python': [
@@ -74,16 +75,23 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
         # Vues des wizards
         'views/booking_wizards_views.xml',
         'views/hospitality_config_wizard_views.xml',
+        'views/customer_invoice_wizard_view.xml',
 
         # Vues des modèles principaux
         'views/booking_import_views.xml',
         'views/booking_month_views.xml',
+        'views/booking_month_views_update.xml',
+        'views/booking_month_context_buttons.xml',
         'views/booking_quarter_views.xml',
         'views/booking_wizards_views.xml',
         'views/booking_import_line_views.xml',
 
+        # Reports
+        'reports/customer_invoice_report.xml',
+
         # Menus
         'views/menu_views.xml',
+        'views/menu_customer_invoices.xml',
         
         # Données initiales
         'data/account_account_data.xml',
@@ -98,7 +106,30 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
 
         'data/product_pricelist_data.xml',
         'data/product_pricelist_item_data.xml',
+
+        'data/customer_invoice_data.xml',
     ],
+    # 'assets': {
+        # 'web.assets_backend': [
+            # CSS pour l'interface backend (dashboard, vues, widgets)
+            # 'os_hospitality_managment/static/src/css/hospitality_dashboard.css',
+            # 'os_hospitality_managment/static/src/css/booking_views.css',
+            # JavaScript pour les interactions et widgets personnalisés
+            # 'os_hospitality_managment/static/src/js/booking_widgets.js',
+        # ],
+        # 'web.report_assets_common': [
+            # CSS pour tous les types de rapports (écran et impression)
+        #     'os_hospitality_managment/static/src/css/hospitality_reports.css',
+        # ],
+        # 'web.report_assets_pdf': [
+            # CSS spécifique aux rapports PDF (optimisations impression)
+        #     'os_hospitality_managment/static/src/css/hospitality_invoice_pdf.css',
+        # ],
+        # 'web.assets_frontend': [
+            # CSS pour le portail client (interface publique)
+    #         'os_hospitality_managment/static/src/css/hospitality_portal.css',
+    #     ],
+    # },
     'images': [
         'static/description/icon.png',
     ],

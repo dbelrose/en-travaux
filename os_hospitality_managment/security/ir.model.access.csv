@@ -9,3 +9,5 @@ access_booking_manual_wizard_user,booking.manual.wizard.user,model_booking_manua
 access_booking_import_line_wizard_user,booking.import.line.wizard.user,model_booking_import_line_wizard,base.group_user,1,1,1,1
 access_booking_import_manager,booking.import.manager,model_booking_import,account.group_account_manager,1,1,1,1
 access_booking_import_line_manager,booking.import.line.manager,model_booking_import_line,account.group_account_manager,1,1,1,1
+access_customer_invoice_config_wizard_manager,customer.invoice.config.wizard manager,model_customer_invoice_config_wizard,account.group_account_manager,1,1,1,1
+access_customer_invoice_config_wizard_user,customer.invoice.config.wizard user,model_customer_invoice_config_wizard,account.group_account_invoice,1,1,1,0
