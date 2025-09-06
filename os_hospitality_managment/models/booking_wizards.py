@@ -262,7 +262,7 @@ class BookingManualWizard(models.TransientModel):
 
         # Générer le nom automatiquement si non fourni
         if not self.import_name:
-            month_name = datetime(1900, self.month, 1).strftime('%B').capitalize()
+            month_name = datetime(1900, int(self.month), 1).strftime('%B').capitalize()
             self.import_name = f"{month_name} {self.year} - {self.property_type_id.name}"
 
         # Vérifier si un import existe déjà pour cette période/propriété

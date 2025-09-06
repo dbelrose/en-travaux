@@ -66,6 +66,7 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
     'data': [
         # Sécurité
         'security/ir.model.access.csv',
+        'security/hospitality_security.xml',
 
         # Product views
         'views/product_template_views.xml',

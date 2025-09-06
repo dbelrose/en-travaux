@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="gov_pf_hr_expense_sheet_od">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang)" />
+                    <div class="page">
+                        <h4 class="text-center pt-4 pb-4">
+                            <em t-if="o.state in ['draft', 'submit']">DRAFT&#160;</em>
+                            <u>ORDRE DE DÉPLACEMENT</u>
+                        </h4>
+
+                        <div class="row">
+                            <div class="col-4">Donne ordre à M/Mme</div>
+                            <div class="col-8">
+                                <t t-esc="o.employee_id.name" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <i>Grade, emploi :</i>
+                            </div>
+                            <div class="col-4">
+                                <t t-esc="o.employee_id.job_title" />
+                            </div>
+                            <div class="col-4">
+                                <t t-esc="o.employee_id.in_charge_of" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <i>Texte réglementaire : </i>
+                            </div>
+                            <div class="col-8" t-field="o.reglementary_text" />
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <i>Coordonnées bancaires :</i>
+                            </div>
+                            <div class="col-4" t-field="o.bank_account_id" />
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <i>de se rendre en tournée, mission à :</i>
+                            </div>
+                            <div class="col-4" t-field="o.destination" />
+                        </div>
+                        <div class="row pb-3">
+                            <div class="col-4">
+                                <i>Motif du déplacement</i>
+                            </div>
+                            <div class="col-8" t-field="o.mission_objective" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-4">
+                                <i>Moyen de transport : </i>
+                            </div>
+                            <div class="col-8" t-field="o.transportation" />
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <i>Date de départ : </i>
+                            </div>
+                            <span class="col-2" t-field="o.departure_depart_date" t-options='{"widget": "date"}' />
+
+                            <div class="col-4">
+                                <i>Retour le : </i>
+                            </div>
+                            <span class="col-2" t-field="o.arrival_return_date" t-options='{"widget": "date"}' />
+                        </div>
+
+                        <div class="row pb-3">
+                            <t t-set="transport_SSCHAP" t-value="" />
+                            <t t-foreach="o.transport_analytic_tag_ids" t-as="tag">
+                                <t t-if="tag.analytic_dimension_id.id == %(account_gov_pf.analytic_dimension_sschap)d">
+                                    <t t-set="transport_SSCHAP" t-value="tag.name" />
+                                </t>
+                            </t>
+                            <div class="col-4">
+                                <i>Coût ----- Imputation budgétaire : </i>
+                            </div>
+                            <div class="col-8">
+                                <span class="pr-2" t-field="o.transport_cost" />
+                                -----
+                                <b>PROGRAMME </b>
+                                <span class="pl-1 pr-1" t-esc="transport_SSCHAP" />
+                                <b>- ARTICLE </b>
+                                <span class="pl-1" t-field="o.transport_account_budget" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-4">
+                                <i>Durée du déplacement : </i>
+                            </div>
+                            <div class="col-4">
+                                <span t-field="o.duration" />
+                                <span class="pl-2 pr-2">jour(s) </span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-4">
+                                <i>Indemnités prévisibles : </i>
+                            </div>
+                            <div class="col-4" t-field="o.total_amount" />
+                        </div>
+                        <div class="row">
+                            <t t-set="compensation_SSCHAP" t-value="" />
+                            <t t-foreach="o.expense_line_ids[0].analytic_tag_ids" t-as="tag">
+                                <t t-if="tag.analytic_dimension_id.id == %(account_gov_pf.analytic_dimension_sschap)d">
+                                    <t t-set="compensation_SSCHAP" t-value="tag.name" />
+                                </t>
+                            </t>
+                            <div class="col-4">
+                                <i>Imputation budgétaire : </i>
+                            </div>
+                            <div class="col-4">
+                                <b>PROGRAMME </b>
+                                <span class="pl-1 pr-1" t-esc="compensation_SSCHAP" />
+                            </div>
+                            <div class="col-4">
+                                <b>ARTICLE </b>
+                                <span class="pl-1" t-field="o.expense_line_ids[0].product_id.property_account_expense_id.code" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-center pt-3 pb-3">Une réquisition de transport sera délivrée à l'intéressé</div>
+
+                        <!-- TODO CHECK SIGNATURE TEMPLATE -->
+                        <table class="table table-bordered table-sm o_main_table mt-1 p-1" style="page-break-inside: avoid">
+                            <tbody>
+                                <tr>
+                                    <td class="border-0 w-50 pl-3 pr-3" style="text-align:center;">
+                                        <u>ORGANISME EMETTEUR</u>
+                                    </td>
+                                    <td class="border-0 w-50 pl-3 pr-3" style="text-align:center;">
+                                        <u>SERVICE DU CONTROLE DE L'ENGAGEMENT</u>
+                                    </td>
+                                </tr>
+                                <tr style="text-align:center;height:250px">
+                                    <td class="border-0 pb-3">
+                                        <t t-if="o.expense_type == 'overseas'">
+                                            <div>
+                                                <t t-if="no_parent_partner.gender == 'female'">
+                                                    La
+                                                </t>
+                                                <t t-else="">
+                                                    Le
+                                                </t>
+                                                <t t-esc="no_parent_partner.job_title" />
+                                                <t t-if="no_parent_partner.in_charge_of">
+                                                    ,
+                                                    <br />
+                                                    <i>
+                                                        <small t-esc="no_parent_partner.in_charge_of" />
+                                                    </i>
+                                                </t>
+                                            </div>
+                                            <br />
+                                            <br />
+                                            <br />
+                                            <br />
+                                            <br />
+                                            <div t-esc="no_parent_partner.name" />
+                                        </t>
+                                        <t t-else="">
+                                            <div>Nom et prénom de l'agent habilité à engager la dépense</div>
+                                        </t>
+                                    </td>
+                                    <td class="border-0 pl-5 pb-3" style="text-align:initial;">
+                                        <t t-if="initial_code_visa">
+                                            N° VISA
+                                            <t t-esc="initial_code_visa" />
+                                        </t>
+                                        <div>Nom et prénom de l'agent habilité à engager la dépense</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="page-break-before:always;">
+
+                            <div class="row">
+                                <div class="col-4">Transport</div>
+                                <div class="col-4">fourni *</div>
+                                <div class="col-4">Signature de l'intéressé</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4">Couchage</div>
+                                <div class="col-4">fourni *</div>
+                                <div class="col-4" />
+                            </div>
+                            <div class="row">
+                                <div class="col-4">Nourriture</div>
+                                <div class="col-4">fourni *</div>
+                                <div class="col-4" />
+                            </div>
+
+                            <div class="row">
+                                <!-- VISA list / left side-->
+                                <div class="col-5">
+                                    <table class="table table-bordered table-sm o_main_table mt-1 p-1" style="page-break-inside: avoid">
+                                        <tbody style="border-width: 2px;">
+                                            <tr>
+                                                <td width="50%" style="text-align:center;;">
+                                                    VISA de Départ
+                                                </td>
+                                                <td style="text-align:center;;">
+                                                    VISA d'Arrivée
+                                                </td>
+                                            </tr>
+                                            <tr style="font-size:small;">
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                            </tr>
+                                            <tr style="font-size:small;">
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                            </tr>
+                                            <tr style="font-size:small;">
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                            </tr>
+                                            <tr style="font-size:small;">
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                            </tr>
+                                            <tr style="font-size:small;">
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                            </tr>
+                                            <tr style="font-size:small;">
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                            </tr>
+                                            <tr style="font-size:small;">
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                            </tr>
+                                            <tr style="font-size:small;">
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                                <td style="height: 100px;">
+                                                    <div>Date</div>
+                                                    <div>Heure</div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Trip details / right side-->
+                                <t t-set="lunch_qty" value="" />
+                                <t t-set="lunch_price" value="" />
+                                <t t-set="lunch_total" value="" />
+                                <t t-set="dinner_qty" value="" />
+                                <t t-set="dinner_price" value="" />
+                                <t t-set="dinner_total" value="" />
+                                <t t-set="night_qty" value="" />
+                                <t t-set="night_price" value="" />
+                                <t t-set="night_total" value="" />
+                                <t t-set="daily_qty" value="" />
+                                <t t-set="daily_price" value="" />
+                                <t t-set="daily_total" value="" />
+                                <t t-set="total" t-value="o.transport_cost + o.total_amount" />
+                                <t t-foreach="o.expense_line_ids" t-as="line">
+                                    <t t-if="line.product_id.id in (%(hr_expense_gov_pf.mission_lunch_od)d, %(hr_expense_gov_pf.meal_allowance_lunch_od)d)">
+                                        <t t-set="lunch_qty" t-value="line.quantity" />
+                                        <t t-set="lunch_price" t-value="line.unit_amount" />
+                                        <t t-set="lunch_total" t-value="line.total_amount" />
+                                    </t>
+                                    <t t-elif="line.product_id.id in (%(hr_expense_gov_pf.mission_dinner_od)d, %(hr_expense_gov_pf.meal_allowance_dinner_od)d)">
+                                        <t t-set="dinner_qty" t-value="line.quantity" />
+                                        <t t-set="dinner_price" t-value="line.unit_amount" />
+                                        <t t-set="dinner_total" t-value="line.total_amount" />
+                                    </t>
+                                    <t t-elif="line.product_id.id == %(hr_expense_gov_pf.mission_night_od)d">
+                                        <t t-set="night_qty" t-value="line.quantity" />
+                                        <t t-set="night_price" t-value="line.unit_amount" />
+                                        <t t-set="night_total" t-value="line.total_amount" />
+                                    </t>
+                                    <t t-elif="line.product_id.id in (%(hr_expense_gov_pf.overseas_compensation_od)d, %(hr_expense_gov_pf.formation_compensation_od)d)">
+                                        <t t-set="daily_qty" t-value="line.quantity" />
+                                        <t t-set="daily_price" t-value="line.unit_amount" />
+                                        <t t-set="daily_total" t-value="line.total_amount" />
+                                    </t>
+                                </t>
+                                <div class="col-7">
+                                    <div class="row pb-2 mb-3">
+                                        <div class="col-2"></div>
+                                        <div class="col-8" style="border-bottom: 1px solid black;text-align:center;">Décompte des frais de déplacement</div>
+                                        <div class="col-2"></div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-8">Taux pour 1 déjeuner</div>
+                                        <div class="col-1">=</div>
+                                        <div t-if="lunch_price" class="col-3" style="text-align:right;">
+                                            <t t-esc="int(lunch_price)" />
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-8">Taux pour 1 dîner</div>
+                                        <div class="col-1">=</div>
+                                        <div t-if="dinner_price" class="col-3" style="text-align:right;">
+                                            <t t-esc="int(dinner_price)" />
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-8">Taux pour 1 découcher</div>
+                                        <div class="col-1">=</div>
+                                        <div t-if="night_price" class="col-3" style="text-align:right;">
+                                            <t t-esc="int(night_price)" />
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-2">
+                                        <div class="col-8">Nombre de déjeuners</div>
+                                        <div class="col-1">=</div>
+                                        <div t-if="lunch_qty" class="col-3" style="text-align:right;">
+                                            <t t-esc="int(lunch_qty)" />
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-8">Nombre de dîners</div>
+                                        <div class="col-1">=</div>
+                                        <div t-if="dinner_qty" class="col-3" style="text-align:right;">
+                                            <t t-esc="int(dinner_qty)" />
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-8">Nombre de découchers</div>
+                                        <div class="col-1">=</div>
+                                        <div t-if="night_qty" class="col-3" style="text-align:right;">
+                                            <t t-esc="int(night_qty)" />
+                                        </div>
+                                    </div>
+
+                                    <div class="row pb-2 mt-4 mb-3">
+                                        <div class="col-2"></div>
+                                        <div class="col-8" style="border-bottom: 1px solid black;text-align:center;">Montant des frais de déplacement</div>
+                                        <div class="col-2"></div>
+                                    </div>
+                                    <div t-if="lunch_qty and lunch_price and lunch_total" class="row mb-2">
+                                        <div class="col-3 pr-0">Déjeuner(s) :</div>
+                                        <div class="col-2" t-esc="int(lunch_price)" />
+                                        <div class="col-1 p-0">x</div>
+                                        <div class="col-2" t-esc="int(lunch_qty)" />
+                                        <div class="col-1">=</div>
+                                        <div class="col-3" t-esc="int(lunch_total)" style="text-align:right;" />
+                                    </div>
+                                    <div t-if="dinner_qty and dinner_price and dinner_total" class="row mb-2">
+                                        <div class="col-3 pr-0"> Dîner(s) :</div>
+                                        <div class="col-2" t-esc="int(dinner_price)" />
+                                        <div class="col-1 p-0">x</div>
+                                        <div class="col-2" t-esc="int(dinner_qty)" />
+                                        <div class="col-1">=</div>
+                                        <div class="col-3" t-esc="int(dinner_total)" style="text-align:right;" />
+                                    </div>
+                                    <div t-if="night_qty and night_price and night_total" class="row mb-2">
+                                        <div class="col-3 pr-0"> Découcher(s) :</div>
+                                        <div class="col-2" t-esc="int(night_price)" />
+                                        <div class="col-1 p-0">x</div>
+                                        <div class="col-2" t-esc="int(night_qty)" />
+                                        <div class="col-1">=</div>
+                                        <div class="col-3" t-esc="int(night_total)" style="text-align:right;" />
+                                    </div>
+                                    <div t-if="daily_qty and daily_price and daily_total" class="row mb-2">
+                                        <div class="col-3">Indemnités journalières(s) :</div>
+                                        <div class="col-2" t-esc="int(daily_price)" />
+                                        <div class="col-1 p-0">x</div>
+                                        <div class="col-2" t-esc="int(daily_qty)" />
+                                        <div class="col-1">=</div>
+                                        <div class="col-3" t-esc="int(daily_total)" style="text-align:right;" />
+                                    </div>
+                                    <div class="row mt-3 mb-3">
+                                        <div class="col-6" style="text-align:center;">À déduire avance perçue</div>
+                                        <div class="col-1">=</div>
+                                        <div class="col-5" t-esc="int(o.transport_cost)" style="text-align:right;border-bottom: 1px sold black;" />
+                                    </div>
+                                    <div class="row mt-3 mb-3">
+                                        <h5 class="col-6" style="text-align:center;">NET À PAYER</h5>
+                                        <div class="col-1">=</div>
+                                        <div class="col-5" t-esc="int(total)" style="text-align:right;border-bottom: 1px double black;" />
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-7" style="text-align:center;">Arrêté à la somme de :</div>
+                                        <div class="col-5" style="text-align:right;" t-esc="total" t-options='{"widget":"monetary","display_currency":o.currency_id}' />
+                                    </div>
+                                    <br />
+                                    <br />
+                                    <div class="row">
+                                        <div class="col-3"></div>
+                                        <div class="col-6" style="text-align:center;">
+                                            Vérifié la conformité
+                                            et l'exactitude de la dépense
+                                            et certifié le service fait par le soussigné
+                                        </div>
+                                        <div class="col-3"></div>
+                                    </div>
+                                    <br />
+                                    <br />
+
+                                    <p class="text-left">
+                                        Fait à Papeete le
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="gov_pf_hr_expense_sheet_pp">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang)" />
+                    <div class="page">
+                        <h4 class="text-center pt-4 pb-4">
+                            <em t-if="o.state in ['draft', 'submit']">DRAFT&#160;</em>
+                            <b>PRIME DE PANIER N°</b>
+                        </h4>
+                        <div class="row">
+                             <div class="col-8"><b>Le Directeur du Système d'Information</b></div>
+                        </div>
+                        <br/>
+                        <div class="row">
+                            <div class="col-4">Donne ordre à l'agent :</div>
+                            <div class="col-8">
+                                <t t-esc="o.employee_id.name" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                Fonction :
+                            </div>
+                            <div class="col-4">
+                                <t t-esc="o.employee_id.job_title" />
+                            </div>
+                            <div class="col-4">
+                                <t t-esc="o.employee_id.in_charge_of" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" style="text-align:center;">
+                                <b>ETAT LIQUIDATIF POUR SERVIR AU PAIEMENT DES PRIMES DE PANIER (Statut FPT) </b>
+                            </div>
+                        </div>
+                        <div class="row" style="text-align:center;">
+                            <b><div class="col-12" t-field="o.reglementary_text" /></b>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                Code tiers :
+                            </div>
+                            <div class="col-4" t-field="o.code tiers" />
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                Compte bancaire de l'agent :
+                            </div>
+                            <div class="col-4" />
+                                <t t-field="o.bank_account_id" /> - <t t-field="o.bank_account_id.bank_name" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                Résidence administrative :
+                            </div>
+                            <div class="col-4" >PAPEETE</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                De se rendre en mission à :
+                            </div>
+                            <div class="col-4" t-field="o.destination" />
+                        </div>
+                        <div class="row pb-3">
+                            <div class="col-4">
+                                Objet de la mission :
+                            </div>
+                            <div class="col-8" t-field="o.mission_objective" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-4">
+                                Moyen de transport utilisé :
+                            </div>
+                            <div class="col-8" t-field="o.transportation" />
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                Date de départ :
+                            </div>
+                            <span class="col-2" t-field="o.departure_depart_date" t-options='{"widget": "date"}' />
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                Retour le :
+                            </div>
+                            <span class="col-2" t-field="o.arrival_return_date" t-options='{"widget": "date"}' />
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                Nombre de repas :
+                            </div>
+                            <!-- span class="col-2" t-field="o.arrival_return_date" t-options='{"widget": "date"}' / -->
+                        </div>
+
+                        <div class="row pb-3">
+                            <t t-set="transport_SSCHAP" t-value="" />
+                            <t t-foreach="o.transport_analytic_tag_ids" t-as="tag">
+                                <t t-if="tag.analytic_dimension_id.id == %(account_gov_pf.analytic_dimension_sschap)d">
+                                    <t t-set="transport_SSCHAP" t-value="tag.name" />
+                                </t>
+                            </t>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-4">
+                                Indemnités prévisibles :
+                            </div>
+                            <div class="col-4" t-field="o.total_amount" />
+                        </div>
+                        <div class="row">
+                            <t t-set="compensation_SSCHAP" t-value="" />
+                            <t t-foreach="o.expense_line_ids[0].analytic_tag_ids" t-as="tag">
+                                <t t-if="tag.analytic_dimension_id.id == %(account_gov_pf.analytic_dimension_sschap)d">
+                                    <t t-set="compensation_SSCHAP" t-value="tag.name" />
+                                </t>
+                            </t>
+                            <div class="col-4">
+                                Imputation budgétaire :
+                            </div>
+                            <div class="col-4">
+                                Programme :
+                                <span class="pl-1 pr-1" t-esc="compensation_SSCHAP" />
+                                <span> - Article :</span>
+                                <span class="pl-1" t-field="o.expense_line_ids[0].product_id.property_account_expense_id.code" />
+                                <span> - CT :</span>
+                            </div>
+                        </div>
+
+                        <!-- TODO CHECK SIGNATURE TEMPLATE -->
+                        <table class="table table-bordered table-sm o_main_table mt-1 p-1" style="page-break-inside: avoid">
+                            <tbody>
+                                <tr>
+                                    <td class="border-0 w-50 pl-3 pr-3" style="text-align:center;">
+                                        <u>ORGANISME EMETTEUR</u>
+                                    </td>
+                                    <td class="border-0 w-50 pl-3 pr-3" style="text-align:center;">
+                                        <u>SERVICE DU CONTROLE DE L'ENGAGEMENT</u>
+                                    </td>
+                                </tr>
+                                <tr style="text-align:center;height:250px">
+                                    <td class="border-0 pb-3">
+                                        <t t-if="o.expense_type == 'overseas'">
+                                            <div>
+                                                <t t-if="no_parent_partner.gender == 'female'">
+                                                    La
+                                                </t>
+                                                <t t-else="">
+                                                    Le
+                                                </t>
+                                                <t t-esc="no_parent_partner.job_title" />
+                                                <t t-if="no_parent_partner.in_charge_of">
+                                                    ,
+                                                    <br />
+                                                    <i>
+                                                        <small t-esc="no_parent_partner.in_charge_of" />
+                                                    </i>
+                                                </t>
+                                            </div>
+                                            <br />
+                                            <br />
+                                            <br />
+                                            <br />
+                                            <br />
+                                            <div t-esc="no_parent_partner.name" />
+                                        </t>
+                                        <t t-else="">
+                                            <div>Nom et prénom de l'agent habilité à engager la dépense</div>
+                                        </t>
+                                    </td>
+                                    <td class="border-0 pl-5 pb-3" style="text-align:initial;">
+                                        <t t-if="initial_code_visa">
+                                            N° VISA
+                                            <t t-esc="initial_code_visa" />
+                                        </t>
+                                        <div>Nom et prénom de l'agent habilité à engager la dépense</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -6,14 +6,20 @@
               sequence="50"
               web_icon="os_hospitality_managment,static/description/icon.png"/>
 
-    <menuitem id="menu_booking_import"
-              name="Booking Import"
+    <menuitem id="menu_import_root"
+              name="Importer des réservations"
               parent="menu_hospitality_root"
               action="action_booking_import"
               sequence="10"/>
 
+    <menuitem id="menu_booking_import"
+              name="Booking (XLS)"
+              parent="menu_import_root"
+              action="action_booking_import"
+              sequence="10"/>
+
     <menuitem id="menu_booking_import_line"
-              name="Booking Import Line"
+              name="Réservations importées"
               parent="menu_hospitality_root"
               action="action_booking_import_line"
               sequence="20"/>

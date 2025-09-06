@@ -143,6 +143,7 @@ class BookingImportWizard(models.TransientModel):
             df = df.fillna('')
             df = df[df['Statut'].str.contains("ok", na=False)]
             df['Arrivée'] = pd.to_datetime(df['Arrivée'], errors='coerce')
+            df['Départ'] = pd.to_datetime(df['Départ'], errors='coerce')
 
             # Statistiques d'import
             imported_count = 0
@@ -190,6 +191,8 @@ class BookingImportWizard(models.TransientModel):
         customer_name = row.get('Nom du client', '') or self._inverse_name_first_name(row.get("Réservé par", ""))
         housing_type = row.get("Type d'hébergement", "")
         arrival_date = row.get('Arrivée')
+        departure_date = row.get('Départ')
+        reservation_date = row.get('Réservé le')
 
         if pd.isnull(arrival_date):
             return 'skipped'
@@ -219,6 +222,8 @@ class BookingImportWizard(models.TransientModel):
             'booker_id': partner.id,
             'property_type_id': property_type.id,
             'arrival_date': arrival_date.date(),
+            'departure_date': departure_date.date(),
+            'reservation_date': reservation_date.date(),
             'duration_nights': int(row.get('Durée (nuits)', 1)),
             'pax_nb': int(row.get('Personnes', 1)),
             'children': count_integers_leq_12(str(row.get('Âges des enfants', ''))),

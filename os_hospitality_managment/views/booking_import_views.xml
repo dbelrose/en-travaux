@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ========================================= -->
-    <!-- VUES BOOKING.IMPORT -->
-    <!-- ========================================= -->
-    
+
     <!-- Vue formulaire booking.import -->
     <record id="view_booking_import_form" model="ir.ui.view">
         <field name="name">booking.import.form.revised</field>

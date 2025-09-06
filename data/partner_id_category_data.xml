@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Catégories d'identifiants -->
+        <record id="partner_id_category_apikey" model="res.partner.id_category">
+            <field name="code">MATRI</field>
+            <field name="name">Matricule</field>
+        </record>
+
+        <record id="partner_id_category_apiusr" model="res.partner.id_category">
+            <field name="code">CTPGF</field>
+            <field name="name">Code tiers PolyGF</field>
+        </record>
+    </data>
+</odoo>

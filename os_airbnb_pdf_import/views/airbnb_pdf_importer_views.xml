@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vue formulaire pour l'importateur PDF Airbnb -->
+    <record id="view_airbnb_pdf_importer_form" model="ir.ui.view">
+        <field name="name">airbnb.pdf.importer.form</field>
+        <field name="model">airbnb.pdf.importer</field>
+        <field name="arch" type="xml">
+            <form string="Importer PDF Airbnb">
+                <group>
+                    <field name="import_id" invisible="1"/>
+                    <field name="pdf_filename" invisible="1"/>
+                    <field name="pdf_file" widget="binary" filename="pdf_filename"/>
+                </group>
+                <footer>
+                    <button name="import_airbnb_pdf" string="Importer" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue formulaire pour booking.import -->
+    <record id="view_booking_import_form" model="ir.ui.view">
+        <field name="name">booking.import.form</field>
+        <field name="model">booking.import</field>
+        <field name="inherit_id">os_hospitality_managment.view_booking_import_form</field>
+        <field name="arch" type="xml">
+            <button name="import_excel_file" position="after">
+                <button name="action_import_airbnb_pdf" string="Importer PDF Airbnb"
+                        type="object" class="btn-primary"/>
+            </button>
+        </field>
+    </record>
+
+    <!-- Actions de menu -->
+    <record id="action_airbnb_import" model="ir.actions.act_window">
+        <field name="name">Imports de réservations</field>
+        <field name="res_model">booking.import</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer votre premier import de réservations
+            </p>
+            <p>
+                Gérez vos imports de réservations depuis différentes plateformes.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menus -->
+
+    <menuitem id="menu_airbnb_import"
+              name="Airbnb PDF Importer"
+              parent="os_hospitality_managment.menu_import_root"
+              action="action_airbnb_import"
+              sequence="10"/>
+
+</odoo>

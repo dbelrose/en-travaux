@@ -26,7 +26,9 @@ class BookingImportLine(models.Model):
 
     # Informations séjour
     arrival_date = fields.Date(string='Date d\'arrivée', required=True)
-    departure_date = fields.Date(string='Date de départ', compute='_compute_departure_date', store=True)
+    departure_date = fields.Date(string='Date de départ', required=True)
+    reservation_date = fields.Date(string='Date de réservation', required=True)
+    # departure_date = fields.Date(string='Date de départ', compute='_compute_departure_date', store=True)
     duration_nights = fields.Integer(string='Durée (nuits)', required=True, default=1)
     pax_nb = fields.Integer(string='Nombre de personnes', required=True, default=1)
     children = fields.Integer(string='Nombre d\'enfants (≤12 ans)', default=0)
@@ -80,6 +82,12 @@ class BookingImportLine(models.Model):
     )
 
     company_currency_id = fields.Many2one('res.currency', string="Company Currency",  related='company_id.currency_id')
+
+    origin = fields.Selection([
+        ('airbnb', 'Airbnb'),
+        ('booking.com', 'Booking.com'),
+        ('other', 'Autre'),
+    ], string='Source', default='airbnb')
 
     @api.depends('partner_id', 'arrival_date', 'property_type_id')
     def _compute_display_name(self):
@@ -280,6 +288,8 @@ class BookingImportLine(models.Model):
                 'default_partner_id': self.partner_id.id,
                 'default_booker_id': self.booker_id.id,
                 'default_arrival_date': self.arrival_date,
+                'default_departure_date': self.departure_date,
+                'default_reservation_date': self.reservation_date,
                 'default_duration_nights': self.duration_nights,
                 'default_pax_nb': self.pax_nb,
                 'default_children': self.children,

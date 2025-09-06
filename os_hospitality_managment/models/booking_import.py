@@ -123,6 +123,7 @@ class BookingImport(models.Model):
             # Filtrer les réservations confirmées
             df = df[df['Statut'].str.contains("ok", na=False)]
             df['Arrivée'] = pd.to_datetime(df['Arrivée'], errors='coerce')
+            df['Départ'] = pd.to_datetime(df['Départ'], errors='coerce')
 
             # Créer/récupérer le partenaire Booking.com
             self._ensure_booking_partner()
@@ -193,6 +194,8 @@ class BookingImport(models.Model):
             'booker_id': partner.id,
             'property_type_id': property_type.id,
             'arrival_date': row.get('Arrivée'),
+            'departure_date': row.get('Départ'),
+            'reservation_date': row.get('Réservé le'),
             'duration_nights': row.get('Durée (nuits)', 0),
             'pax_nb': row.get('Personnes', 0),
             'children': count_integers_leq_12(str(row.get('Âges des enfants', ''))),
@@ -207,10 +210,12 @@ class BookingImport(models.Model):
         """Récupère ou crée un partenaire client"""
         partner = self.env['res.partner'].search([('name', '=', customer_name)], limit=1)
         if not partner:
+            booker_country = row.get('Booker country', '').strip()
             country_id = False
-            booker_country = row.get('Booker country', '')
             if booker_country:
-                country = self.env['res.country'].search([('name', '=', booker_country)], limit=1)
+                country = self.env['res.country'].search([
+                    ('code', '=', booker_country.upper())
+                ], limit=1)
                 country_id = country.id if country else False
 
             partner = self.env['res.partner'].create({
