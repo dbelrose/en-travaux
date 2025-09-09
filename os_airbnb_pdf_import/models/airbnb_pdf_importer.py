@@ -22,10 +22,23 @@ class AirbnbPdfImporter(models.TransientModel):
         """Extrait le texte du PDF"""
         try:
             pdf_bytes = base64.b64decode(pdf_data)
-            pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
-            text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text()
+            pdf_stream = io.BytesIO(pdf_bytes)
+
+            # Support pour différentes versions de PyPDF2
+            try:
+                # PyPDF2 >= 3.0
+                pdf_reader = PyPDF2.PdfReader(pdf_stream)
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text()
+            except AttributeError:
+                # PyPDF2 < 3.0 (ancienne API)
+                pdf_reader = PyPDF2.PdfFileReader(pdf_stream)
+                text = ""
+                for page_num in range(pdf_reader.numPages):
+                    page = pdf_reader.getPage(page_num)
+                    text += page.extractText()
+
             return text
         except Exception as e:
             _logger.error(f"Erreur lors de l'extraction du PDF: {e}")
@@ -272,24 +285,24 @@ class AirbnbPdfImporter(models.TransientModel):
                 'type': 'service',
                 'sale_ok': True,
                 'purchase_ok': False,
-                # 'categ_id': self._get_accommodation_category().id,
+                'categ_id': self._get_accommodation_category().id,
             }
             product = ProductTemplate.create(product_vals)
 
         return product
 
-    # def _get_accommodation_category(self):
-    #     """Retourne ou crée la catégorie hébergement"""
-    #     category = self.env['product.category'].search([
-    #         ('name', '=', 'Hébergements')
-    #     ], limit=1)
-    #
-    #     if not category:
-    #         category = self.env['product.category'].create({
-    #             'name': 'Hébergements'
-    #         })
-    #
-    #     return category
+    def _get_accommodation_category(self):
+        """Retourne ou crée la catégorie hébergement"""
+        category = self.env['product.category'].search([
+            ('name', '=', 'Hébergements')
+        ], limit=1)
+
+        if not category:
+            category = self.env['product.category'].create({
+                'name': 'Hébergements'
+            })
+
+        return category
 
     def import_airbnb_pdf(self):
         """Méthode principale d'import"""
@@ -330,9 +343,6 @@ class BookingImport(models.Model):
     name = fields.Char(string='Nom', required=True)
     company_id = fields.Many2one('res.company', string='Société',
                                  default=lambda self: self.env.company)
-    booking_line_ids = fields.One2many('booking.import.line', 'import_id',
-                                       string='Lignes de réservation')
-
     def action_import_airbnb_pdf(self):
         """Action pour ouvrir l'assistant d'import PDF"""
         return {

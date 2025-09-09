@@ -61,7 +61,7 @@
                         </group>
                     </group>
                     
-                    <group string="Fichier" invisible="import_type != 'file' or state != 'draft'">
+                    <group name="group_file" string="Fichier" invisible="import_type != 'file' or state != 'draft'">
                         <field name="file_data" filename="file_name"/>
                     </group>
                     
