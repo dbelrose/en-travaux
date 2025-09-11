@@ -1,6 +1,6 @@
 {
     'name': 'Booking.com Import Manager',
-    'version': '17.0.1.0.0',
+    'version': '17.0.1.0.2',
     'category': 'Accounting/Accounting',
     'summary': 'Import et gestion des réservations Booking.com avec génération automatique de factures',
     'description': """
@@ -109,6 +109,10 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
         'data/product_pricelist_item_data.xml',
 
         'data/customer_invoice_data.xml',
+
+        # Configuration initiale
+        "views/res_config_settings_view.xml",
+
     ],
     # 'assets': {
         # 'web.assets_backend': [
@@ -134,7 +138,7 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
     'images': [
         'static/description/icon.png',
     ],
-    
+    'post_init_hook': 'post_init_hook',
     'installable': True,
     'auto_install': False,
     'application': True,

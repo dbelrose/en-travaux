@@ -39,6 +39,7 @@ Compatibilité :
     'author': 'OpalSea',
     'website': 'https://www.opalsea.site',
     'depends': [
+        'base',
         'os_hospitality_managment',
     ],
     'external_dependencies': {

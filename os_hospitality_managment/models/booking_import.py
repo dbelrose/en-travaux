@@ -28,6 +28,7 @@ class BookingImport(models.Model):
 
     # Identification de l'import
     display_name = fields.Char(string='Nom', compute='_compute_display_name', store=True)
+    name = fields.Char(string='Nom', related='display_name', store=True)
     import_date = fields.Datetime(string='Date d\'import', default=fields.Datetime.now, required=True)
     file_name = fields.Char(string='Nom du fichier')
     import_type = fields.Selection([

@@ -87,7 +87,7 @@ class BookingImportLine(models.Model):
         ('airbnb', 'Airbnb'),
         ('booking.com', 'Booking.com'),
         ('other', 'Autre'),
-    ], string='Source', default='airbnb')
+    ], string='Source', default='booking.com')
 
     @api.depends('partner_id', 'arrival_date', 'property_type_id')
     def _compute_display_name(self):

@@ -1,11 +1,13 @@
-import re
-import logging
 from datetime import datetime
 from odoo import models, fields, _
 from odoo.exceptions import UserError
+
+import re
+import logging
 import PyPDF2
 import io
 import base64
+import fitz  # PyMuPDF
 
 _logger = logging.getLogger(__name__)
 
@@ -17,6 +19,140 @@ class AirbnbPdfImporter(models.TransientModel):
     pdf_file = fields.Binary(string='Fichier PDF', required=True)
     pdf_filename = fields.Char(string='Nom du fichier')
     import_id = fields.Many2one('booking.import', string='Import', required=True)
+
+    def _extract_phone_from_pdf_annotations_fitz(self, pdf_b64):
+        """
+        Retourne (raw, normalized) depuis la 1re occurrence 'tel:' trouvée
+        dans les annotations de lien du PDF. Sinon (None, None).
+        """
+        if not pdf_b64:
+            return None, None
+
+        pdf_bytes = base64.b64decode(pdf_b64)
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        try:
+            for page in doc:
+                for ln in page.get_links():  # -> dict avec 'uri' + 'from' (rect)
+                    uri = ln.get("uri")
+                    if uri and uri.lower().startswith("tel:"):
+                        raw = uri[4:].strip()  # ce que l’auteur a mis après tel:
+                        # Normalisation : on conserve un + initial et uniquement des chiffres
+                        if raw.startswith('+'):
+                            normalized = '+' + re.sub(r'\D', '', raw[1:])
+                        else:
+                            normalized = re.sub(r'\D', '', raw)
+                        return raw, normalized
+            return None, None
+        finally:
+            doc.close()
+
+    def _extract_first_uri_from_first_page(self, pdf_b64):
+        """
+        Retourne la première URI trouvée sur la page 1, ou None.
+        """
+        if not pdf_b64:
+            return None
+
+        pdf_bytes = base64.b64decode(pdf_b64)
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        try:
+            if len(doc) == 0:
+                return None
+            page = doc[0]
+            for link in page.get_links():
+                uri = link.get("uri")
+                if uri:
+                    return uri  # on prend la première trouvée
+            return None
+        finally:
+            doc.close()
+
+    def _extract_avatar_base64_from_first_page(self, pdf_b64, inflate_pt=6.0, dpi=144):
+        """
+        pdf_b64 : str (Base64 Odoo, ex. record.pdf_file)
+        Retourne : str Base64 (prête pour image_1920) ou None
+        """
+        if not pdf_b64:
+            return None
+
+        pdf_bytes = base64.b64decode(pdf_b64)
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        try:
+            if len(doc) == 0:
+                return None
+            page = doc[0]
+
+            # 1) Si le PDF contient un lien Airbnb sur l’avatar, on s’aligne dessus
+            try:
+                links = page.get_links()  # chaque dict contient 'from' (Rect) et 'uri'
+            except Exception:
+                links = []
+
+            for link in links:
+                uri = (link.get("uri") or "").lower()
+                if "airbnb." in uri and "/users/show/" in uri:
+                    r = fitz.Rect(link["from"])
+                    # 1) si 'inflated' existe (versions récentes) : l'utiliser
+                    if hasattr(r, "inflated"):
+                        link_rect = r.inflated(inflate_pt, inflate_pt)
+                    # 2) sinon si 'inflate' existe (implémentations où l'opération est in-place)
+                    elif hasattr(r, "inflate"):
+                        r.inflate(inflate_pt, inflate_pt)  # modifie r en place
+                        link_rect = r
+                    # 3) sinon : élargissement manuel (compatible partout)
+                    else:
+                        link_rect = fitz.Rect(r.x0 - inflate_pt, r.y0 - inflate_pt, r.x1 + inflate_pt,
+                                              r.y1 + inflate_pt)
+
+                    # a) images "inline" via get_text("dict") -> blocks type==1 (avec bytes)
+                    try:
+                        blocks = page.get_text("dict")["blocks"]
+                    except Exception:
+                        blocks = []
+                    for b in blocks:
+                        if b.get("type") == 1 and "image" in b and "bbox" in b:
+                            bbox = fitz.Rect(b["bbox"])
+                            if bbox.intersects(link_rect):
+                                return base64.b64encode(b["image"]).decode("ascii")
+
+                    # b) fallback: images avec xref via get_image_info(xrefs=True)
+                    try:
+                        infos = page.get_image_info(xrefs=True)
+                    except Exception:
+                        infos = []
+                    for im in infos:
+                        bbox = fitz.Rect(im.get("bbox", (0, 0, 0, 0)))
+                        if bbox.intersects(link_rect) and im.get("xref"):
+                            base = doc.extract_image(im["xref"])
+                            return base64.b64encode(base["image"]).decode("ascii")
+
+                    # c) dernier recours: rasteriser la zone du lien
+                    pix = page.get_pixmap(clip=link_rect, dpi=dpi)
+                    return base64.b64encode(pix.tobytes("png")).decode("ascii")
+
+            # 2) Pas de lien détecté : prendre la **plus grande image** de la page
+            try:
+                blocks = page.get_text("dict")["blocks"]
+            except Exception:
+                blocks = []
+
+            img_blocks = [b for b in blocks if b.get("type") == 1 and "image" in b and "bbox" in b]
+            if img_blocks:
+                img_blocks.sort(key=lambda b: fitz.Rect(b["bbox"]).get_area(), reverse=True)
+                return base64.b64encode(img_blocks[0]["image"]).decode("ascii")
+
+            # 3) Dernier fallback: première image signalée par get_image_info
+            try:
+                infos = page.get_image_info(xrefs=True)
+            except Exception:
+                infos = []
+            if infos:
+                base = doc.extract_image(infos[0]["xref"])
+                return base64.b64encode(base["image"]).decode("ascii")
+
+            # return None
+        finally:
+            doc.close()
 
     def _extract_text_from_pdf(self, pdf_data):
         """Extrait le texte du PDF"""
@@ -58,11 +194,30 @@ class AirbnbPdfImporter(models.TransientModel):
                 data['first_name'] = name_parts[0] if name_parts else ''
                 data['last_name'] = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
 
+            # Extraction de la photo du client
+            b64_avatar = self._extract_avatar_base64_from_first_page(self.pdf_file)
+
+            if b64_avatar:
+                data['image_1920'] = b64_avatar  # ✅ prêt pour l’ORM
+
+            # Extraction de l'URL du client
+            uri = self._extract_first_uri_from_first_page(self.pdf_file)
+            if uri:
+                data['website'] = uri  # ✅ Ajout du lien Airbnb
+
             # Extraction du téléphone
-            phone_pattern = r"Téléphone\s*:\s*([^\n]+)"
-            phone_match = re.search(phone_pattern, text)
-            if phone_match:
-                data['phone'] = phone_match.group(1).strip()
+            raw_phone, phone = self._extract_phone_from_pdf_annotations_fitz(self.pdf_file)
+            if phone:
+                data['phone'] = phone
+                data['phone_raw'] = raw_phone
+            else:
+                text = self._extract_text_from_pdf(self.pdf_file) or ""
+                m = re.search(r"(?:\\+?\\d[\\d\\s().-]{6,}\\d)", text)  # motif tolérant
+                if m:
+                    raw = m.group(0)
+                    data['phone'] = ('+' + re.sub(r'\\D', '', raw[1:])) if raw.strip().startswith('+') else re.sub(
+                        r'\\D', '', raw)
+                    data['phone_raw'] = raw
 
             # Extraction de la ville et pays
             location_pattern = r"Habite à\s*([^,\n]+)(?:,\s*([^\n]+))?"
@@ -83,7 +238,7 @@ class AirbnbPdfImporter(models.TransientModel):
                     'English': 'en_US',
                     'French': 'fr_FR'
                 }
-                data['language'] = lang_mapping.get(lang_text, 'en_US')
+                data['language'] = lang_mapping.get(lang_text, 'fr_FR')
 
             # Extraction du type de logement
             property_pattern = r"([^\n]*chambres?[^\n]*)"
@@ -129,7 +284,14 @@ class AirbnbPdfImporter(models.TransientModel):
 
             # Extraction du montant total
             total_pattern = r"Total \(EUR\)\s*([0-9.,]+)\s*€"
-            total_match = re.search(total_pattern, text)
+            first = total_match = re.search(total_pattern, text)
+
+            if first:
+                # On repart juste après le 1er match
+                second = re.search(total_pattern, text[first.end():])
+                if second:
+                    total_match = second
+
             if total_match:
                 total_str = total_match.group(1).replace(',', '.')
                 data['rate'] = float(total_str)
@@ -206,12 +368,17 @@ class AirbnbPdfImporter(models.TransientModel):
                     ('code', '=', self._get_country_code(data['country']))
                 ], limit=1)
 
+            lang = self.env['res.lang']._lang_get_id(data.get('language', 'fr_FR'))
+
             partner_vals = {
-                'name': name,
+                'name': name or 'Indéfini',
+                'image_1920': data.get('image_1920', ''),
                 'phone': data.get('phone', ''),
+                'mobile': data.get('phone_raw', ''),
+                'website': data.get('website', ''),
                 'city': data.get('city', ''),
                 'country_id': country.id if country else False,
-                'lang': data.get('language', 'en_US'),
+                'lang': lang,
                 'is_company': False,
                 'customer_rank': 1,
             }
@@ -237,11 +404,9 @@ class AirbnbPdfImporter(models.TransientModel):
         # Trouver ou créer le type de propriété
         property_type = self._get_or_create_property_type(data.get('property_type', 'Logement Airbnb'))
 
-        # Convertir le montant EUR en XPF (taux approximatif)
-        # 1 EUR ≈ 119.33 XPF (à ajuster selon le taux en vigueur)
-        eur_to_xpf_rate = 119.33
-        rate_xpf = data.get('rate', 0) * eur_to_xpf_rate
-        commission_xpf = data.get('commission_amount', 0) * eur_to_xpf_rate
+        # Convertir le montant EUR en XPF
+        rate_xpf = data.get('rate', 0) * 1000 / 8.38  # taux plus précis
+        commission_xpf = data.get('commission_amount', 0) * 1000 / 8.38
 
         booking_vals = {
             'import_id': self.import_id.id,
@@ -261,7 +426,16 @@ class AirbnbPdfImporter(models.TransientModel):
             'status': 'ok',
             'rate': rate_xpf,
             'commission_amount': commission_xpf,
+            'origin': 'airbnb',  # Définir l'origine comme Airbnb
         }
+
+        # Supprimer les champs qui n'existent peut-être pas
+        fields_to_check = ['children', 'booking_id', 'payment_status', 'origin']
+        for field_name in fields_to_check:
+            if field_name in booking_vals:
+                # Vérifier si le champ existe dans le modèle
+                if field_name not in BookingLine._fields:
+                    booking_vals.pop(field_name)
 
         booking_line = BookingLine.create(booking_vals)
         return booking_line
@@ -275,13 +449,14 @@ class AirbnbPdfImporter(models.TransientModel):
 
         # Rechercher un produit existant
         product = ProductTemplate.search([
-            ('name', 'ilike', clean_description)
+            ('description_sale', 'ilike', clean_description)
         ], limit=1)
 
         if not product:
             # Créer un nouveau type de propriété
             product_vals = {
                 'name': clean_description,
+                'description_sale': clean_description,
                 'type': 'service',
                 'sale_ok': True,
                 'purchase_ok': False,
@@ -337,12 +512,9 @@ class AirbnbPdfImporter(models.TransientModel):
 
 
 class BookingImport(models.Model):
-    _name = 'booking.import'
+    _inherit = 'booking.import'
     _description = 'Import de réservations'
 
-    name = fields.Char(string='Nom', required=True)
-    company_id = fields.Many2one('res.company', string='Société',
-                                 default=lambda self: self.env.company)
     def action_import_airbnb_pdf(self):
         """Action pour ouvrir l'assistant d'import PDF"""
         return {

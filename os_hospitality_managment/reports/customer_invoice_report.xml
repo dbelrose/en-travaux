@@ -44,8 +44,8 @@
         <field name="name">Facture Hospitalité</field>
         <field name="model">account.move</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">os_hospitality_management.hospitality_invoice_template</field>
-        <field name="report_file">os_hospitality_management.hospitality_invoice_template</field>
+        <field name="report_name">os_hospitality_managment.hospitality_invoice_template</field>
+        <field name="report_file">os_hospitality_managment.hospitality_invoice_template</field>
         <field name="print_report_name">'Facture - %s' % (object.name)</field>
         <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="binding_type">report</field>
@@ -56,7 +56,7 @@
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-set="lang" t-value="o.invoice_user_id.lang if o.move_type in ('in_invoice', 'in_refund') else o.partner_id.lang"/>
-                <t t-call="os_hospitality_management.hospitality_invoice_document" t-lang="lang"/>
+                <t t-call="os_hospitality_managment.hospitality_invoice_document" t-lang="lang"/>
             </t>
         </t>
     </template>

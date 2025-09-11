@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_hm_res_config_settings" model="ir.ui.view">
+    <field name="name">os_hospitality_managment.res.config.settings</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="priority" eval="90"/>
+    <field name="arch" type="xml">
+
+      <!-- Bloc "Hospitality Management" dans Paramètres -->
+      <xpath expr="//form" position="inside">
+        <app data-string="Hospitality Management"
+             string="Hospitality Management"
+             name="os_hospitality_managment"
+             groups="base.group_erp_manager">
+<!--             logo="/os_hospitality_managment/static/description/icon.png"-->
+
+          <!-- Section Plateformes -->
+          <block title="Plateformes &amp; Facturation">
+
+            <!-- Sous-section Plateformes -->
+            <block title="Plateformes">
+
+              <!-- Booking.com -->
+              <setting>
+                <field name="booking_enabled"/>
+                <div class="o_setting_right_pane">
+                  <label string="Booking.com" for="booking_enabled"/>
+                  <div class="text-muted">
+                    Activer l'intégration Booking.com (activée par défaut).
+                  </div>
+                </div>
+              </setting>
+
+              <!-- Airbnb -->
+              <setting>
+                <field name="airbnb_enabled"/>
+                <div class="o_setting_right_pane">
+                  <label string="Airbnb" for="airbnb_enabled"/>
+                  <div class="text-muted">
+                    Activer Airbnb, le module d'import PDF Airbnb sera installé.
+                  </div>
+                </div>
+              </setting>
+
+              <!-- Module Airbnb PDF Importer -->
+              <setting invisible="not airbnb_enabled">
+                <field name="module_os_airbnb_pdf_importer"/>
+                <div class="o_setting_right_pane">
+                  <label string="Module PDF Airbnb" for="module_os_airbnb_pdf_importer"/>
+                  <div class="text-muted">
+                    Installer le module os_airbnb_pdf_importer pour l'import des PDF Airbnb.
+                  </div>
+                </div>
+              </setting>
+
+            </block>
+
+            <!-- Sous-section Commissions Booking.com -->
+            <block title="Commissions Booking.com">
+
+              <setting>
+                <field name="booking_vendor_concierge_commission"/>
+                <div class="o_setting_right_pane">
+                  <label string="Commission conciergerie (Fournisseur)" for="booking_vendor_concierge_commission"/>
+                  <div class="text-muted">
+                    Générer une facture fournisseur pour la commission conciergerie Booking.com.
+                  </div>
+                </div>
+              </setting>
+
+              <setting>
+                <field name="booking_vendor_platform_commission"/>
+                <div class="o_setting_right_pane">
+                  <label string="Commission plateforme (Fournisseur)" for="booking_vendor_platform_commission"/>
+                  <div class="text-muted">
+                    Générer une facture fournisseur pour la commission plateforme Booking.com.
+                  </div>
+                </div>
+              </setting>
+
+              <setting>
+                <field name="booking_customer_concierge_commission"/>
+                <div class="o_setting_right_pane">
+                  <label string="Commission conciergerie (Client)" for="booking_customer_concierge_commission"/>
+                  <div class="text-muted">
+                    Générer une facture client pour la commission conciergerie Booking.com.
+                  </div>
+                </div>
+              </setting>
+
+            </block>
+
+            <!-- Sous-section Commissions Airbnb -->
+            <block title="Commissions Airbnb" invisible="not airbnb_enabled">
+
+              <setting>
+                <field name="airbnb_vendor_concierge_commission"/>
+                <div class="o_setting_right_pane">
+                  <label string="Commission conciergerie (Fournisseur)" for="airbnb_vendor_concierge_commission"/>
+                  <div class="text-muted">
+                    Générer une facture fournisseur pour la commission conciergerie Airbnb.
+                  </div>
+                </div>
+              </setting>
+
+              <setting>
+                <field name="airbnb_vendor_platform_commission"/>
+                <div class="o_setting_right_pane">
+                  <label string="Commission plateforme (Fournisseur)" for="airbnb_vendor_platform_commission"/>
+                  <div class="text-muted">
+                    Générer une facture fournisseur pour la commission plateforme Airbnb.
+                  </div>
+                </div>
+              </setting>
+
+              <setting>
+                <field name="airbnb_customer_concierge_commission"/>
+                <div class="o_setting_right_pane">
+                  <label string="Commission conciergerie (Client)" for="airbnb_customer_concierge_commission"/>
+                  <div class="text-muted">
+                    Générer une facture client pour la commission conciergerie Airbnb.
+                  </div>
+                </div>
+              </setting>
+
+            </block>
+
+          </block>
+
+        </app>
+      </xpath>
+    </field>
+  </record>
+</odoo>
