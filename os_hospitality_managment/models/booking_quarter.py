@@ -97,9 +97,8 @@ class BookingQuarter(models.Model):
     @api.depends('year', 'quarter', 'property_type_id')
     def _compute_display_name(self):
         for record in self:
-            quarter_names = {1: '1er', 2: '2ème', 3: '3ème', 4: '4ème'}
             property_name = record.property_type_id.name if record.property_type_id else 'Sans propriété'
-            record.display_name = f"{quarter_names.get(int(record.quarter) if record.quarter else 0, '')} T{record.quarter} {record.year} - {property_name}"
+            record.display_name = f"T{record.quarter} {record.year} - {property_name}"
 
     @api.depends('property_type_id')
     def _compute_establishment_info(self):

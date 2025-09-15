@@ -32,7 +32,7 @@ class BookingImport(models.Model):
     import_date = fields.Datetime(string='Date d\'import', default=fields.Datetime.now, required=True)
     file_name = fields.Char(string='Nom du fichier')
     import_type = fields.Selection([
-        ('file', 'Import de fichier'),
+        ('file', 'XLS'),
         ('manual', 'Saisie manuelle')
     ], string='Type d\'import', default='file')
 
@@ -57,7 +57,7 @@ class BookingImport(models.Model):
     line_ids = fields.One2many('booking.import.line', 'import_id', string='Réservations')
 
     # Données du fichier
-    file_data = fields.Binary(string='Fichier Excel')
+    file_data = fields.Binary(string='Fichier')
 
     # Société
     company_id = fields.Many2one('res.company', string='Société',
@@ -69,6 +69,23 @@ class BookingImport(models.Model):
         ('imported', 'Importé'),
         ('processed', 'Traité')
     ], string='État', default='draft')
+
+    # Origine de l'import
+    origin = fields.Selection([
+        ('booking.com', 'Booking.com'),
+        ('other', 'Autre'),
+    ], string='Origine', default='booking.com')
+
+    booking_com_reservations = fields.Integer(
+        string='Réservations Booking.com',
+        compute='_compute_origin_stats',
+        store=False
+    )
+    other_reservations = fields.Integer(
+        string='Autres réservations',
+        compute='_compute_origin_stats',
+        store=False
+    )
 
     @api.depends('import_date', 'file_name', 'import_type')
     def _compute_display_name(self):
@@ -108,11 +125,11 @@ class BookingImport(models.Model):
         for record in self:
             record.property_type_ids = record.line_ids.mapped('property_type_id')
 
-    def import_excel_file(self):
+    def action_import_excel_file(self):
         """Importe les réservations depuis un fichier Excel"""
         self.ensure_one()
         if not self.file_data:
-            raise UserError("Aucun fichier n'a été téléchargé.")
+            raise UserError("Aucun fichier XLS n'a été téléchargé.")
 
         try:
             # Lire le fichier Excel

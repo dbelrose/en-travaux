@@ -153,13 +153,15 @@
         <field name="model">booking.month</field>
         <field name="arch" type="xml">
             <tree string="Vues mensuelles">
+                <field name="origin" optional="hide" widget="badge"/>
+                <field name="import_type" optional="hide" widget="badge"/>
                 <field name="display_name"/>
                 <field name="year"/>
                 <field name="month"/>
                 <field name="property_type_id"/>
                 <field name="total_reservations"/>
                 <field name="total_revenue" sum="Total CA" widget="monetary"/>
-                <field name="total_commission_booking" sum="Total commission Booking" widget="monetary"/>
+                <field name="total_commission_booking" sum="Total commission plateforme" widget="monetary"/>
                 <field name="concierge_commission" sum="Total commission concierge" widget="monetary"/>
                 <field name="net_revenue" sum="Total net" widget="monetary"/>
                 <field name="invoice_state" widget="badge"/>

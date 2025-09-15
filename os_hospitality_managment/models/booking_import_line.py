@@ -28,7 +28,6 @@ class BookingImportLine(models.Model):
     arrival_date = fields.Date(string='Date d\'arrivée', required=True)
     departure_date = fields.Date(string='Date de départ', required=True)
     reservation_date = fields.Date(string='Date de réservation', required=True)
-    # departure_date = fields.Date(string='Date de départ', compute='_compute_departure_date', store=True)
     duration_nights = fields.Integer(string='Durée (nuits)', required=True, default=1)
     pax_nb = fields.Integer(string='Nombre de personnes', required=True, default=1)
     children = fields.Integer(string='Nombre d\'enfants (≤12 ans)', default=0)
@@ -55,9 +54,14 @@ class BookingImportLine(models.Model):
     ], string='Statut', default='ok')
 
     # Informations financières
-    rate = fields.Float(string='Tarif (XPF)', digits='Product Price')
-    commission_amount = fields.Monetary(string='Commission (XPF)', digits='Product Price', 
-                                        currency_field='company_currency_id')
+    rate = fields.Monetary(string='Tarif', currency_field='company_currency_id', store=True)
+    commission_amount = fields.Monetary(string='Platform commission', currency_field='company_currency_id', store=True)
+    base_concierge_commission = fields.Monetary(
+        string='Concierge commission',
+        compute='_compute_base_concierge_commission',
+        currency_field='company_currency_id',
+        store=True
+    )
     commission_rate = fields.Float(string='Taux commission (%)', compute='_compute_commission_rate', store=True)
 
     # Nuitées calculées
@@ -66,7 +70,7 @@ class BookingImportLine(models.Model):
     total_nights = fields.Integer(string='Total nuitées', compute='_compute_nights', store=True)
 
     # Montant taxe de séjour
-    tax_amount = fields.Monetary(string='Taxe de séjour (XPF)', compute='_compute_tax_amount', 
+    tax_amount = fields.Monetary(string='Taxe de séjour (XPF)', compute='_compute_tax_amount',
                                  currency_field='company_currency_id', store=True)
 
     # Métadonnées
@@ -81,13 +85,17 @@ class BookingImportLine(models.Model):
         store=True
     )
 
-    company_currency_id = fields.Many2one('res.currency', string="Company Currency",  related='company_id.currency_id')
+    company_currency_id = fields.Many2one('res.currency', string="Company Currency", related='company_id.currency_id')
 
     origin = fields.Selection([
-        ('airbnb', 'Airbnb'),
         ('booking.com', 'Booking.com'),
         ('other', 'Autre'),
-    ], string='Source', default='booking.com')
+    ], string='origine', default='booking.com')
+
+    import_type = fields.Selection([
+        ('file', 'XLS'),
+        ('manual', 'Saisie manuelle')
+    ], string='Type d\'import', default='file')
 
     @api.depends('partner_id', 'arrival_date', 'property_type_id')
     def _compute_display_name(self):
@@ -365,3 +373,24 @@ class BookingImportLine(models.Model):
                 'target': 'current',
             }
         return False
+
+    @api.depends('rate', 'commission_amount', 'origin', 'company_id.hm_airbnb_vendor_concierge_commission',
+                 'company_id.hm_booking_vendor_concierge_commission',
+                 'company_id.hm_airbnb_customer_concierge_commission',
+                 'company_id.hm_booking_customer_concierge_commission')
+    def _compute_base_concierge_commission(self):
+        for record in self:
+            airbnb_vendor_ok = record.origin == 'airbnb' and record.company_id.hm_airbnb_vendor_concierge_commission
+            booking_vendor_ok = record.origin == 'booking.com' \
+                                and record.company_id.hm_booking_vendor_concierge_commission
+            airbnb_customer_ok = record.origin == 'airbnb' and record.company_id.hm_airbnb_customer_concierge_commission
+            booking_customer_ok = record.origin == 'booking.com' \
+                                  and record.company_id.hm_booking_customer_concierge_commission
+
+            rate = record.rate or 0.0
+            commission = record.commission_amount or 0.0
+
+            if airbnb_vendor_ok or airbnb_customer_ok or booking_vendor_ok or booking_customer_ok:
+                record.base_concierge_commission = rate - commission
+            else:
+                record.base_concierge_commission = 0.0

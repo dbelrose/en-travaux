@@ -48,9 +48,11 @@
         <field name="model">booking.import.line</field>
         <field name="arch" type="xml">
             <tree string="Lignes de réservation">
+                <field name="origin" optional="hide"/>
+                <field name="import_type" optional="hide"/>
                 <field name="import_id"/>
                 <field name="booker_id"/>
-                <field name="partner_id"/>
+                <field name="partner_id" optional="hide"/>
                 <field name="property_type_id"/>
                 <field name="arrival_date"/>
                 <field name="duration_nights"/>
@@ -59,9 +61,11 @@
                 <field name="payment_status"/>
                 <field name="status"/>
                 <field name="rate" optional="hide" sum="Total Rate"/>
-                <field name="commission_amount" optional="hide" sum="Total Commission" widget="monetary"/>
+                <field name="commission_amount"
+                       optional="hide" sum="Total platform commission" widget="monetary"/>
+                <field name="base_concierge_commission"
+                       optional="hide" sum="Total concierge commission" widget="monetary"/>
                 <field name="company_currency_id" invisible="1"/>
-
             </tree>
         </field>
     </record>

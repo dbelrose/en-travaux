@@ -8,11 +8,11 @@
         <field name="arch" type="xml">
             <form string="Import de réservations">
                 <header>
-                    <button name="import_excel_file"
+                    <button name="action_import_excel_file"
                             string="Importer fichier Excel"
                             type="object"
                             class="btn-primary"
-                            invisible="state != 'draft' or import_type != 'file'"/>
+                            invisible="state in ['imported', 'processed'] or import_type != 'file'"/>
                     <button name="action_add_reservation"
                             string="Ajouter réservation"
                             type="object"
@@ -98,10 +98,11 @@
         <field name="name">booking.import.tree.revised</field>
         <field name="model">booking.import</field>
         <field name="arch" type="xml">
-            <tree string="Imports de réservations">
+            <tree string="Imports Booking.com">
                 <field name="display_name"/>
                 <field name="import_date"/>
                 <field name="import_type" widget="badge"/>
+                <field name="origin" widget="badge"/>
                 <field name="total_reservations"/>
                 <field name="date_from"/>
                 <field name="date_to"/>
@@ -116,5 +117,6 @@
         <field name="res_model">booking.import</field>
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="view_booking_import_tree"/>
+        <field name="domain">[('origin', '=', 'booking.com')]</field>
     </record>
 </odoo>

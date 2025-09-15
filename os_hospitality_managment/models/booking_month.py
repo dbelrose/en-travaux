@@ -71,7 +71,7 @@ class BookingMonth(models.Model):
 
     # Commissions partenaires (calculées)
     concierge_commission_base = fields.Monetary(string='Base commission concierge',
-                                                compute='_compute_partner_commissions',
+                                                compute='_compute_base_concierge_commission',
                                                 currency_field='company_currency_id', store=True)
     concierge_commission = fields.Monetary(string='Commission concierge', compute='_compute_partner_commissions',
                                            currency_field='company_currency_id', store=True)
@@ -108,13 +108,19 @@ class BookingMonth(models.Model):
         ('posted', 'Publié')
     ], string='État', default='draft')
 
-    company_currency_id = fields.Many2one('res.currency', string="Company Currency",  related='company_id.currency_id')
+    company_currency_id = fields.Many2one('res.currency', string="Company Currency", related='company_id.currency_id')
 
     origin = fields.Selection([
         ('airbnb', 'Airbnb'),
         ('booking.com', 'Booking.com'),
         ('other', 'Autre'),
     ], string='Source', default='booking.com')
+
+    import_type = fields.Selection([
+        ('file', 'XLS'),
+        ('pdf', 'PDF'),
+        ('manual', 'Saisie manuelle')
+    ], string='Type d\'import', default='file')
 
 
     # Contrainte d'unicité
@@ -300,22 +306,6 @@ class BookingMonth(models.Model):
             record.total_revenue = sum(r.rate for r in reservations if r.rate)
             record.total_commission_booking = sum(r.commission_amount for r in reservations if r.commission_amount)
             record.total_tourist_tax = sum(r.tax_amount for r in reservations if r.tax_amount)
-
-    @api.depends('total_revenue', 'total_commission_booking', 'total_tourist_tax', 'concierge_commission_rate')
-    def _compute_partner_commissions(self):
-        for record in self:
-            if not record.total_revenue:
-                record.concierge_commission = 0.0
-                continue
-
-            # Calculer la base de commission (CA - commission Booking - taxe séjour)
-            commission_base = record.total_revenue - record.total_commission_booking - record.total_tourist_tax
-
-            # Commission concierge = taux configuré de la base
-            if commission_base > 0 and record.concierge_commission_rate > 0:
-                record.concierge_commission = commission_base * (record.concierge_commission_rate / 100.0)
-            else:
-                record.concierge_commission = 0.0
 
     @api.depends('total_revenue', 'total_commission_booking', 'total_tourist_tax', 'concierge_commission')
     def _compute_net_revenue(self):
@@ -629,7 +619,6 @@ class BookingMonth(models.Model):
             else:
                 record.month_name = ""
 
-
     @api.depends('year', 'month')
     def _compute_period_dates(self):
         for record in self:
@@ -765,25 +754,14 @@ class BookingMonth(models.Model):
             record.revenue_direct = direct_revenue
             record.revenue_other_channels = other_revenue
 
-    @api.depends('total_revenue', 'total_commission_booking', 'total_tourist_tax', 'concierge_commission_rate')
+    @api.depends('concierge_commission_base', 'total_tourist_tax', 'concierge_commission_rate')
     def _compute_partner_commissions(self):
         """Calcule les commissions des partenaires"""
         for record in self:
-            if not record.total_revenue:
-                record.concierge_commission_base = 0.0
-                record.concierge_commission = 0.0
-                continue
-
-            # Base de calcul pour commission concierge
-            commission_base = record.total_revenue - record.total_commission_booking - record.total_tourist_tax
-            record.concierge_commission_base = max(0.0, commission_base)
+            commission_base = max(0.0, record.concierge_commission_base - record.total_tourist_tax) or 0.0
 
             # Commission concierge
-            if record.concierge_commission_base > 0 and record.concierge_commission_rate > 0:
-                record.concierge_commission = record.concierge_commission_base * (
-                            record.concierge_commission_rate / 100.0)
-            else:
-                record.concierge_commission = 0.0
+            record.concierge_commission = commission_base * record.concierge_commission_rate / 100.0 or 0.0
 
     @api.depends('total_revenue', 'total_commission_booking', 'total_tourist_tax',
                  'concierge_commission')
@@ -1155,7 +1133,7 @@ class BookingMonth(models.Model):
         else:
             w_fiscal_position = self.sudo().env['account.fiscal.position'].with_company(concierge_company.id)
             fiscal_position = w_fiscal_position._get_fiscal_position(partner=client_partner)
-            
+
         return {
             'partner_id': client_partner.id,
             'move_type': 'out_invoice',
@@ -1231,7 +1209,7 @@ class BookingMonth(models.Model):
         else:
             w_fiscal_position = self.sudo().env['account.fiscal.position'].with_company(concierge_company.id)
             fiscal_position = w_fiscal_position._get_fiscal_position(partner=client_partner)
-            
+
         # 2. Récupérer les taxes par défaut du produit
         product_taxes = concierge_service.taxes_id.filtered(
             lambda t: t.company_id == concierge_company
@@ -1261,13 +1239,13 @@ class BookingMonth(models.Model):
         """Génère les deux factures : fournisseur (société cliente) et client (société concierge)"""
         # Créer d'abord la facture fournisseur
         airbnb_vendor_ok = self.origin == 'airbnb' and self.company_id.hm_airbnb_vendor_concierge_commission
-        booking_vendor_ok = self.origin == 'booking_com' and self.company_id.hm_booking_vendor_concierge_commission
+        booking_vendor_ok = self.origin == 'booking.com' and self.company_id.hm_booking_vendor_concierge_commission
         if airbnb_vendor_ok or booking_vendor_ok:
             self.action_generate_concierge_invoice()
 
         # Puis créer la facture client
         airbnb_customer_ok = self.origin == 'airbnb' and self.company_id.hm_airbnb_customer_concierge_commission
-        booking_customer_ok = self.origin == 'booking_com' and self.company_id.hm_booking_customer_concierge_commission
+        booking_customer_ok = self.origin == 'booking.com' and self.company_id.hm_booking_customer_concierge_commission
         if airbnb_customer_ok or booking_customer_ok:
             self.action_generate_concierge_client_invoice()
         return
@@ -1301,3 +1279,67 @@ class BookingMonth(models.Model):
 
         # Aucune position fiscale trouvée
         return None
+
+    @api.depends('year', 'month', 'property_type_id', 'company_id')
+    def _compute_base_concierge_commission(self):
+        """
+        Calcule la base de commission concierge en cumulant les montants
+        des lignes d'import pour le mois, l'année, le type de propriété et la société donnés
+        """
+        for record in self:
+            # Initialiser le montant
+            total_commission = 0.0
+
+            if record.year and record.month and record.property_type_id and record.company_id:
+                # Définir les dates de début et fin du mois
+                start_date = date(record.year, record.month, 1)
+
+                # Calculer le dernier jour du mois
+                if record.month == 12:
+                    end_date = date(record.year + 1, 1, 1)
+                else:
+                    end_date = date(record.year, record.month + 1, 1)
+
+                # Rechercher les lignes d'import correspondantes
+                domain = [
+                    ('arrival_date', '>=', start_date),
+                    ('arrival_date', '<', end_date),
+                    ('property_type_id', '=', record.property_type_id.id),
+                    ('company_id', '=', record.company_id.id),
+                    ('status', '=', 'ok'),  # Seulement les réservations confirmées
+                ]
+
+                # Rechercher les lignes dans le modèle booking.import.line
+                import_lines = self.env['booking.import.line'].search(domain)
+
+                # Sommer les commissions
+                for line in import_lines:
+                    if line.base_concierge_commission:
+                        total_commission += line.base_concierge_commission
+
+            record.concierge_commission_base = total_commission
+
+    @api.model
+    def recalculate_all_commissions(self):
+        """
+        Méthode utilitaire pour recalculer toutes les commissions
+        Peut être appelée manuellement ou par un cron
+        """
+        all_records = self.search([])
+        all_records._compute_base_concierge_commission()
+        return True
+
+    def action_recalculate_commission(self):
+        """
+        Action pour recalculer la commission depuis l'interface
+        """
+        self._compute_base_concierge_commission()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Recalcul terminé',
+                'message': f'Commission recalculée: {self.concierge_commission_base:.2f}',
+                'type': 'success',
+            }
+        }
