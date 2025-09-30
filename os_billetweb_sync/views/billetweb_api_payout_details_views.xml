@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Tree (Liste) -->
+    <record id="view_billetweb_api_payout_details_tree" model="ir.ui.view">
+        <field name="name">billetweb.api.payout.details.tree</field>
+        <field name="model">billetweb.api.payout.details</field>
+        <field name="arch" type="xml">
+            <tree string="Détails Payout BilletWeb" default_order="date desc">
+                <field name="ext_id"/>
+                <field name="date"/>
+                <field name="event"/>
+                <field name="order_id"/>
+                <field name="price" sum="Total Prix"/>
+                <field name="tax_amount" sum="Total Taxes"/>
+                <field name="fees" sum="Total Frais"/>
+                <field name="payout_api_id"/>
+                <field name="api_call_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Form -->
+    <record id="view_billetweb_api_payout_details_form" model="ir.ui.view">
+        <field name="name">billetweb.api.payout.details.form</field>
+        <field name="model">billetweb.api.payout.details</field>
+        <field name="arch" type="xml">
+            <form string="Détail Payout BilletWeb">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="ext_id" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Informations de base">
+                            <field name="detail_id"/>
+                            <field name="date"/>
+                            <field name="event"/>
+                            <field name="order_id"/>
+                        </group>
+                        <group string="Références API">
+                            <field name="api_call_id"/>
+                            <field name="payout_api_id"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Montants">
+                            <field name="price"/>
+                            <field name="tax_rate" widget="percentage"/>
+                            <field name="tax_amount"/>
+                            <field name="fees"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Données brutes">
+                            <field name="raw_data" widget="ace" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action de fenêtre -->
+    <record id="action_billetweb_api_payout_details" model="ir.actions.act_window">
+        <field name="name">Détails Payout BilletWeb</field>
+        <field name="res_model">billetweb.api.payout.details</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun détail de payout trouvé
+            </p>
+            <p>
+                Les détails de payout sont automatiquement synchronisés depuis l'API BilletWeb.
+            </p>
+        </field>
+    </record>
+
+    <!-- Vue Search -->
+    <record id="view_billetweb_api_payout_details_search" model="ir.ui.view">
+        <field name="name">billetweb.api.payout.details.search</field>
+        <field name="model">billetweb.api.payout.details</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher Détails Payout">
+                <field name="ext_id" string="ID Externe"/>
+                <field name="event" string="Événement"/>
+                <field name="order_id" string="ID Commande"/>
+                <field name="payout_api_id" string="Payout"/>
+
+                <filter name="today" string="Aujourd'hui"
+                        domain="[('date', '>=', datetime.date.today().strftime('%Y-%m-%d'))]"/>
+                <filter name="this_week" string="Cette semaine"
+                        domain="[('date', '>=', (datetime.date.today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter name="this_month" string="Ce mois"
+                        domain="[('date', '>=', datetime.date.today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+
+                <separator/>
+                <filter name="with_taxes" string="Avec taxes"
+                        domain="[('tax_amount', '>', 0)]"/>
+                <filter name="with_fees" string="Avec frais"
+                        domain="[('fees', '>', 0)]"/>
+
+                <group expand="0" string="Grouper par">
+                    <filter name="group_by_event" string="Événement" context="{'group_by': 'event'}"/>
+                    <filter name="group_by_payout" string="Payout" context="{'group_by': 'payout_api_id'}"/>
+                    <filter name="group_by_date" string="Date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>

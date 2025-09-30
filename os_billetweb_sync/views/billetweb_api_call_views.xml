@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Tree pour billetweb.api.call -->
+    <record id="view_billetweb_api_call_tree" model="ir.ui.view">
+        <field name="name">billetweb.api.call.tree</field>
+        <field name="model">billetweb.api.call</field>
+        <field name="arch" type="xml">
+            <tree string="Journal des appels API BilletWeb"
+                  decoration-success="success == True"
+                  decoration-danger="success == False"
+                  default_order="call_date desc">
+                <field name="call_date"/>
+                <field name="api_endpoint"/>
+                <field name="api_user"/>
+                <field name="success"/>
+                <field name="status_code"/>
+                <field name="response_size"/>
+                <field name="api_date"/>
+                <field name="ext_id"/>
+                <field name="cache_until"/>
+                <field name="error_message"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Form pour billetweb.api.call -->
+    <record id="view_billetweb_api_call_form" model="ir.ui.view">
+        <field name="name">billetweb.api.call.form</field>
+        <field name="model">billetweb.api.call</field>
+        <field name="arch" type="xml">
+            <form string="Appel API BilletWeb">
+                <header>
+                    <field name="success" widget="boolean_button"
+                           options="{'terminology': {'string_true': 'Succès', 'string_false': 'Échec'}}"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="api_endpoint" placeholder="Point d'accès API"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Informations de l'appel">
+                            <field name="call_date"/>
+                            <field name="api_user"/>
+                            <field name="call_hash"/>
+                            <field name="api_date"/>
+                            <field name="ext_id"/>
+                        </group>
+                        <group string="Résultat de l'appel">
+                            <field name="status_code"/>
+                            <field name="response_size"/>
+                            <field name="cache_until"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Message d'erreur" invisible="error_message == False">
+                            <field name="error_message" nolabel="1" widget="text"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Search pour billetweb.api.call -->
+    <record id="view_billetweb_api_call_search" model="ir.ui.view">
+        <field name="name">billetweb.api.call.search</field>
+        <field name="model">billetweb.api.call</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher dans les appels API">
+                <field name="api_endpoint" string="Endpoint"/>
+                <field name="api_user" string="Utilisateur"/>
+                <field name="call_hash" string="Hash"/>
+                <field name="ext_id" string="ID Externe"/>
+                <field name="error_message" string="Erreur"/>
+
+                <!-- Filtres -->
+                <filter name="filter_success" string="Succès" domain="[('success', '=', True)]"/>
+                <filter name="filter_error" string="Erreurs" domain="[('success', '=', False)]"/>
+                <filter name="filter_today" string="Aujourd'hui"
+                        domain="[('call_date', '>=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))),
+                                 ('call_date', '&lt;', datetime.datetime.combine(context_today() + datetime.timedelta(days=1), datetime.time(0,0,0)))]"/>
+                <filter name="filter_week" string="Cette semaine"
+                        domain="[('call_date', '>=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d'))]"/>
+
+                <separator/>
+
+                <!-- Groupes -->
+                <group expand="0" string="Grouper par">
+                    <filter name="group_endpoint" string="Endpoint" context="{'group_by': 'api_endpoint'}"/>
+                    <filter name="group_user" string="Utilisateur" context="{'group_by': 'api_user'}"/>
+                    <filter name="group_success" string="Statut" context="{'group_by': 'success'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'call_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action pour le menu -->
+    <record id="action_billetweb_api_call" model="ir.actions.act_window">
+        <field name="name">Journal des appels API</field>
+        <field name="res_model">billetweb.api.call</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_billetweb_api_call_search"/>
+        <field name="context">{'search_default_filter_today': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun appel API enregistré
+            </p>
+            <p>
+                Ce journal permet de suivre tous les appels effectués vers l'API BilletWeb
+                pour éviter les doublons et respecter les limites d'utilisation.
+            </p>
+        </field>
+    </record>
+</odoo>

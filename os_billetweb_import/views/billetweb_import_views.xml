@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_billetweb_import_form" model="ir.ui.view">
+    <field name="name">billetweb.import.form</field>
+    <field name="model">billetweb.import</field>
+    <field name="arch" type="xml">
+      <form>
+          <sheet>
+              <group>
+                  <field name="name"
+                  />
+<!--                               invisible="not name"-->
+                  <field name="import_date"/>
+                  <field name="file_name"
+                  />
+<!--                               invisible="name"-->
+                  <field name="file_data"
+                         filename="file_name"
+                  />
+<!--                               invisible="name"-->
+                  <button name="billetweb_import_action"
+                          type="object"
+                          string="Importer"
+                          class="btn-primary"
+                  />
+<!--                                invisible="not file_name"-->
+              </group>
+          </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="view_billetweb_import_wizard" model="ir.ui.view">
+    <field name="name">billetweb.import.form</field>
+    <field name="model">billetweb.import</field>
+    <field name="arch" type="xml">
+      <form string="Import Virements BilletWeb">
+        <group>
+          <field name="file_data" filename="file_name"/>
+          <field name="file_name"/>
+        </group>
+        <footer>
+          <button string="Importer" type="object" name="billetweb_import_action" class="btn-primary"/>
+          <button string="Fermer" class="btn-secondary" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+</odoo>

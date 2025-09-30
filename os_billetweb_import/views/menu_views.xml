@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_billetweb"
+              name="Billetweb"
+              parent="os_base.menu_accounting_management"
+              sequence="10"
+    />
+    <menuitem id="menu_billetweb_import"
+              name="Importation"
+              parent="menu_billetweb"
+              action="billetweb_import_action"
+              sequence="100"
+    />
+    <menuitem id="menu_billetweb_import_history"
+              name="Historique des importations"
+              parent="menu_billetweb"
+              action="os_billetweb_sync.action_billetweb_import_history"
+              sequence="200"
+    />
+</odoo>

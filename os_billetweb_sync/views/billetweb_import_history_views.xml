@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_billetweb_import_history_tree" model="ir.ui.view">
+        <field name="name">billetweb.import.history.tree</field>
+        <field name="model">billetweb.import.history</field>
+        <field name="arch" type="xml">
+            <tree string="Historique des imports BilletWeb">
+                <field name="date_import"/>
+                <field name="company_id"/>
+                <field name="number_of_payouts"/>
+                <field name="number_of_errors"/>
+                <field name="status"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_billetweb_import_history_kanban" model="ir.ui.view">
+        <field name="name">billetweb.import.history.kanban</field>
+        <field name="model">billetweb.import.history</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card">
+                            <div>
+                                <strong><field name="company_id"/></strong>
+                            </div>
+                            <div>Importé : <field name="date_import"/></div>
+                            <div>Virements : <field name="number_of_payouts"/></div>
+                            <div>Erreurs : <field name="number_of_errors"/></div>
+                            <div><field name="status"/></div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_billetweb_import_history" model="ir.actions.act_window">
+        <field name="name">Historique Imports BilletWeb</field>
+        <field name="res_model">billetweb.import.history</field>
+        <field name="view_mode">kanban,tree,form</field>
+    </record>
+</odoo>

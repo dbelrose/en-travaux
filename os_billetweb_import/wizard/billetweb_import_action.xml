@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Action Wizard Paiements -->
+  <record id="action_billetweb_import_wizard_payment" model="ir.actions.act_window">
+    <field name="name">Import BilletWeb (Paiements)</field>
+    <field name="res_model">billetweb.import</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+    <field name="context">{'default_display_result': 'payment'}</field>
+  </record>
+
+  <!-- Action Wizard Factures -->
+  <record id="action_billetweb_import_wizard_invoice" model="ir.actions.act_window">
+    <field name="name">Import BilletWeb (Factures)</field>
+    <field name="res_model">billetweb.import</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+    <field name="context">{'default_display_result': 'invoice'}</field>
+  </record>
+
+  <menuitem id="menu_billetweb_root"
+            name="BilletWeb FR"
+            sequence="100"
+            parent="account.menu_finance"
+  />
+  <menuitem id="menu_billetweb_import_payment" name="Importer Paiements"
+            parent="menu_billetweb_root" action="action_billetweb_import_wizard_payment" sequence="10"/>
+  <menuitem id="menu_billetweb_import_invoice" name="Importer Factures"
+            parent="menu_billetweb_root" action="action_billetweb_import_wizard_invoice" sequence="20"/>
+</odoo>

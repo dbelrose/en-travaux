@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <menuitem id="menu_accounting_management"
+              name="Gestion"
+              parent="account.menu_finance"
+              sequence="10"/>
+</odoo>

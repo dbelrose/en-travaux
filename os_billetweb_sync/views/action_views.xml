@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_import_billetweb_api" model="ir.actions.server">
+      <field name="name">Importer les données BilletWeb</field>
+      <field name="model_id" ref="model_billetweb_import"/>
+      <field name="binding_model_id" ref="model_billetweb_import"/>
+      <field name="state">code</field>
+      <field name="code">model.with_context(from_ui=True).action_import_api()</field>
+    </record>
+
+    <!-- Dans votre fichier XML des vues/actions (par exemple views/menu.xml) -->
+    <record id="action_billetweb_import_manual" model="ir.actions.server">
+        <field name="name">Import BilletWeb Manuel</field>
+        <field name="model_id" ref="model_billetweb_sync_service"/>
+        <field name="binding_model_id" ref="model_billetweb_sync_service"/>
+        <field name="state">code</field>
+        <field name="code">model.with_context(from_ui=True).action_import_api()</field>
+
+<!--        <field name="code">-->
+<!--            # Ajouter le contexte pour indiquer que c'est un appel depuis l'UI-->
+<!--            action = records.with_context(from_ui=True).action_import_api()-->
+<!--            if action:-->
+<!--                action = action-->
+<!--        </field>-->
+    </record>
+
+    <!-- Ou si vous utilisez une action ir.actions.act_window -->
+    <record id="action_billetweb_import_window" model="ir.actions.act_window">
+        <field name="name">Import BilletWeb</field>
+        <field name="res_model">billetweb.sync.service</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'from_ui': True}</field>
+        <!-- Autres champs selon votre configuration -->
+    </record>
+
+<!--    <record id="action_billetweb_api_attendees" model="ir.actions.act_window">-->
+<!--        <field name="name">BilletWeb API attendees</field>-->
+<!--        <field name="res_model">billetweb.api.attendees</field>-->
+<!--        <field name="view_mode">tree,form</field>-->
+<!--    </record>-->
+
+<!--    <record id="action_billetweb_api_call" model="ir.actions.act_window">-->
+<!--        <field name="name">BilletWeb API call</field>-->
+<!--        <field name="res_model">billetweb.api.call</field>-->
+<!--        <field name="view_mode">tree,form</field>-->
+<!--    </record>-->
+
+<!--    <record id="action_billetweb_api_payouts" model="ir.actions.act_window">-->
+<!--        <field name="name">BilletWeb API payouts</field>-->
+<!--        <field name="res_model">billetweb.api.payouts</field>-->
+<!--        <field name="view_mode">tree,form</field>-->
+<!--    </record>-->
+
+<!--    <record id="action_billetweb_api_payout_details" model="ir.actions.act_window">-->
+<!--        <field name="name">BilletWeb API payout details</field>-->
+<!--        <field name="res_model">billetweb.api.payout.details</field>-->
+<!--        <field name="view_mode">tree,form</field>-->
+<!--    </record>-->
+</odoo>

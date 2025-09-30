@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_sync_billetweb"
+              name="Synchroniser"
+              parent="os_billetweb_import.menu_billetweb"
+              action="action_import_billetweb_api"
+              sequence="300"
+    />
+
+    <menuitem id="menu_billetweb_import_manual"
+              name="Import Manuel BilletWeb"
+              parent="os_billetweb_import.menu_billetweb"
+              action="action_billetweb_import_manual"
+              sequence="400"/>
+
+    <menuitem id="menu_billetweb_api_attendees"
+              name="API attendees"
+              parent="os_billetweb_import.menu_billetweb"
+              action="action_billetweb_api_attendees"
+              sequence="500"/>
+
+    <menuitem id="menu_billetweb_api_call"
+              name="API call"
+              parent="os_billetweb_import.menu_billetweb"
+              action="action_billetweb_api_call"
+              sequence="600"/>
+
+    <menuitem id="menu_billetweb_api_payouts"
+              name="API payouts"
+              parent="os_billetweb_import.menu_billetweb"
+              action="action_billetweb_api_payouts"
+              sequence="700"/>
+
+    <menuitem id="menu_billetweb_api_payout_details"
+              name="API payout details"
+              parent="os_billetweb_import.menu_billetweb"
+              action="action_billetweb_api_payout_details"
+              sequence="800"/>
+
+</odoo>
