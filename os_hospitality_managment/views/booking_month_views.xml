@@ -169,12 +169,8 @@
         <field name="model">booking.month</field>
         <field name="arch" type="xml">
             <tree string="Vues mensuelles">
-                <field name="origin" optional="hide" widget="badge"/>
-                <field name="import_type" optional="hide" widget="badge"/>
                 <field name="display_name" optional="hide"/>
-                <field name="year"
-                       group_operator="count"
-                />
+                <field name="year"/>
                 <field name="month"/>
                 <field name="property_type_id"/>
                 <field name="total_reservations"

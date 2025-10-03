@@ -505,30 +505,72 @@ class AirbnbPdfImporter(models.TransientModel):
             raise UserError(_("Erreur lors de l'import: %s") % str(e))
 
     def _add_booking_line_to_booking_month(self, booking_line):
-        """Ajoute la ligne de réservation au mois de réservation"""
-        BookingMonth = self.env['booking.month']
-        if not booking_line or not booking_line.reservation_date:
+        """
+        Ajoute la ligne de réservation à la vue mensuelle appropriée.
+        Crée la vue mensuelle si elle n'existe pas encore.
+        """
+        if not booking_line or not booking_line.arrival_date or not booking_line.property_type_id:
+            _logger.warning(
+                f"Impossible d'ajouter la réservation au mois : "
+                f"données manquantes (arrival_date ou property_type_id)"
+            )
             return
 
-        month_start = booking_line.reservation_date.replace(day=1)
-        month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        BookingMonth = self.env['booking.month']
 
+        # Extraire l'année et le mois de la date d'arrivée
+        year = booking_line.arrival_date.year
+        month = booking_line.arrival_date.month
+
+        # Rechercher ou créer la vue mensuelle correspondante
         booking_month = BookingMonth.search([
-            ('start_date', '=', month_start),
-            ('end_date', '=', month_end),
-            ('import_id', '=', self.import_id.id)
+            ('year', '=', year),
+            ('month', '=', month),
+            ('property_type_id', '=', booking_line.property_type_id.id),
+            ('company_id', '=', booking_line.company_id.id or self.env.company.id)
         ], limit=1)
 
         if not booking_month:
-            booking_month = BookingMonth.create({
-                'name': month_start.strftime('%B %Y'),
-                'start_date': month_start,
-                'end_date': month_end,
-                'import_id': self.import_id.id,
-            })
+            # Créer une nouvelle vue mensuelle
+            try:
+                booking_month = BookingMonth.create({
+                    'year': year,
+                    'month': month,
+                    'property_type_id': booking_line.property_type_id.id,
+                    'company_id': booking_line.company_id.id or self.env.company.id,
+                })
+                _logger.info(
+                    f"Vue mensuelle créée : {booking_month.display_name} "
+                    f"pour la réservation {booking_line.booking_reference}"
+                )
+            except Exception as e:
+                _logger.error(
+                    f"Erreur lors de la création de la vue mensuelle "
+                    f"pour {year}/{month:02d} - {booking_line.property_type_id.name}: {e}"
+                )
+                return
 
+        # Lier la réservation à la vue mensuelle
         booking_line.booking_month_id = booking_month.id
-        booking_month.line_ids = [(4, booking_line.id)]
+
+        # Forcer le recalcul des champs calculés de la vue mensuelle
+        # en invalidant le cache pour que les compute se déclenchent
+        booking_month.invalidate_recordset([
+            'reservation_ids',
+            'total_reservations',
+            'total_nights',
+            'total_guests',
+            'total_revenue',
+            'total_commission_booking',
+            'total_tourist_tax',
+            'concierge_commission',
+            'net_revenue',
+        ])
+
+        _logger.info(
+            f"Réservation {booking_line.booking_reference} ajoutée à "
+            f"{booking_month.display_name} ({booking_month.total_reservations} réservations)"
+        )
 
     def extract_dates_from_pdf_text(self, data, text):
         """

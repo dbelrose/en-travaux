@@ -547,28 +547,6 @@ class BookingMonth(models.Model):
 
     company_currency_id = fields.Many2one('res.currency', string="Company Currency", related='company_id.currency_id')
 
-    origin = fields.Selection([
-        ('airbnb', '🏠 Airbnb'),
-        ('booking.com', '🏨 Booking.com'),
-        ('other', 'Autre'),
-    ],
-        string='Origine',
-        default='booking.com',
-        help='Source principale des réservations',
-        store=True
-    )
-
-    import_type = fields.Selection([
-        ('file', 'XLS'),
-        ('pdf', 'PDF'),
-        ('manual', 'Saisie manuelle')
-    ],
-        string='Source',
-        default='file',
-        help='Méthode d\'importation des données de réservation',
-        store=True
-    )
-
     # Contrainte d'unicité
     _sql_constraints = [
         ('unique_month_property',
@@ -1428,25 +1406,22 @@ class BookingMonth(models.Model):
         """Génère les deux factures : fournisseur (société cliente) et client (société concierge)"""
         self.ensure_one()
 
-        # Airbnb
-        if self.origin == 'airbnb':
-            # Créer d'abord la facture fournisseur
-            if self.company_id.hm_airbnb_vendor_concierge_commission:
-                self.action_generate_concierge_invoice()
+        # Créer d'abord la facture fournisseur
+        if self.company_id.hm_airbnb_vendor_concierge_commission:
+            self.action_generate_concierge_invoice()
 
-            # Puis créer la facture client
-            if self.company_id.hm_airbnb_customer_concierge_commission:
-                self.action_generate_concierge_client_invoice()
+        # Puis créer la facture client
+        if self.company_id.hm_airbnb_customer_concierge_commission:
+            self.action_generate_concierge_client_invoice()
 
-        # Booking.com
-        if self.origin == 'booking.com':
-            # Créer d'abord la facture fournisseur
-            if self.company_id.hm_booking_vendor_concierge_commission:
-                self.action_generate_concierge_invoice()
+        # Créer d'abord la facture fournisseur
+        if self.company_id.hm_booking_vendor_concierge_commission:
+            self.action_generate_concierge_invoice()
 
-            # Puis créer la facture client
-            if self.company_id.hm_booking_customer_concierge_commission:
-                self.action_generate_concierge_client_invoice()
+        # Puis créer la facture client
+        if self.company_id.hm_booking_customer_concierge_commission:
+            self.action_generate_concierge_client_invoice()
+
         return
 
     def _get_fiscal_position_manual(self, partner, company):
