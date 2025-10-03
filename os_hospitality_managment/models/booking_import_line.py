@@ -12,90 +12,25 @@ class BookingImportLine(models.Model):
     _rec_name = 'display_name'
 
     # Relation avec l'import parent
-    import_id = fields.Many2one('booking.import', string='Import', required=True, ondelete='cascade')
-
+    import_id = fields.Many2one(
+        'booking.import',
+        string='Import',
+        required=True,
+        ondelete='cascade'
+    )
+    booking_month_id = fields.Many2one(
+        'booking.month',
+        string='Mois de réservation',
+        ondelete='set null',
+        index=True,
+        help='Mois de réservation associé pour un accès rapide'
+    )
     # Nom d'affichage
-    display_name = fields.Char(string='Nom', compute='_compute_display_name', store=True)
-
-    # Informations client
-    partner_id = fields.Many2one('res.partner', string='Client', required=True)
-    booker_id = fields.Many2one('res.partner', string='Réservateur')
-
-    # Informations propriété
-    property_type_id = fields.Many2one('product.template', string='Type d\'hébergement', required=True)
-
-    # Informations séjour
-    arrival_date = fields.Date(string='Date d\'arrivée', required=True)
-    departure_date = fields.Date(string='Date de départ', required=True)
-    reservation_date = fields.Date(string='Date de réservation', required=True)
-    duration_nights = fields.Integer(string='Durée (nuits)', required=True, default=1)
-    pax_nb = fields.Integer(string='Nombre de personnes', required=True, default=1)
-    children = fields.Integer(string='Nombre d\'enfants (≤12 ans)', default=0)
-    adults = fields.Integer(string='Nombre d\'adultes', compute='_compute_adults', store=True)
-
-    # Références booking
-    booking_reference = fields.Char(string='Référence Booking')
-    booking_id = fields.Char(string='ID Booking')
-
-    # Statuts
-    payment_status = fields.Selection([
-        ('Entièrement payée', 'Entièrement payée'),
-        ('Prépaiement réglé', 'Prépaiement réglé'),
-        ('Partiellement payée', 'Partiellement payée'),
-        ('Non payée', 'Non payée'),
-        ('Remboursée', 'Remboursée'),
-    ], string='Statut paiement', default='Entièrement payée')
-
-    status = fields.Selection([
-        ('ok', 'Confirmé'),
-        ('cancelled', 'Annulé'),
-        ('no_show', 'No-show'),
-        ('modified', 'Modifié'),
-    ], string='Statut', default='ok')
-
-    # Informations financières
-    rate = fields.Monetary(string='Tarif', currency_field='company_currency_id', store=True)
-    commission_amount = fields.Monetary(string='Platform commission', currency_field='company_currency_id', store=True)
-    base_concierge_commission = fields.Monetary(
-        string='Concierge commission',
-        compute='_compute_base_concierge_commission',
-        currency_field='company_currency_id',
+    display_name = fields.Char(
+        string='Nom',
+        compute='_compute_display_name',
         store=True
     )
-    commission_rate = fields.Float(string='Taux commission (%)', compute='_compute_commission_rate', store=True)
-
-    # Nuitées calculées
-    nights_adults = fields.Integer(string='Nuitées adultes', compute='_compute_nights', store=True)
-    nights_children = fields.Integer(string='Nuitées enfants', compute='_compute_nights', store=True)
-    total_nights = fields.Integer(string='Total nuitées', compute='_compute_nights', store=True)
-
-    # Montant taxe de séjour
-    tax_amount = fields.Monetary(string='Taxe de séjour (XPF)', compute='_compute_tax_amount',
-                                 currency_field='company_currency_id', store=True)
-
-    # Métadonnées
-    create_date = fields.Datetime(string='Date de création', readonly=True)
-    write_date = fields.Datetime(string='Dernière modification', readonly=True)
-
-    # Société
-    company_id = fields.Many2one(
-        'res.company',
-        string='Société',
-        related='import_id.company_id',
-        store=True
-    )
-
-    company_currency_id = fields.Many2one('res.currency', string="Company Currency", related='company_id.currency_id')
-
-    origin = fields.Selection([
-        ('booking.com', 'Booking.com'),
-        ('other', 'Autre'),
-    ], string='origine', default='booking.com')
-
-    import_type = fields.Selection([
-        ('file', 'XLS'),
-        ('manual', 'Saisie manuelle')
-    ], string='Type d\'import', default='file')
 
     @api.depends('partner_id', 'arrival_date', 'property_type_id')
     def _compute_display_name(self):
@@ -109,13 +44,371 @@ class BookingImportLine(models.Model):
                 name_parts.append(f"({record.property_type_id.name})")
             record.display_name = ' - '.join(name_parts) if name_parts else f"Réservation {record.id}"
 
-    @api.depends('arrival_date', 'duration_nights')
-    def _compute_departure_date(self):
+
+    # Informations client
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Client',
+        required=True
+    )
+    booker_id = fields.Many2one(
+        'res.partner',
+        string='Réservateur'
+    )
+
+    concierge_partner_id = fields.Many2one(
+        'res.partner',
+        string='Concierge',
+        compute='_get_concierge_partner_id',
+        store=True
+    )
+
+    @api.depends('property_type_id')
+    def _get_concierge_partner_id(self):
         for record in self:
-            if record.arrival_date and record.duration_nights:
-                record.departure_date = fields.Date.add(record.arrival_date, days=record.duration_nights)
+            record.concierge_partner_id = False
+
+            if not record.property_type_id or not record.property_type_id.company_id:
+                continue
+
+            # Récupérer le type de relation "Concierge" via external ID
+            try:
+                concierge_relation_base = self.env.ref('os_hospitality_managment.relation_type_concierge')
+                # Rechercher le type de sélection correspondant (côté concierge -> propriété)
+                concierge_relation_type = self.env['res.partner.relation.type.selection'].search([
+                    ('type_id', '=', concierge_relation_base.id),
+                    ('is_inverse', '=', False)  # Concierge vers Société
+                ], limit=1)
+
+            except ValueError:
+                # Fallback si l'external ID n'existe pas
+                concierge_relation_type = self.env['res.partner.relation.type.selection'].search([
+                    ('name', 'ilike', 'Concierge')
+                ], limit=1)
+
+            if not concierge_relation_type:
+                continue
+
+            # Rechercher la relation où :
+            # - other_partner_id correspond à la société de la propriété
+            # - type_selection_id correspond au type "Concierge"
+            relation = self.env['res.partner.relation.all'].search([
+                ('other_partner_id', '=', record.property_type_id.company_id.partner_id.id),
+                ('type_selection_id', '=', concierge_relation_type.id),
+                ('active', '=', True)  # Seulement les relations actives
+            ], limit=1)
+
+            if relation:
+                record.concierge_partner_id = relation.this_partner_id
             else:
-                record.departure_date = False
+                # Fallback : utiliser le partenaire de la société comme avant
+                record.concierge_partner_id = record.property_type_id.company_id.partner_id
+
+    # Informations propriété
+    property_type_id = fields.Many2one(
+        'product.template',
+        string='Hébergement',
+        domain="[('company_id', '=', company_id)]",
+        help='Type de propriété réservé',
+        required=True
+)
+
+    # Informations séjour
+    arrival_date = fields.Date(
+        string='🟢 Arrivée',
+        required=True,
+        help='Date d\'arrivée du client (inclusif)'
+    )
+    departure_date = fields.Date(
+        string='🔴 Départ',
+        required=True,
+        help='Date de départ du client (exclusif)',
+    )
+    reservation_date = fields.Date(
+        string='✅ Réservation',
+        required=True,
+        help='Date à laquelle la réservation a été effectuée'
+    )
+    duration_nights = fields.Integer(
+        string='🌙 Nuitées',
+        required=True,
+        default=1
+    )
+    pax_nb = fields.Integer(
+        string='👥 Personnes',
+        required=True,
+        default=1,
+        help='Nombre total de personnes (adultes + enfants)',
+        store=True
+    )
+    children = fields.Integer(
+        string='👶 Enfants',
+        default=0,
+        help='Nombre d\'enfants de 12 ans ou moins',
+        store=True
+    )
+
+    adults = fields.Integer(
+        string='🧑 Adultes',
+        compute='_compute_adults',
+        store=True,
+        help='Nombre d\'adultes (pax_nb - children)'
+    )
+
+    @api.depends('pax_nb', 'children')
+    def _compute_adults(self):
+        for record in self:
+            record.adults = max((record.pax_nb or 0) - (record.children or 0), 0)
+
+    # Références booking
+    booking_reference = fields.Char(
+        string='Référence Booking'
+    )
+    booking_id = fields.Char(
+        string='ID Booking'
+    )
+    # Statuts
+    payment_status = fields.Selection([
+        ('Entièrement payée', 'Entièrement payée'),
+        ('Prépaiement réglé', 'Prépaiement réglé'),
+        ('Partiellement payée', 'Partiellement payée'),
+        ('Non payée', 'Non payée'),
+        ('Remboursée', 'Remboursée'),
+    ],
+        string='Statut paiement',
+        default='Entièrement payée'
+    )
+    status = fields.Selection([
+        ('ok', 'Confirmé'),
+        ('cancelled', 'Annulé'),
+        ('no_show', 'No-show'),
+        ('modified', 'Modifié'),
+    ],
+        string='Statut',
+        default='ok'
+    )
+    # Informations financières
+    rate = fields.Monetary(
+        string='➕ CA',
+        currency_field='company_currency_id',
+        help='Montant facturé au client',
+        store=True
+    )
+    commission_amount = fields.Monetary(
+        string='➖ Plateforme',
+        currency_field='company_currency_id',
+        help='Montant de la commission de la plateforme',
+        store=True
+    )
+    commission_rate = fields.Float(
+        string='% Plateforme',
+        compute='_compute_commission_rate',
+        help='Taux de commission de la plateforme',
+        store=True
+    )
+
+    @api.depends('rate', 'commission_amount')
+    def _compute_commission_rate(self):
+        for record in self:
+            if record.rate and record.rate > 0:
+                record.commission_rate = (record.commission_amount / record.rate) * 100
+            else:
+                record.commission_rate = 0.0
+
+    concierge_service_id = fields.Many2one(
+        'product.product',
+        string='Conciergerie',
+        domain="[('default_code', '=', 'COMMISSION_CONCIERGE'), '|', ('company_id', '=', company_id), ('company_id', "
+               "'=', False)]",
+        default=lambda self: self.env['product.product'].search([
+            ('default_code', '=', 'COMMISSION_CONCIERGE'),
+            '|', ('company_id', '=', self.company_id.id), ('company_id', '=', False)
+        ], limit=1),
+        help='Produit/service utilisé pour calculer la commission du concierge'
+    )
+
+    inverse_concierge_commission_rate = fields.Float(
+        string='% Inverse concierge',
+        compute='_compute_inverse_concierge_commission_rate',
+        help='Le taux de commission inverse du concierge (100% - taux de commission)',
+        store=True
+    )
+
+
+
+    concierge_commission_rate = fields.Float(
+        string='% Concierge',
+        compute='_compute_concierge_commission_rate',
+        help='Taux de commission du concierge (100% - taux de commission inverse)',
+        store=True
+    )
+
+    @api.depends('inverse_concierge_commission_rate')
+    def _compute_concierge_commission_rate(self):
+        """Calcule le taux de commission concierge"""
+        for record in self:
+            record.concierge_commission_rate = 100 - record.inverse_concierge_commission_rate or 0.0
+
+    base_concierge_commission = fields.Monetary(
+        string='Base concierge',
+        compute='_compute_base_concierge_commission',
+        currency_field='company_currency_id',
+        help='Base de calcul pour la commission du concierge (CA - Commission plateforme - Taxe de séjour)',
+        store=True
+    )
+
+    @api.depends('rate', 'commission_amount', 'origin', 'company_id.hm_airbnb_vendor_concierge_commission',
+                 'company_id.hm_booking_vendor_concierge_commission',
+                 'company_id.hm_airbnb_customer_concierge_commission',
+                 'company_id.hm_booking_customer_concierge_commission')
+    def _compute_base_concierge_commission(self):
+        for record in self:
+            airbnb_vendor_ok = record.origin == 'airbnb' and record.company_id.hm_airbnb_vendor_concierge_commission
+            booking_vendor_ok = record.origin == 'booking.com' \
+                                and record.company_id.hm_booking_vendor_concierge_commission
+            airbnb_customer_ok = record.origin == 'airbnb' and record.company_id.hm_airbnb_customer_concierge_commission
+            booking_customer_ok = record.origin == 'booking.com' \
+                                  and record.company_id.hm_booking_customer_concierge_commission
+
+            rate = record.rate or 0.0
+            commission = record.commission_amount or 0.0
+            tax_amount = record.tax_amount or 0.0
+
+            if airbnb_vendor_ok or airbnb_customer_ok or booking_vendor_ok or booking_customer_ok:
+                record.base_concierge_commission = rate - commission - tax_amount
+            else:
+                record.base_concierge_commission = 0.0
+
+    concierge_commission = fields.Monetary(
+        string='➖ Concierge',
+        compute='_compute_concierge_commission',
+        currency_field='company_currency_id',
+        help='Montant de la commission du concierge',
+        store=True
+    )
+
+    @api.depends('base_concierge_commission', 'concierge_commission_rate')
+    def _compute_concierge_commission(self):
+        """Calcule la commission concierge en utilisant le discount du supplierinfo"""
+        for record in self:
+            record.concierge_commission = record.base_concierge_commission * record.concierge_commission_rate / 100
+
+    # Nuitées calculées
+    nights_adults = fields.Integer(
+        string='Nuitées adultes',
+        compute='_compute_nights_adults',
+        store=True
+    )
+
+    @api.depends('duration_nights', 'adults')
+    def _compute_nights_adults(self):
+        for record in self:
+            record.nights_adults = (record.duration_nights or 0) * (record.adults or 0)
+
+    nights_children = fields.Integer(
+        string='Nuitées enfants',
+        compute='_compute_nights_children',
+        store=True
+    )
+
+    @api.depends('duration_nights', 'children')
+    def _compute_nights_children(self):
+        for record in self:
+            record.nights_children = (record.duration_nights or 0) * (record.children or 0)
+
+    total_nights = fields.Integer(
+        string='Total nuitées',
+        compute='_compute_total_nights',
+        store=True
+    )
+
+    @api.depends('nights_adults', 'nights_children')
+    def _compute_total_nights(self):
+        for record in self:
+            record.total_nights = record.nights_adults + record.nights_children
+
+    # TO
+    tax_amount = fields.Monetary(
+        string='Mairie',
+        compute='_compute_tax_amount',
+        currency_field='company_currency_id',
+        store=True
+    )
+
+    @api.depends('nights_adults')
+    def _compute_tax_amount(self):
+        # TODO: Adapter le calcul de la taxe de séjour selon les règles locales
+        for record in self:
+            record.tax_amount = record.nights_adults * 60.0
+
+    # Métadonnées
+    create_date = fields.Datetime(string='Date de création', readonly=True)
+    write_date = fields.Datetime(string='Dernière modification', readonly=True)
+
+    # Société
+    company_id = fields.Many2one(
+        'res.company',
+        string='Société',
+        related='import_id.company_id',
+        store=True
+    )
+
+    company_currency_id = fields.Many2one(
+        'res.currency',
+        string="Company Currency",
+        related='company_id.currency_id'
+    )
+
+    origin = fields.Selection([
+        ('booking.com', 'Booking.com'),
+        ('other', 'Autre'),
+    ],
+        string='Origine',
+        default='booking.com'
+    )
+
+    import_type = fields.Selection([
+        ('file', 'XLS'),
+        ('manual', 'Saisie manuelle')
+    ],
+        string='Format',
+        default='file'
+    )
+
+    def _get_concierge_partner(self):
+        """Récupère le partenaire concierge pour cette ligne de réservation"""
+        if not self.property_type_id or not self.property_type_id.company_id:
+            return False
+
+        # Récupérer le type de relation "Concierge" via external ID
+        try:
+            concierge_relation_base = self.env.ref('os_hospitality_managment.relation_type_concierge')
+            # Rechercher le type de sélection correspondant (côté concierge -> propriété)
+            concierge_relation_type = self.env['res.partner.relation.type.selection'].search([
+                ('type_id', '=', concierge_relation_base.id),
+                ('is_inverse', '=', False)  # Concierge vers Société
+            ], limit=1)
+        except ValueError:
+            # Fallback si l'external ID n'existe pas
+            concierge_relation_type = self.env['res.partner.relation.type.selection'].search([
+                ('name', 'ilike', 'Concierge')
+            ], limit=1)
+
+        if not concierge_relation_type:
+            return False
+
+        # Rechercher la relation
+        relation = self.env['res.partner.relation.all'].search([
+            ('other_partner_id', '=', self.property_type_id.company_id.partner_id.id),
+            ('type_selection_id', '=', concierge_relation_type.id),
+            ('active', '=', True)
+        ], limit=1)
+
+        if relation:
+            return relation.this_partner_id
+        else:
+            # Fallback : utiliser le partenaire de la société
+            return self.property_type_id.company_id.partner_id
 
     @api.depends('pax_nb', 'children')
     def _compute_adults(self):
@@ -129,19 +422,35 @@ class BookingImportLine(models.Model):
             record.nights_children = (record.duration_nights or 0) * (record.children or 0)
             record.total_nights = record.nights_adults + record.nights_children
 
-    @api.depends('nights_adults')
-    def _compute_tax_amount(self):
-        """Calcule le montant de la taxe de séjour (60 XPF par nuitée adulte)"""
+    @api.depends('company_id', 'concierge_partner_id')
+    def _compute_inverse_concierge_commission_rate(self):
+        """Calcule le taux de commission inverse concierge en utilisant le discount du supplierinfo"""
         for record in self:
-            record.tax_amount = record.nights_adults * 60.0
+            taux = 0.0
 
-    @api.depends('rate', 'commission_amount')
-    def _compute_commission_rate(self):
-        for record in self:
-            if record.rate and record.rate > 0:
-                record.commission_rate = (record.commission_amount / record.rate) * 100
-            else:
-                record.commission_rate = 0.0
+            # Rechercher le produit COMMISSION_CONCIERGE
+            concierge_service = record.env['product.product'].search([
+                ('default_code', '=', 'COMMISSION_CONCIERGE'),
+                '|', ('company_id', '=', record.company_id.id), ('company_id', '=', False)
+            ], limit=1)
+
+            if concierge_service:
+                # Trouver le partenaire concierge pour cette propriété
+                concierge_partner = record.concierge_partner_id
+
+                if concierge_partner:
+                    # Rechercher l'info fournisseur correspondante
+                    supplier_info = concierge_service.seller_ids.filtered(
+                        lambda s: s.partner_id == concierge_partner
+                    )
+
+                    if supplier_info:
+                        taux = supplier_info[0].discount
+                    else:
+                        # Fallback : utiliser le prix du produit comme pourcentage
+                        taux = 100 - concierge_service.list_price
+
+            record.inverse_concierge_commission_rate = taux
 
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
@@ -373,24 +682,3 @@ class BookingImportLine(models.Model):
                 'target': 'current',
             }
         return False
-
-    @api.depends('rate', 'commission_amount', 'origin', 'company_id.hm_airbnb_vendor_concierge_commission',
-                 'company_id.hm_booking_vendor_concierge_commission',
-                 'company_id.hm_airbnb_customer_concierge_commission',
-                 'company_id.hm_booking_customer_concierge_commission')
-    def _compute_base_concierge_commission(self):
-        for record in self:
-            airbnb_vendor_ok = record.origin == 'airbnb' and record.company_id.hm_airbnb_vendor_concierge_commission
-            booking_vendor_ok = record.origin == 'booking.com' \
-                                and record.company_id.hm_booking_vendor_concierge_commission
-            airbnb_customer_ok = record.origin == 'airbnb' and record.company_id.hm_airbnb_customer_concierge_commission
-            booking_customer_ok = record.origin == 'booking.com' \
-                                  and record.company_id.hm_booking_customer_concierge_commission
-
-            rate = record.rate or 0.0
-            commission = record.commission_amount or 0.0
-
-            if airbnb_vendor_ok or airbnb_customer_ok or booking_vendor_ok or booking_customer_ok:
-                record.base_concierge_commission = rate - commission
-            else:
-                record.base_concierge_commission = 0.0

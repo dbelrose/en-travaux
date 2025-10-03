@@ -11,3 +11,4 @@ from . import account_move_extension
 from . import customer_invoice_wizard
 from . import res_company
 from . import res_config_settings
+from . import account_move

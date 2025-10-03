@@ -9,20 +9,15 @@
             <!-- Ajout du bouton pour générer les factures clients -->
             <button name="action_generate_both_concierge_invoices" position="after">
                 <button name="action_generate_customer_invoices"
-                        string="Factures clients"
+                        string="⚙️ Factures clients"
                         type="object"
                         class="btn-primary"
                         invisible="customer_invoices_generated or total_revenue &lt;= 0"/>
                 <button name="action_view_customer_invoices"
-                        string="Voir factures clients"
+                        string="👁️ Factures clients"
                         type="object"
                         class="btn-secondary"
                         invisible="not customer_invoices_generated"/>
-            </button>
-
-            <!-- Mise à jour du bouton "Générer toutes les factures" -->
-            <button name="action_generate_all_invoices" position="attributes">
-                <attribute name="string">Toutes les factures</attribute>
             </button>
 
             <!-- Ajout des statistiques clients dans la page statistiques -->
@@ -79,21 +74,20 @@
         <field name="inherit_id" ref="view_booking_month_tree"/>
         <field name="arch" type="xml">
             <!-- Ajout de colonnes pour les factures clients -->
-            <field name="concierge_commission" position="after">
-                <field name="customer_invoices_generated" invisible="1"/>
+            <field name="net_revenue" position="after">
+                <field name="customer_invoices_generated" column_invisible="1"/>
                 <field name="total_customer_invoices" optional="show"/>
-                <field name="customer_invoices_amount" sum="Total facturé clients" widget="monetary" optional="show"/>
+                <field name="customer_invoices_amount"
+                       sum="Total facturé clients"
+                       widget="monetary"
+                       optional="show"
+                />
             </field>
-
-            <!-- Mise à jour du bouton d'action -->
-            <button name="action_generate_all_invoices" position="attributes">
-                <attribute name="string">Toutes factures</attribute>
-            </button>
 
             <!-- Ajout d'un bouton spécifique pour les factures clients -->
             <button name="action_generate_all_invoices" position="after">
                 <button name="action_generate_customer_invoices"
-                        string="Factures clients"
+                        string="⚙️ Factures clients"
                         type="object"
                         icon="fa-user"
                         invisible="customer_invoices_generated"/>

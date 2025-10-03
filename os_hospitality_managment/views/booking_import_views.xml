@@ -9,27 +9,36 @@
             <form string="Import de réservations">
                 <header>
                     <button name="action_import_excel_file"
-                            string="Importer fichier Excel"
+                            string="⬆️ Fichier Excel"
+                            help="Importer un fichier Excel contenant des réservations"
                             type="object"
                             class="btn-primary"
-                            invisible="state in ['imported', 'processed'] or import_type != 'file'"/>
+                            invisible="state in ['imported', 'processed'] or import_type != 'file'"
+                    />
                     <button name="action_add_reservation"
-                            string="Ajouter réservation"
+                            string="➕ Réservation"
+                            help="Ajouter une réservation manuellement"
                             type="object"
-                            class="btn-secondary"/>
+                            class="btn-secondary"
+                    />
                     <button name="action_process_import"
-                            string="Traiter l'import"
+                            string="⚙️ Traiter l'import"
+                            help="Créer les réservations à partir des lignes importées"
                             type="object"
                             class="btn-primary"
-                            invisible="state != 'imported'"/>
+                            invisible="state != 'imported'"
+                    />
                     <button name="action_view_quarters"
-                            string="Voir déclarations"
+                            string="👁️ Déclarations"
                             type="object"
-                            class="btn-secondary"/>
+                            class="btn-secondary"
+                    />
                     <button name="action_view_months"
-                            string="Voir vues mensuelles"
+                            string="👁️ Vues mensuelles"
+                            help="Voir les réservations importées par mois"
                             type="object"
-                            class="btn-secondary"/>
+                            class="btn-secondary"
+                    />
                     <field name="state" widget="statusbar"/>
                 </header>
                 
@@ -72,14 +81,17 @@
                                     <field name="partner_id"/>
                                     <field name="arrival_date"/>
                                     <field name="duration_nights"/>
-                                    <field name="pax_nb"/>
-                                    <field name="children"/>
+                                    <field name="pax_nb" optional="hide"/>
+                                    <field name="children" optional="hide"/>
                                     <field name="adults"/>
-                                    <field name="status" widget="badge"/>
-                                    <field name="rate" optional="hide" widget="monetary"/>
+                                    <field name="status"  optional="hide" widget="badge"/>
+                                    <field name="rate" widget="monetary"/>
                                     <field name="commission_amount" optional="hide" widget="monetary"/>
-                                    <field name="tax_amount" optional="hide" widget="monetary"/>
-                                    <field name="company_currency_id" invisible="1"/>
+                                    <field name="tax_amount" widget="monetary"/>
+                                    <field name="concierge_commission" widget="monetary"/>
+                                    <field name="company_currency_id"
+                                           column_invisible="1"
+                                    />
                                     <button name="action_edit" 
                                             string="Modifier"
                                             type="object"

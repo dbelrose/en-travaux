@@ -7,14 +7,15 @@ from odoo.exceptions import UserError
 class BookingImport(models.Model):
     _inherit = 'booking.import'
 
-    # Ajout du champ pour le fichier PDF Airbnb
-    pdf_file_data = fields.Binary(string='Fichier PDF Airbnb')
+    import_type = fields.Selection(
+        selection_add=[('pdf', 'PDF')],
+        ondelete={'pdf': 'set default'}
+    )
 
-    import_type = fields.Selection([
-        ('file', 'Booking.com (XLS)'),
-        ('airbnb_pdf', 'Airbnb (PDF)'),
-        ('manual', 'Saisie manuelle')
-    ], string='Type d\'import', default='file')
+    origin = fields.Selection(
+        selection_add=[('airbnb', 'Airbnb')],
+        ondelete={'airbnb': 'set default'}
+    )
 
     # Statistiques par origine - SANS @api.depends pour éviter l'erreur
     airbnb_reservations = fields.Integer(
@@ -22,18 +23,7 @@ class BookingImport(models.Model):
         compute='_compute_origin_stats',
         store=False  # Important: pas de stockage pour éviter les problèmes
     )
-    booking_com_reservations = fields.Integer(
-        string='Réservations Booking.com',
-        compute='_compute_origin_stats',
-        store=False
-    )
-    other_reservations = fields.Integer(
-        string='Autres réservations',
-        compute='_compute_origin_stats',
-        store=False
-    )
 
-    # AUCUN @api.depends - calcul à la demande seulement
     def _compute_origin_stats(self):
         """Calcule les statistiques par origine"""
         for record in self:
@@ -72,14 +62,14 @@ class BookingImport(models.Model):
     def import_airbnb_pdf(self):
         """Importe les réservations depuis un fichier PDF Airbnb"""
         self.ensure_one()
-        if not self.pdf_file_data:
+        if not self.file_data:
             raise UserError(_("Aucun fichier PDF n'a été téléchargé."))
 
         try:
             # Créer et exécuter l'importateur PDF
             airbnb_importer = self.env['airbnb.pdf.importer'].create({
-                'pdf_file': self.pdf_file_data,
-                'pdf_filename': self.file_name,
+                'pdf_file': self.file_data,
+                'file_name': self.file_name,
                 'import_id': self.id,
             })
 

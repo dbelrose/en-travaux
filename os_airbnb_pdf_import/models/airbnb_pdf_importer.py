@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from odoo import models, fields, _
 from odoo.exceptions import UserError
 
@@ -17,7 +17,7 @@ class AirbnbPdfImporter(models.TransientModel):
     _description = 'Importateur PDF Airbnb'
 
     pdf_file = fields.Binary(string='Fichier PDF', required=True)
-    pdf_filename = fields.Char(string='Nom du fichier')
+    file_name = fields.Char(string='Nom du fichier')
     import_id = fields.Many2one('booking.import', string='Import', required=True)
 
     def _extract_phone_from_pdf_annotations_fitz(self, pdf_b64):
@@ -185,6 +185,9 @@ class AirbnbPdfImporter(models.TransientModel):
         data = {}
 
         try:
+            data['origin'] = 'airbnb'  # Origine de la réservation
+            data['import_type'] = 'pdf'
+
             # Extraction du nom du client
             name_pattern = r"Ancien voyageur\s*\n\s*([^\n]+)"
             name_match = re.search(name_pattern, text)
@@ -241,26 +244,13 @@ class AirbnbPdfImporter(models.TransientModel):
                 data['language'] = lang_mapping.get(lang_text, 'fr_FR')
 
             # Extraction du type de logement
-            property_pattern = r"([^\n]*chambres?[^\n]*)"
+            property_pattern = r"Ancien voyageur\s*\n\s*[^\n]+\n\s*([^\n]+)"
             property_match = re.search(property_pattern, text, re.IGNORECASE)
             if property_match:
                 data['property_type'] = property_match.group(1).strip()
 
             # Extraction des dates
-            date_pattern = r"(\d{1,2})\s+(\w+)\.?\s*–\s*(\d{1,2})\s+(\w+)\s*\((\d+)\s+nuits?\)"
-            date_match = re.search(date_pattern, text)
-            if date_match:
-                start_day = int(date_match.group(1))
-                start_month = self._parse_french_month(date_match.group(2))
-                end_day = int(date_match.group(3))
-                end_month = self._parse_french_month(date_match.group(4))
-                nights = int(date_match.group(5))
-
-                # Assumons année 2025 (peut être ajusté selon le contexte)
-                current_year = 2025
-                data['arrival_date'] = datetime(current_year, start_month, start_day).date()
-                data['departure_date'] = datetime(current_year, end_month, end_day).date()
-                data['duration_nights'] = nights
+            self.extract_dates_from_pdf_text(data, text)
 
             # Extraction du nombre de voyageurs
             travelers_pattern = r"(\d+)\s+voyageurs?"
@@ -283,26 +273,25 @@ class AirbnbPdfImporter(models.TransientModel):
                 data['booking_reference'] = confirmation_match.group(1).strip()
 
             # Extraction du montant total
-            total_pattern = r"Total \(EUR\)\s*([0-9.,]+)\s*€"
-            first = total_match = re.search(total_pattern, text)
+            total_pattern = r"Total \(EUR\)\s*([0-9\s\u00A0.,]+)\s*€"
+            payment_section = re.search(r"Versement\s+de\s+l[''`]hôte", text, re.IGNORECASE)
 
-            if first:
-                # On repart juste après le 1er match
-                second = re.search(total_pattern, text[first.end():])
-                if second:
-                    total_match = second
+            if not payment_section:
+                payment_section = re.search(r"Détails\s+du\s+paiement\s+du\s+voyageur", text, re.IGNORECASE)
+
+            total_match = re.search(total_pattern, text[payment_section.end():], re.IGNORECASE)
 
             if total_match:
-                total_str = total_match.group(1).replace(',', '.')
-                data['rate'] = float(total_str)
+                amount_str = total_match.group(1)
+                # Nettoyer la chaîne pour la convertir en nombre
+                cleaned_amount = amount_str.replace(' ', '').replace('\u00A0', '').replace(',', '.')
+                data['rate'] = float(cleaned_amount)
 
-            # Extraction du versement hôte (commission)
-            host_payment_pattern = r"Total \(EUR\)\s*([0-9.,]+)\s*€"
             # Trouver tous les montants totaux
-            all_totals = re.findall(r"Total \(EUR\)\s*([0-9.,]+)\s*€", text)
-            if len(all_totals) >= 2:
-                guest_total = float(all_totals[0].replace(',', '.'))
-                host_total = float(all_totals[1].replace(',', '.'))
+            all_totals = re.findall(total_pattern, text)
+            if len(all_totals) >= 2 and self.env.company.hm_airbnb_vendor_platform_commission:
+                guest_total = float(all_totals[0].replace(' ', '').replace('\u00A0', '').replace(',', '.'))
+                host_total = float(all_totals[1].replace(' ', '').replace('\u00A0', '').replace(',', '.'))
                 data['commission_amount'] = guest_total - host_total
 
             # Extraction de la date de réservation
@@ -368,17 +357,14 @@ class AirbnbPdfImporter(models.TransientModel):
                     ('code', '=', self._get_country_code(data['country']))
                 ], limit=1)
 
-            lang = self.env['res.lang']._lang_get_id(data.get('language', 'fr_FR'))
-
             partner_vals = {
                 'name': name or 'Indéfini',
                 'image_1920': data.get('image_1920', ''),
-                'phone': data.get('phone', ''),
                 'mobile': data.get('phone_raw', ''),
                 'website': data.get('website', ''),
                 'city': data.get('city', ''),
                 'country_id': country.id if country else False,
-                'lang': lang,
+                'lang': data.get('language', 'fr_FR'),
                 'is_company': False,
                 'customer_rank': 1,
             }
@@ -426,11 +412,12 @@ class AirbnbPdfImporter(models.TransientModel):
             'status': 'ok',
             'rate': rate_xpf,
             'commission_amount': commission_xpf,
-            'origin': 'airbnb',  # Définir l'origine comme Airbnb
+            'origin': data.get('origin', 'airbnb'),  # Définir l'origine comme Airbnb
+            'import_type': data.get('import_type', 'pdf'),
         }
 
         # Supprimer les champs qui n'existent peut-être pas
-        fields_to_check = ['children', 'booking_id', 'payment_status', 'origin']
+        fields_to_check = ['children', 'booking_id', 'payment_status']
         for field_name in fields_to_check:
             if field_name in booking_vals:
                 # Vérifier si le champ existe dans le modèle
@@ -485,6 +472,12 @@ class AirbnbPdfImporter(models.TransientModel):
             raise UserError(_("Veuillez sélectionner un fichier PDF."))
 
         try:
+            # Valoriser le type d'import
+            self.import_id.import_type = 'pdf'
+
+            # Valoriser l'origine de l'import
+            self.import_id.origin = 'airbnb'
+
             # Extraction du texte
             text = self._extract_text_from_pdf(self.pdf_file)
 
@@ -496,6 +489,7 @@ class AirbnbPdfImporter(models.TransientModel):
 
             # Création de la ligne de réservation
             booking_line = self._create_booking_line(data, partner)
+            self._add_booking_line_to_booking_month(booking_line)
 
             return {
                 'type': 'ir.actions.act_window',
@@ -510,18 +504,113 @@ class AirbnbPdfImporter(models.TransientModel):
             _logger.error(f"Erreur lors de l'import Airbnb: {e}")
             raise UserError(_("Erreur lors de l'import: %s") % str(e))
 
+    def _add_booking_line_to_booking_month(self, booking_line):
+        """Ajoute la ligne de réservation au mois de réservation"""
+        BookingMonth = self.env['booking.month']
+        if not booking_line or not booking_line.reservation_date:
+            return
 
-class BookingImport(models.Model):
-    _inherit = 'booking.import'
-    _description = 'Import de réservations'
+        month_start = booking_line.reservation_date.replace(day=1)
+        month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
 
-    def action_import_airbnb_pdf(self):
-        """Action pour ouvrir l'assistant d'import PDF"""
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Importer PDF Airbnb'),
-            'view_mode': 'form',
-            'res_model': 'airbnb.pdf.importer',
-            'target': 'new',
-            'context': {'default_import_id': self.id}
+        booking_month = BookingMonth.search([
+            ('start_date', '=', month_start),
+            ('end_date', '=', month_end),
+            ('import_id', '=', self.import_id.id)
+        ], limit=1)
+
+        if not booking_month:
+            booking_month = BookingMonth.create({
+                'name': month_start.strftime('%B %Y'),
+                'start_date': month_start,
+                'end_date': month_end,
+                'import_id': self.import_id.id,
+            })
+
+        booking_line.booking_month_id = booking_month.id
+        booking_month.line_ids = [(4, booking_line.id)]
+
+    def extract_dates_from_pdf_text(self, data, text):
+        """
+        Extrait les dates d'arrivée, départ et réservation d'un texte PDF
+        basé sur le format observé dans l'image fournie
+        """
+
+        # Pattern pour les dates individuelles (format: jour. DD mois YYYY)
+        # Exemple: "jeu. 27 févr. 2025" ou "dim. 2 mars 2025"
+        date_pattern = r"(\w+)\.\s*(\d{1,2})\s+(\w+)\.?\s*(\d{4})"
+
+        # Recherche de la date d'arrivée
+        arrival_match = re.search(r"Arrivée.*?(\w+)\.\s*(\d{1,2})\s+(\w+)\.?\s*(\d{4})", text, re.IGNORECASE | re.DOTALL)
+        if arrival_match:
+            day = int(arrival_match.group(2))
+            month_str = arrival_match.group(3)
+            year = int(arrival_match.group(4))
+            month = self._parse_french_month(month_str)
+            if month:
+                data['arrival_date'] = date(year, month, day)
+
+        # Recherche de la date de départ
+        departure_match = re.search(r"Départ.*?(\w+)\.\s*(\d{1,2})\s+(\w+)\.?\s*(\d{4})", text, re.IGNORECASE | re.DOTALL)
+        if departure_match:
+            day = int(departure_match.group(2))
+            month_str = departure_match.group(3)
+            year = int(departure_match.group(4))
+            month = self._parse_french_month(month_str)
+            if month:
+                data['departure_date'] = date(year, month, day)
+
+        # Recherche de la date de réservation
+        reservation_match = re.search(r"Date de réservation.*?(\w+)\.\s*(\d{1,2})\s+(\w+)\.?\s*(\d{4})", text,
+                                      re.IGNORECASE | re.DOTALL)
+        if reservation_match:
+            day = int(reservation_match.group(2))
+            month_str = reservation_match.group(3)
+            year = int(reservation_match.group(4))
+            month = self._parse_french_month(month_str)
+            if month:
+                data['reservation_date'] = date(year, month, day)
+
+        # Calcul du nombre de nuits si on a les dates d'arrivée et de départ
+        if 'arrival_date' in data and 'departure_date' in data:
+            duration = data['departure_date'] - data['arrival_date']
+            data['duration_nights'] = duration.days
+
+        return data
+
+    def _parse_french_month(self, month_str):
+        """
+        Convertit les noms/abréviations de mois français en numéro de mois
+        """
+        french_months = {
+            'janvier': 1, 'janv': 1, 'jan': 1,
+            'février': 2, 'févr': 2, 'fev': 2, 'feb': 2,
+            'mars': 3, 'mar': 3,
+            'avril': 4, 'avr': 4, 'apr': 4,
+            'mai': 5,
+            'juin': 6, 'jun': 6,
+            'juillet': 7, 'juil': 7, 'jul': 7,
+            'août': 8, 'aou': 8, 'aug': 8,
+            'septembre': 9, 'sept': 9, 'sep': 9,
+            'octobre': 10, 'oct': 10,
+            'novembre': 11, 'nov': 11,
+            'décembre': 12, 'déc': 12, 'dec': 12
         }
+
+        month_clean = month_str.lower().strip('.').strip()
+        return french_months.get(month_clean)
+
+# class BookingImport(models.Model):
+#     _inherit = 'booking.import'
+#     _description = 'Import de réservations'
+#
+#     def action_import_airbnb_pdf(self):
+#         """Action pour ouvrir l'assistant d'import PDF"""
+#         return {
+#             'type': 'ir.actions.act_window',
+#             'name': _('Importer PDF Airbnb'),
+#             'view_mode': 'form',
+#             'res_model': 'airbnb.pdf.importer',
+#             'target': 'new',
+#             'context': {'default_import_id': self.id}
+#         }

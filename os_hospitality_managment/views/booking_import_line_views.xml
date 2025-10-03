@@ -9,6 +9,7 @@
                 <sheet>
                     <group>
                         <group string="Client">
+                            <field name="company_id" invisible="1"/>
                             <field name="booker_id" required="1"/>
                             <field name="partner_id" required="1"/>
                         </group>
@@ -50,22 +51,62 @@
             <tree string="Lignes de réservation">
                 <field name="origin" optional="hide"/>
                 <field name="import_type" optional="hide"/>
+                <field name="concierge_partner_id" optional="hide"/>
                 <field name="import_id"/>
                 <field name="booker_id"/>
                 <field name="partner_id" optional="hide"/>
-                <field name="property_type_id"/>
-                <field name="arrival_date"/>
-                <field name="duration_nights"/>
-                <field name="pax_nb"/>
-                <field name="children"/>
-                <field name="payment_status"/>
+                <field name="property_type_id" optional="show"/>
+                <field name="arrival_date" optional="show"/>
+                <field name="duration_nights"
+                       optional="show"
+                       sum="Nombre total de nuitées"
+                />
+                <field name="pax_nb"
+                       optional="hide"
+                       avg="Nombre moyen de personnes par séjour"
+                />
+                <field name="children"
+                       optional="hide"
+                       avg="Nombre moyen d'enfants par séjour"
+                />
+                <field name="adults"
+                       optional="show"
+                       avg="Nombre moyen d'adultes par séjour"
+                />
+                <field name="payment_status"
+                       optional="hide"
+                />
                 <field name="status"/>
-                <field name="rate" optional="hide" sum="Total Rate"/>
+                <field name="rate"
+                       optional="hide"
+                       sum="Total client"
+                />
                 <field name="commission_amount"
-                       optional="hide" sum="Total platform commission" widget="monetary"/>
+                       optional="hide"
+                       sum="Total commission plateforme"
+                       widget="monetary"
+                />
+                <field name="tax_amount"
+                       sum="Total mairie"
+                       widget="monetary"
+                />
                 <field name="base_concierge_commission"
-                       optional="hide" sum="Total concierge commission" widget="monetary"/>
-                <field name="company_currency_id" invisible="1"/>
+                       optional="hide"
+                       sum="Total base commission concierge"
+                       widget="monetary"
+                />
+                <field name="concierge_commission_rate"
+                       optional="hide"
+                       avg="Taux de commission moyen du concierge"
+                />
+                <field name="concierge_commission"
+                       optional="show"
+                       sum="Montant de commission du concierge"
+                       widget="monetary"
+                />
+                <field name="company_currency_id"
+                       column_invisible="1"
+                />
             </tree>
         </field>
     </record>
@@ -82,16 +123,21 @@
                 <field name="arrival_date"/>
                 <field name="import_id"/>
                 <separator/>
-                <filter string="Arrivées aujourd'hui" name="arrival_today"
+                <filter string="Arrivées aujourd'hui"
+                        name="arrival_today"
                         domain="[('arrival_date', '&gt;=', context_today()), ('arrival_date', '&lt;', context_today() + datetime.timedelta(days=1))]"/>
-                <filter string="Arrivées cette semaine" name="arrival_week"
+                <filter string="Arrivées cette semaine"
+                        name="arrival_week"
                         domain="[('arrival_date', '&gt;=', context_today() - datetime.timedelta(days=context_today().weekday())), ('arrival_date', '&lt;', context_today() + datetime.timedelta(days=7-context_today().weekday()))]"/>
-                <filter string="Arrivées ce mois" name="arrival_month"
+                <filter string="Arrivées ce mois"
+                        name="arrival_month"
                         domain="[('arrival_date', '&gt;=', context_today().replace(day=1)), ('arrival_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1))]"/>
                 <separator/>
-                <filter string="Payé entièrement" name="fully_paid"
+                <filter string="Payé entièrement"
+                        name="fully_paid"
                         domain="[('payment_status', '=', 'Entièrement payée')]"/>
-                <filter string="Statut OK" name="status_ok"
+                <filter string="Statut OK"
+                        name="status_ok"
                         domain="[('status', '=', 'ok')]"/>
                 <separator/>
                 <group expand="0" string="Regrouper par">

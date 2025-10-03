@@ -2,7 +2,6 @@ from odoo import models, fields, api
 from datetime import date
 import logging
 import num2words
-# from hospitality_management_common import first_day_of_next_month as fdonm
 
 _logger = logging.getLogger(__name__)
 
