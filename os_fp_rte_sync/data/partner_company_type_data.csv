@@ -1,0 +1,50 @@
+﻿id;name
+partner_company_type_ 110;Artisan-commerçant
+partner_company_type_ 120;Commerçant
+partner_company_type_ 130;Artisan
+partner_company_type_ 140;Officier public ou ministériel
+partner_company_type_ 150;Profession libérale
+partner_company_type_ 160;Exploitant agricole
+partner_company_type_ 170;Agent commercial
+partner_company_type_ 180;Auto-entrepreneur
+partner_company_type_ 190;Personne physique
+partner_company_type_ 210;Indivision
+partner_company_type_ 220;Société de Fait
+partner_company_type_ 230;Société en Participations
+partner_company_type_ 240;Fiducie
+partner_company_type_ 270;Paroisse hors zone concordataire
+partner_company_type_ 290;Autre groupement de droit privé non doté de la personnalité morale 
+partner_company_type_ 310;Personne morale de droit étranger immatriculée au RCS
+partner_company_type_ 320;Personne morale de droit étranger non immatriculée au RCS
+partner_company_type_ 410;Etablissement Public ou régie à caractère industriel ou commercial (dont E.P.I.C.)
+partner_company_type_ 510;Autre société coopérative
+partner_company_type_ 520;Société en Nom Collectif ou S.N.C.
+partner_company_type_ 530;Société en Commandite
+partner_company_type_ 541;Société A Responsabilité Limitée ou S.A.R.L.
+partner_company_type_ 542;SARL unipersonnelle (dont E.U.R.L.)
+partner_company_type_ 550;Société Anonyme à Conseil d'Administration
+partner_company_type_ 560;Société Anonyme à Directoire (dont S.A.E.M.)
+partner_company_type_ 570;Société par Actions Simplifiées ou S.A.S.
+partner_company_type_ 580;Société européenne
+partner_company_type_ 610;Caisse d'Epargne et de Prévoyance
+partner_company_type_ 620;Groupement d'Intérêt Economique ou G.I.E.
+partner_company_type_ 630;Société Coopérative Agricole
+partner_company_type_ 640;Société non commerciale d'Assurances
+partner_company_type_ 651;Société Civile Non Immobilière
+partner_company_type_ 652;Société Civile Immobilière (SCI)
+partner_company_type_ 690;Autres personnes de droit privé inscrites au registre du commerce et des sociétés
+partner_company_type_ 710;Administration de l'Etat
+partner_company_type_ 721;Ministere, service et institution de la collectivité territoriale
+partner_company_type_ 722;Etablissement Public Administatif de la collectivité territoriale
+partner_company_type_ 731;Administrations Communales
+partner_company_type_ 732;Syndicats de Communes
+partner_company_type_ 740;Autre personne morale de droit public administratif
+partner_company_type_ 810;Organisme gérant un régime de protection sociale à adhésion obligatoire
+partner_company_type_ 820;Organisme Mutualiste
+partner_company_type_ 830;Comité d'Entreprise
+partner_company_type_ 840;Organisme Professionnel
+partner_company_type_ 850;Organisme de retraite à adhésion non obligatoire
+partner_company_type_ 910;Syndicat de Propriétaires
+partner_company_type_ 920;Association de loi 1901 ou assimilé
+partner_company_type_ 930;Fondation
+partner_company_type_ 990;Autre personne morale de droit privé
