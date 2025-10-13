@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <!-- Formes juridiques françaises pour la Polynésie française -->
+    <record id="partner_company_type_110" model="res.partner.company.type">
+      <field name="name">Artisan-commerçant</field>
+      <field name="shortcut">110</field>
+    </record>
+    <record id="partner_company_type_120" model="res.partner.company.type">
+      <field name="name">Commerçant</field>
+      <field name="shortcut">120</field>
+    </record>
+    <record id="partner_company_type_130" model="res.partner.company.type">
+      <field name="name">Artisan</field>
+      <field name="shortcut">130</field>
+    </record>
+    <record id="partner_company_type_140" model="res.partner.company.type">
+      <field name="name">Officier public ou ministériel</field>
+      <field name="shortcut">140</field>
+    </record>
+    <record id="partner_company_type_150" model="res.partner.company.type">
+      <field name="name">Profession libérale</field>
+      <field name="shortcut">150</field>
+    </record>
+    <record id="partner_company_type_160" model="res.partner.company.type">
+      <field name="name">Exploitant agricole</field>
+      <field name="shortcut">160</field>
+    </record>
+    <record id="partner_company_type_170" model="res.partner.company.type">
+      <field name="name">Agent commercial</field>
+      <field name="shortcut">170</field>
+    </record>
+    <record id="partner_company_type_180" model="res.partner.company.type">
+      <field name="name">Auto-entrepreneur</field>
+      <field name="shortcut">180</field>
+    </record>
+    <record id="partner_company_type_190" model="res.partner.company.type">
+      <field name="name">Personne physique</field>
+      <field name="shortcut">190</field>
+    </record>
+    <record id="partner_company_type_210" model="res.partner.company.type">
+      <field name="name">Indivision</field>
+      <field name="shortcut">210</field>
+    </record>
+    <record id="partner_company_type_220" model="res.partner.company.type">
+      <field name="name">Société de Fait</field>
+      <field name="shortcut">220</field>
+    </record>
+    <record id="partner_company_type_230" model="res.partner.company.type">
+      <field name="name">Société en Participations</field>
+      <field name="shortcut">230</field>
+    </record>
+    <record id="partner_company_type_240" model="res.partner.company.type">
+      <field name="name">Fiducie</field>
+      <field name="shortcut">240</field>
+    </record>
+    <record id="partner_company_type_270" model="res.partner.company.type">
+      <field name="name">Paroisse hors zone concordataire</field>
+      <field name="shortcut">270</field>
+    </record>
+    <record id="partner_company_type_290" model="res.partner.company.type">
+      <field name="name">Autre groupement de droit privé non doté de la personnalité morale</field>
+      <field name="shortcut">290</field>
+    </record>
+    <record id="partner_company_type_310" model="res.partner.company.type">
+      <field name="name">Personne morale de droit étranger immatriculée au RCS</field>
+      <field name="shortcut">310</field>
+    </record>
+    <record id="partner_company_type_320" model="res.partner.company.type">
+      <field name="name">Personne morale de droit étranger non immatriculée au RCS</field>
+      <field name="shortcut">320</field>
+    </record>
+    <record id="partner_company_type_410" model="res.partner.company.type">
+      <field name="name">Etablissement Public ou régie à caractère industriel ou commercial (dont E.P.I.C.)</field>
+      <field name="shortcut">410</field>
+    </record>
+    <record id="partner_company_type_510" model="res.partner.company.type">
+      <field name="name">Autre société coopérative</field>
+      <field name="shortcut">510</field>
+    </record>
+    <record id="partner_company_type_520" model="res.partner.company.type">
+      <field name="name">Société en Nom Collectif ou S.N.C.</field>
+      <field name="shortcut">520</field>
+    </record>
+    <record id="partner_company_type_530" model="res.partner.company.type">
+      <field name="name">Société en Commandite</field>
+      <field name="shortcut">530</field>
+    </record>
+    <record id="partner_company_type_541" model="res.partner.company.type">
+      <field name="name">Société A Responsabilité Limitée ou S.A.R.L.</field>
+      <field name="shortcut">541</field>
+    </record>
+    <record id="partner_company_type_542" model="res.partner.company.type">
+      <field name="name">SARL unipersonnelle (dont E.U.R.L.)</field>
+      <field name="shortcut">542</field>
+    </record>
+    <record id="partner_company_type_550" model="res.partner.company.type">
+      <field name="name">Société Anonyme à Conseil d'Administration</field>
+      <field name="shortcut">550</field>
+    </record>
+    <record id="partner_company_type_560" model="res.partner.company.type">
+      <field name="name">Société Anonyme à Directoire (dont S.A.E.M.)</field>
+      <field name="shortcut">560</field>
+    </record>
+    <record id="partner_company_type_570" model="res.partner.company.type">
+      <field name="name">Société par Actions Simplifiées ou S.A.S.</field>
+      <field name="shortcut">570</field>
+    </record>
+    <record id="partner_company_type_580" model="res.partner.company.type">
+      <field name="name">Société européenne</field>
+      <field name="shortcut">580</field>
+    </record>
+    <record id="partner_company_type_610" model="res.partner.company.type">
+      <field name="name">Caisse d'Epargne et de Prévoyance</field>
+      <field name="shortcut">610</field>
+    </record>
+    <record id="partner_company_type_620" model="res.partner.company.type">
+      <field name="name">Groupement d'Intérêt Economique ou G.I.E.</field>
+      <field name="shortcut">620</field>
+    </record>
+    <record id="partner_company_type_630" model="res.partner.company.type">
+      <field name="name">Société Coopérative Agricole</field>
+      <field name="shortcut">630</field>
+    </record>
+    <record id="partner_company_type_640" model="res.partner.company.type">
+      <field name="name">Société non commerciale d'Assurances</field>
+      <field name="shortcut">640</field>
+    </record>
+    <record id="partner_company_type_651" model="res.partner.company.type">
+      <field name="name">Société Civile Non Immobilière</field>
+      <field name="shortcut">651</field>
+    </record>
+    <record id="partner_company_type_652" model="res.partner.company.type">
+      <field name="name">Société Civile Immobilière (SCI)</field>
+      <field name="shortcut">652</field>
+    </record>
+    <record id="partner_company_type_690" model="res.partner.company.type">
+      <field name="name">Autres personnes de droit privé inscrites au registre du commerce et des sociétés</field>
+      <field name="shortcut">690</field>
+    </record>
+    <record id="partner_company_type_710" model="res.partner.company.type">
+      <field name="name">Administration de l'Etat</field>
+      <field name="shortcut">710</field>
+    </record>
+    <record id="partner_company_type_721" model="res.partner.company.type">
+      <field name="name">Ministere, service et institution de la collectivité territoriale</field>
+      <field name="shortcut">721</field>
+    </record>
+    <record id="partner_company_type_722" model="res.partner.company.type">
+      <field name="name">Etablissement Public Administatif de la collectivité territoriale</field>
+      <field name="shortcut">722</field>
+    </record>
+    <record id="partner_company_type_731" model="res.partner.company.type">
+      <field name="name">Administrations Communales</field>
+      <field name="shortcut">731</field>
+    </record>
+    <record id="partner_company_type_732" model="res.partner.company.type">
+      <field name="name">Syndicats de Communes</field>
+      <field name="shortcut">732</field>
+    </record>
+    <record id="partner_company_type_740" model="res.partner.company.type">
+      <field name="name">Autre personne morale de droit public administratif</field>
+      <field name="shortcut">740</field>
+    </record>
+    <record id="partner_company_type_810" model="res.partner.company.type">
+      <field name="name">Organisme gérant un régime de protection sociale à adhésion obligatoire</field>
+      <field name="shortcut">810</field>
+    </record>
+    <record id="partner_company_type_820" model="res.partner.company.type">
+      <field name="name">Organisme Mutualiste</field>
+      <field name="shortcut">820</field>
+    </record>
+    <record id="partner_company_type_830" model="res.partner.company.type">
+      <field name="name">Comité d'Entreprise</field>
+      <field name="shortcut">830</field>
+    </record>
+    <record id="partner_company_type_840" model="res.partner.company.type">
+      <field name="name">Organisme Professionnel</field>
+      <field name="shortcut">840</field>
+    </record>
+    <record id="partner_company_type_850" model="res.partner.company.type">
+      <field name="name">Organisme de retraite à adhésion non obligatoire</field>
+      <field name="shortcut">850</field>
+    </record>
+    <record id="partner_company_type_910" model="res.partner.company.type">
+      <field name="name">Syndicat de Propriétaires</field>
+      <field name="shortcut">910</field>
+    </record>
+    <record id="partner_company_type_920" model="res.partner.company.type">
+      <field name="name">Association de loi 1901 ou assimilé</field>
+      <field name="shortcut">920</field>
+    </record>
+    <record id="partner_company_type_930" model="res.partner.company.type">
+      <field name="name">Fondation</field>
+      <field name="shortcut">930</field>
+    </record>
+    <record id="partner_company_type_990" model="res.partner.company.type">
+      <field name="name">Autre personne morale de droit privé</field>
+      <field name="shortcut">990</field>
+    </record>
+  </data>
+</odoo>
