@@ -32,7 +32,9 @@ Référentiels inclus :
     'license': 'LGPL-3',
     'depends': [
         'base',
+        'web',
         'contacts',
+        'queue_job',
         'partner_company_type',  # OCA partner-contact
         'partner_identification',  # OCA partner-contact
         'partner_employee_quantity',  # OCA partner-contact (optionnel)
@@ -47,10 +49,12 @@ Référentiels inclus :
         'data/res.partner.category.csv',
         'data/ir_cron.xml',
         'data/ir_config_parameter.xml',
+        # 'data/queue_job_channel.xml',
 
         'views/rte_sync_views.xml',
         'views/res_config_settings_view.xml',
         'views/partner_image_wizard_views.xml',
+        'views/res_partner_image_cache_wizard.xml',
     ],
     'installable': True,
     'application': False,

@@ -8,3 +8,6 @@ access_rte_sync_wizard_system,rte.sync.wizard system,model_rte_sync_wizard,base.
 access_partner_image_assign_wizard_user,partner.image.assign.wizard user,model_partner_image_assign_wizard,base.group_user,1,1,1,1
 access_partner_image_assign_wizard_manager,partner.image.assign.wizard manager,model_partner_image_assign_wizard,group_rte_sync_manager,1,1,1,1
 access_partner_image_assign_wizard_system,partner.image.assign.wizard system,model_partner_image_assign_wizard,base.group_system,1,1,1,1
+access_res_partner_image_cache_wizard_user,res.partner.image.cache.wizard user,model_res_partner_image_cache_wizard,group_rte_sync_user,1,0,0,0
+access_res_partner_image_cache_wizard_manager,res.partner.image.cache.wizard manager,model_res_partner_image_cache_wizard,group_rte_sync_manager,1,1,1,1
+access_res_partner_image_cache_wizard_system,res.partner.image.cache.wizard system,model_res_partner_image_cache_wizard,base.group_system,1,1,1,1

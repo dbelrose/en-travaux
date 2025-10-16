@@ -6,3 +6,4 @@ from . import images_config
 from . import partner_image_wizard
 # from . import partner_image_auto_assignment
 from . import res_partner_image_generator
+from . import res_partner_image_cache_wizard

@@ -15,6 +15,7 @@ class ResPartner(models.Model):
     x_rte_updated_at = fields.Datetime("Dernière maj RTE")
 
     _sql_constraints = [
-        ("uniq_tahiti", "unique(x_tahiti)", "Le N° TAHITI doit être unique sur les partenaires."),
         ("uniq_etablissement", "unique(x_etablissement)", "Le N° d'établissement RTE doit être unique."),
     ]
+
+# ("uniq_tahiti", "unique(x_tahiti)", "Le N° TAHITI doit être unique sur les partenaires."),
