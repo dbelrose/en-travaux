@@ -1,0 +1,3 @@
+"id","name","login","lang","tz","company_id/id","company_ids/id","employee","active","partner_id/id","groups_id/id"
+"res_users_pf_gpuchon","Georges PUCHON","gpuchon","fr_FR","Pacific/Tahiti","l10n_pf_gov_dac.res_company_pf_dac","l10n_pf_gov_dac.res_company_pf_dac","True","True","res_partner_gpuchon","manureva.group_manureva_user"
+"res_users_pf_msage","Manaiva SAGE","msage","fr_FR","Pacific/Tahiti","l10n_pf_gov_dac.res_company_pf_dac","l10n_pf_gov_dac.res_company_pf_dac","True","True","res_partner_msage","manureva.group_manureva_manager"

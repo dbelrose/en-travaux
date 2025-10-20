@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <record id="constructeur_form_view" model="ir.ui.view">
+            <field name="name">manureva.constructeur.form</field>
+            <field name="model">manureva.constructeur</field>
+            <field name="arch" type="xml">
+                <form string="Constructeur">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1>
+                                <field name="name" placeholder="Constructeur" readonly="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="partner_id"
+                                       string="Contact"
+                                       widget="res_partner_many2one"/>
+                            </group>
+                            <group>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page name="types_aeronef" string="Types d'aéronef">
+                                <group>
+                                    <field name="type_aeronef_ids" nolabel="1">
+                                        <tree string="Types d'aéronef">
+                                            <field name="typ_oaci"/>
+                                            <field name="tonnage"/>
+                                            <field name="pax"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                            <page name="comment" string="Observation">
+                                <group>
+                                    <field name="comment" nolabel="1"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record id="constructeur_tree_view" model="ir.ui.view">
+            <field name="name">manureva.constructeur.tree</field>
+            <field name="model">manureva.constructeur</field>
+            <field name="arch" type="xml">
+                <tree string="Constructeurs">
+                    <field name="name"/>
+                    <field name="comment"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="constructeur_act_window" model="ir.actions.act_window">
+            <field name="name">Constructeurs</field>
+            <field name="res_model">manureva.constructeur</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Cliquez ici pour ajouter votre premier constructeur.
+                </p>
+            </field>
+        </record>
+
+        <menuitem name="Constructeurs"
+                  id="constructeur_menu"
+                  parent="menu_aeronefs"
+                  action="constructeur_act_window"
+                  sequence="40"
+        />
+
+</odoo>

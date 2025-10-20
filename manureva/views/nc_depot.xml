@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="nc_depot_form_view" model="ir.ui.view">
+        <field name="name">manureva.nc_depot.form</field>
+        <field name="model">manureva.nc_depot</field>
+        <field name="arch" type="xml">
+            <form string="Trafic autres vols">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="aerodrome_id"/>
+                            <field name="type_aeronef_id"/>
+                            <field name="lib_type_aeronef"/>
+                            <field name="touch_and_go"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['L', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['L', 'M'])]}"/>
+                            <field name="date_debut"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['L', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['L', 'M'])]}"/>
+                            <field name="heure_fin"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['L', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['L', 'M'])]}"/>
+                            <field name="circonstance"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="date_bloc"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="date_piste"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="nombre_passagers"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])]}"/>
+                            <field name="type_voyage"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                        </group>
+                        <group>
+                            <field name="aeronef_id"/>
+                            <field name="vol_local_voyage"/>
+                            <field name="remise_de_gaz"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['L', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['L', 'M'])]}"/>
+                            <field name="heure_debut"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['L', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['L', 'M'])]}"/>
+                            <field name="mouvement"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="aerod_prov_dest"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="lib_aerod_prov_dest"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])]}"/>
+                            <field name="heure_bloc"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="heure_piste"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="ind_nav_aerienne"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="pis_utilisee"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="reg_vol"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="balisage"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                            <field name="vis_horizontale"
+                                   attrs="{'invisible': [('vol_local_voyage', 'not in', ['V', 'M'])],
+                                   'required': [('vol_local_voyage', 'in', ['V', 'M'])]}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="nc_depot_tree_view_local" model="ir.ui.view">
+        <field name="name">manureva.nc_depot.tree.local</field>
+        <field name="model">manureva.nc_depot</field>
+        <field name="arch" type="xml">
+            <tree string="Trafic vols 'local'" editable="top">
+                <field name="aerodrome_id"/>
+                <field name="aeronef_id"/>
+                <field name="type_aeronef_id"/>
+                <field name="lib_type_aeronef" optional="hide"/>
+                <field name="vol_local_voyage" attrs="{'readonly': True}"/>
+                <field name="touch_and_go"/>
+                <field name="remise_de_gaz"/>
+                <field name="date_debut"/>
+                <field name="heure_debut"/>
+                <field name="heure_fin"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="nc_depot_tree_view_voyage" model="ir.ui.view">
+        <field name="name">manureva.nc_depot.tree.voyage</field>
+        <field name="model">manureva.nc_depot</field>
+        <field name="arch" type="xml">
+            <tree string="Trafic vols 'voyage'" editable="top">
+                <field name="aerodrome_id"/>
+                <field name="aeronef_id"/>
+                <field name="type_aeronef_id"/>
+                <field name="lib_type_aeronef" optional="hide"/>
+                <field name="vol_local_voyage" attrs="{'readonly': True}"/>
+                <field name="mouvement"/>
+                <field name="circonstance"/>
+                <field name="aerod_prov_dest"/>
+                <field name="lib_aerod_prov_dest" optional="show"/>
+                <field name="date_bloc"/>
+                <field name="heure_bloc"/>
+                <field name="date_piste" optional="hide"/>
+                <field name="heure_piste" optional="hide"/>
+                <field name="nombre_passagers"/>
+                <field name="type_voyage"/>
+                <field name="balisage"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="nc_depot_tree_view_mixte" model="ir.ui.view">
+        <field name="name">manureva.nc_depot.tree</field>
+        <field name="model">manureva.nc_depot</field>
+        <field name="arch" type="xml">
+            <tree string="Trafic vols 'local' et 'voyage'" editable="top">
+                <field name="aerodrome_id"/>
+                <field name="aeronef_id"/>
+                <field name="type_aeronef_id"/>
+                <field name="lib_type_aeronef" optional="hide"/>
+                <field name="vol_local_voyage" attrs="{'readonly': True}"/>
+                <field name="touch_and_go"/>
+                <field name="remise_de_gaz"/>
+                <field name="date_debut"/>
+                <field name="heure_debut"/>
+                <field name="heure_fin"/>
+                <field name="mouvement"/>
+                <field name="circonstance"/>
+                <field name="aerod_prov_dest"/>
+                <field name="lib_aerod_prov_dest" optional="show"/>
+                <field name="date_bloc"/>
+                <field name="heure_bloc"/>
+                <field name="date_piste" optional="hide"/>
+                <field name="heure_piste" optional="hide"/>
+                <field name="ind_nav_aerienne" optional="hide"/>
+                <field name="pis_utilisee" optional="hide"/>
+                <field name="reg_vol" optional="hide"/>
+                <field name="balisage" optional="hide"/>
+                <field name="vis_horizontale" optional="hide"/>
+                <field name="nombre_passagers"/>
+                <field name="type_voyage"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="nc_depot_tree_view" model="ir.ui.view">
+        <field name="name">manureva.nc_depot.tree</field>
+        <field name="model">manureva.nc_depot</field>
+        <field name="arch" type="xml">
+            <tree string="Trafic vols 'local' ou 'voyage'">
+                <field name="aerodrome_id"/>
+                <field name="aeronef_id"/>
+                <field name="type_aeronef_id"/>
+                <field name="lib_type_aeronef" optional="hide"/>
+                <field name="vol_local_voyage"/>
+                <field name="touch_and_go" optional="hide"/>
+                <field name="remise_de_gaz" optional="hide"/>
+                <field name="date_debut" optional="hide"/>
+                <field name="heure_debut" optional="hide"/>
+                <field name="heure_fin" optional="hide"/>
+                <field name="mouvement"/>
+                <field name="circonstance"/>
+                <field name="aerod_prov_dest"/>
+                <field name="lib_aerod_prov_dest" optional="show"/>
+                <field name="date_bloc"/>
+                <field name="heure_bloc"/>
+                <field name="date_piste" optional="hide"/>
+                <field name="heure_piste" optional="hide"/>
+                <field name="ind_nav_aerienne" optional="hide"/>
+                <field name="pis_utilisee" optional="hide"/>
+                <field name="reg_vol" optional="hide"/>
+                <field name="balisage" optional="hide"/>
+                <field name="vis_horizontale" optional="hide"/>
+                <field name="nombre_passagers"/>
+                <field name="type_voyage"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="nc_depot_search_view" model="ir.ui.view">
+        <field name="name">manureva.nc_depot.search</field>
+        <field name="model">manureva.nc_depot</field>
+        <field name="arch" type="xml">
+            <search string="Trafic autres vols">
+                <group expand="1" string="Group By">
+                    <filter string="Aérodrome source" name="aerodrome_id" domain="[]"
+                            context="{'group_by':'aerodrome_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="nc_depot_act_window_local" model="ir.actions.act_window">
+        <field name="name">Vols 'local'</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">manureva.nc_depot</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="nc_depot_tree_view_local"/>
+        <field name="domain">[('vol_local_voyage', '=', 'L')]</field>
+        <field name="context">{'default_vol_local_voyage': 'L'}</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">
+                Cliquer 'Créer' pour ajouter un vol 'local' autre que ceux de transport aérien public.
+            </p>
+        </field>
+    </record>
+
+    <record id="nc_depot_act_window_voyage" model="ir.actions.act_window">
+        <field name="name">Vols 'voyage'</field>
+        <field name="res_model">manureva.nc_depot</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="nc_depot_tree_view_voyage"/>
+        <field name="domain">[('vol_local_voyage', '=', 'V')]</field>
+        <field name="context">{'default_vol_local_voyage': 'V'}</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">
+                Cliquer 'Créer' pour ajouter un vol 'voyage' autre que ceux de transport aérien public.
+            </p>
+        </field>
+    </record>
+
+    <record id="nc_depot_act_window_mixte" model="ir.actions.act_window">
+        <field name="name">Vols 'local' et 'voyage'</field>
+        <field name="res_model">manureva.nc_depot</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="nc_depot_tree_view_mixte"/>
+        <field name="domain">[('vol_local_voyage', '=', 'M')]</field>
+        <field name="context">{'default_vol_local_voyage': 'M'}</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">
+                Cliquer 'Créer' pour ajouter un vol 'local' et 'voyage' autre que ceux de transport aérien public.
+            </p>
+        </field>
+    </record>
+
+    <record id="nc_depot_act_window" model="ir.actions.act_window">
+        <field name="name">Vols 'local' ou 'voyage'</field>
+        <field name="res_model">manureva.nc_depot</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="nc_depot_tree_view"/>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">
+                Cliquer 'Créer' pour ajouter un vol 'local' ou 'voyage' autre que ceux de transport aérien public.
+            </p>
+        </field>
+    </record>
+
+    <menuitem name="Vols autres que ceux de transport aérien public - Opérateur"
+              id="nc_depot_menu_operateur"
+              parent="manureva.menu_fichier_tiers"
+              action="nc_depot_act_window"
+              sequence="30"
+    />
+
+    <menuitem name="Vols autres que ceux de transport aérien public - Aérodrome"
+              id="nc_depot_menu_aerodrome"
+              parent="manureva.menu_fichier_tiers"
+              action="nc_depot_act_window"
+              sequence="40"
+    />
+
+</odoo>

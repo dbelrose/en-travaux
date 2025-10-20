@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+		<record id="action_type_taxe" model="ir.actions.act_window">
+			<field name="name">Types de taxe</field>
+			<field name="res_model">manureva.type_taxe</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[]</field>
+			<field name="help" type="html">
+				<p class="oe_view_nocontent_create">Créez votre premier type de taxe
+				</p>
+			</field>
+		</record>
+
+    	<menuitem 	id="menu_type_taxe"
+					parent="menu_taxe"
+					name="Types de taxe"
+					action="action_type_taxe"/>
+
+</odoo>

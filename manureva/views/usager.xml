@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <record id="usager_form_view" model="ir.ui.view">
+            <field name="name">manureva.usager.form</field>
+            <field name="model">manureva.usager</field>
+            <field name="arch" type="xml">
+                <form string="Opérateurs">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="partner_id" string="Société"/>
+                            <h1>
+                                <field name="partner_id" placeholder="Nom" string="Société"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="type_activite_id"/>
+                            </group>
+                            <group>
+                                <field name="cie_oaci"/>
+                                <field name="cie_pays"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page name="aeronef" string="Aéronefs">
+                                <field name="aeronef_ids">
+                                        <tree string="Factures">
+                                            <field name="name"/>
+                                            <field name="type_aeronef_id"/>
+                                        </tree>
+                                </field>
+                            </page>
+                            <page name="facture" string="Factures">
+                                <field name="facture_ids">
+                                        <tree string="Factures">
+                                            <field name="name"/>
+                                            <field name="facture"/>
+                                        </tree>
+                                </field>
+                            </page>
+                            <page name="comment" string="Entête">
+                                <field name="comment"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="usager_tree_view" model="ir.ui.view">
+            <field name="name">manureva.usager.tree</field>
+            <field name="model">manureva.usager</field>
+            <field name="arch" type="xml">
+                <tree string="Opérateurs">
+                    <field name="cie_oaci" string="OACI"/>
+                    <field name="partner_id" string="Société"/>
+                    <field name="type_activite_id" string="Activité"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="usager_search_view" model="ir.ui.view">
+            <field name="name">manureva.usager.search</field>
+            <field name="model">manureva.usager</field>
+            <field name="arch" type="xml">
+                <search string="Opérateurs">
+                    <field name="partner_id"/>
+                    <field name="cie_oaci"/>
+                    <field name="cie_pays"/>
+                    <group expand="1" string="Group By">
+                        <filter string="Type d'activité" name="type_activite_id" domain="[]"
+                                context="{'group_by':'type_activite_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_usager" model="ir.actions.act_window">
+            <field name="name">Opérateurs</field>
+            <field name="res_model">manureva.usager</field>
+            <field name="view_mode">tree,form</field>
+		    <field name="context">{'tree_view_ref': 'manureva.usager_tree_view'}</field>
+            <field name="domain">[["is_company","=",True]]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Créez votre premier usager
+                </p>
+            </field>
+        </record>
+
+        <menuitem name="Opérateurs"
+                  id="usager_menu"
+                  parent="menu_usager"
+                  action="action_usager"
+                  sequence="90"
+        />
+
+</odoo>

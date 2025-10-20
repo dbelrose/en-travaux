@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <record id="facture_form_view" model="ir.ui.view">
+            <field name="name">manureva.facture.form</field>
+            <field name="model">manureva.facture</field>
+            <field name="arch" type="xml">
+                <form string="ModelTitle">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="facture"/>
+                            <h1>
+                                <field name="facture" placeholder="Title"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                    <field name="aerodrome_id"/>
+                    <field name="usager_id"/>
+                            </group>
+                            <group>
+                    <field name="periode_id"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page name="Lignes" string="Lignes">
+                                <group>
+                                    <field name="ligne_facture_ids" nolabel="1">
+                                        <tree string="Lignes de facture">
+                                            <field name="name" string="Type d'aéronef"/>
+                                            <field name="atterrissage"/>
+                                            <field name="passager"/>
+                                            <field name="balisage"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_facture_tree" model="ir.ui.view">
+            <field name="name">manureva.facture.tree</field>
+            <field name="model">manureva.facture</field>
+            <field name="arch" type="xml">
+                <tree string="Factures">
+                    <field name="name"/>
+                    <field name="facture"/>
+                    <field name="aerodrome_id"/>
+                    <field name="usager_id"/>
+                    <field name="periode_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="facture_search_view" model="ir.ui.view">
+            <field name="name">manureva.facture.search</field>
+            <field name="model">manureva.facture</field>
+            <field name="arch" type="xml">
+                <search string="Factures">
+                    <field name="name"/>
+                    <field name="facture"/>
+                    <field name="aerodrome_id"/>
+                    <field name="usager_id"/>
+                    <field name="periode_id"/>
+                    <group expand="1" string="Group By">
+                        <filter string="Opérateur" name="usager_id" domain="[]"
+                                context="{'group_by':'usager_id'}"/>
+                        <filter string="Période" name="periode_id" domain="[]"
+                                context="{'group_by':'periode_id'}"/>
+                        <filter string="Aérodrome" name="aerodrome_id" domain="[]"
+                                context="{'group_by':'aerodrome_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_facture" model="ir.actions.act_window">
+            <field name="name">Factures</field>
+            <field name="res_model">manureva.facture</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Les factures apparaîtront ici
+                </p>
+            </field>
+        </record>
+
+    	<menuitem 	id="menu_facture"
+					parent="menu_facturation"
+					name="Factures"
+					action="action_facture"
+                    sequence="20"
+        />
+
+</odoo>
