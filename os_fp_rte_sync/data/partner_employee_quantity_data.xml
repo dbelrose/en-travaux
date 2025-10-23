@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <!-- Classes d'effectifs -->
+    <record id="partner_employee_quantity_1" model="res.partner.employee_quantity_range">
+      <field name="name">1 à 2 personnes</field>
+    </record>
+    <record id="partner_employee_quantity_2" model="res.partner.employee_quantity_range">
+      <field name="name">3 à 4 personnes</field>
+    </record>
+    <record id="partner_employee_quantity_3" model="res.partner.employee_quantity_range">
+      <field name="name">5 à 9 personnes</field>
+    </record>
+    <record id="partner_employee_quantity_4" model="res.partner.employee_quantity_range">
+      <field name="name">10 à 19 personnes</field>
+    </record>
+    <record id="partner_employee_quantity_5" model="res.partner.employee_quantity_range">
+      <field name="name">20 à 49 personnes</field>
+    </record>
+    <record id="partner_employee_quantity_6" model="res.partner.employee_quantity_range">
+      <field name="name">50 à 99 personnes</field>
+    </record>
+    <record id="partner_employee_quantity_7" model="res.partner.employee_quantity_range">
+      <field name="name">100 à 199 personnes</field>
+    </record>
+    <record id="partner_employee_quantity_8" model="res.partner.employee_quantity_range">
+      <field name="name">200 à 499 personnes</field>
+    </record>
+    <record id="partner_employee_quantity_9" model="res.partner.employee_quantity_range">
+      <field name="name">500 personnes et plus</field>
+    </record>
+    <record id="partner_employee_quantity_10" model="res.partner.employee_quantity_range">
+      <field name="name">Aucune personne</field>
+    </record>
+  </data>
+</odoo>

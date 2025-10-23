@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Type de relation: Concierge -->
+        <record id="relation_type_concierge" model="res.partner.relation.type">
+            <field name="name">Concierge</field>
+            <field name="name_inverse">Propriété gérée</field>
+            <field name="contact_type_left">c</field>  <!-- Concierge = Company -->
+            <field name="contact_type_right">c</field> <!-- Société = Company -->
+            <field name="allow_self" eval="False"/>
+            <field name="is_symmetric" eval="False"/>
+            <field name="handle_invalid_onchange">ignore</field>
+        </record>
+
+    </data>
+</odoo>

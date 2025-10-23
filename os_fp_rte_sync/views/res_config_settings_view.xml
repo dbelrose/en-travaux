@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="os_fp_rte_sync_res_config_settings_view" model="ir.ui.view">
+    <field name="name">os_fp_rte_sync.res.config.settings.view</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="priority" eval="90"/>
+    <field name="arch" type="xml">
+      <xpath expr="//form" position="inside">
+        <app name="fp_rte_sync" string="RTE (ISPF)">
+          <block title="RTE (ISPF)">
+            <setting id="fp_rte_only_active" string="N'importer que les entreprises actives"
+                     help="Si coché, seules les entreprises actives sont importées ; les partenaires déjà importés sont archivés quand ils deviennent inactifs.">
+              <field name="fp_rte_import_only_active"/>
+            </setting>
+            <setting id="fp_rte_naf_whitelist_set" string="Codes NAF/APE à considérer"
+                     help="Codes séparés par des virgules. Le joker * est supporté (ex : 56.*, 47.5*).">
+              <field name="fp_rte_naf_whitelist" placeholder="93.12Z,96.04Z,55.20Z"/>
+            </setting>
+          </block>
+        </app>
+      </xpath>
+    </field>
+  </record>
+</odoo>

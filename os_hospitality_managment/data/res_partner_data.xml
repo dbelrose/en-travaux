@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <!-- ========================================= -->
+    <!-- CONFIGURATION DES PARTENAIRES -->
+    <!-- ========================================= -->
+
+    <record id="res_partner_mairie_punaauia" model="res.partner">
+        <field name="name">Mairie de Punaauia</field>
+        <field name="street">PK 10,5 C/Mont, Route des Plages</field>
+        <field name="city">Punaauia</field>
+        <field name="zip">98703</field>
+        <field name="country_id" ref="base.pf"/>  <!-- Polynésie française -->
+        <field name="phone">+689 40 86 51 51</field>
+        <field name="email">contact@mairie-punaauia.pf</field>
+        <field name="is_company">True</field>
+        <field name="customer_rank">0</field>
+        <field name="supplier_rank">1</field>  <!-- La mairie est un fournisseur (bénéficiaire des taxes) -->
+        <field name="category_id" eval="[(6, 0, [ref('res_partner_category_commune')])]"/>  <!-- Catégorie "Commune" -->
+        <field name="property_product_pricelist" ref="pricelist_municipality"/>
+
+        <!-- Comptes comptables associés -->
+        <field name="property_account_receivable_id" ref="account.1_pcg_411"/>  <!-- Compte client -->
+        <field name="property_account_payable_id" ref="account.1_pcg_401"/>  <!-- Compte fournisseur -->
+    </record>
+
+    <!-- Booking.com -->
+    <record id="partner_booking_com" model="res.partner">
+        <field name="name">Booking.com</field>
+        <field name="is_company">True</field>
+        <field name="supplier_rank">1</field>
+        <field name="customer_rank">0</field>
+        <field name="street">Herengracht 597</field>
+        <field name="city">Amsterdam</field>
+        <field name="zip">1017 CE</field>
+        <field name="country_id" ref="base.nl"/>
+        <field name="email">partner.payments@booking.com</field>
+        <field name="website">https://www.booking.com</field>
+    </record>
+
+</odoo>
