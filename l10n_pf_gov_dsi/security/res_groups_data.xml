@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+         <record id="res_groups_pf_gov_dsi_user" model="res.groups">
+            <field name="name">Utilisateur</field>
+            <field name="category_id" ref="module_category_pf_gov_dsi"/>
+            <field name="implied_ids" eval="[(4, ref('purchase.group_purchase_user'))]"/>
+        </record>
+        <record id="res_groups_pf_gov_dsi_manager" model="res.groups">
+            <field name="name">Administrateur</field>
+            <field name="category_id" ref="module_category_pf_gov_dsi"/>
+            <field name="implied_ids" eval="[(4, ref('res_groups_pf_gov_dsi_user')), (4, ref('base.group_partner_manager'))]"/>
+        </record>
+</odoo>

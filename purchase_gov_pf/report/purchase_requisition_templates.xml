@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- EPAC TEMPLATE -->
+    <template id="gov_pf_purchase_requisition_epac">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h4 class="text-center pb-4">
+                            <em t-if="o.state in ['draft', 'ongoing']">DRAFT&#160;</em>
+                            <u>FICHE DE DEMANDE D’ENGAGEMENT PROVISIONNEL</u>
+                        </h4>
+                        <h4 class="text-center pb-4">
+                            <u>N°</u>
+                            <span class="pl-2" t-field="o.origin" />
+                            <t t-if="o.parent_id">
+                                <span>/
+                                    <t t-esc="epac_counter" />
+                                </span>
+                            </t>
+                            <u> DU </u>
+                            <span class="pl-2" t-field="o.approve_date" t-options='{"widget": "date"}' />
+                        </h4>
+
+                        <table class="table table-bordered table-sm o_main_table mt-3">
+                            <thead>
+                                <tr class="table-active">
+                                    <th name="th_service_ref" class="text-center" colspan="2">
+                                        <b>REFERENCES DU SERVICE</b>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="d-flex justify-content-between pl-3 border-0">
+                                        <strong t-esc="o.company_id.name" />
+                                    </td>
+                                    <td class="border-0">
+                                        <strong>
+                                            <u>CLE : </u>
+                                            <span t-field="o.origin" />
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered table-sm o_main_table mt-3">
+                            <thead>
+                                <tr class="table-active">
+                                    <th name="th_service_ref" class="text-center">
+                                        <strong>REFERENCES BUDGETAIRES</strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <t t-set="SSCHAP" t-value="" />
+                                    <t t-set="CT" t-value="" />
+                                    <t t-foreach="o.analytic_tag_ids" t-as="tag">
+                                        <t t-if="tag.analytic_dimension_id.id == %(account_gov_pf.analytic_dimension_sschap)d">
+                                            <t t-set="SSCHAP" t-value="tag.name" />
+                                        </t>
+                                        <t t-if="tag.analytic_dimension_id.id == %(account_gov_pf.analytic_dimension_ct)d">
+                                            <t t-set="CT" t-value="tag.name" />
+                                        </t>
+                                    </t>
+                                    <td class="border-0">
+                                        <span class="pl-5">
+                                            <u>CT : </u>
+                                            <span class="pl-1" t-esc="CT" />
+                                        </span>
+                                        <span class="pl-5">
+                                            <u>PROGRAMME : </u>
+                                            <span class="pl-1" t-esc="SSCHAP" />
+                                        </span>
+                                        <span class="pl-5">
+                                            <u>ARTICLE : </u>
+                                            <span class="pl-1" t-field=" o.article" />
+                                        </span>
+                                        <span class="pl-5">
+                                            <u>MONTANT : </u>
+                                            <span class="pl-1" t-field=" o.amount_budget" />
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered table-sm o_main_table mt-3">
+                            <thead>
+                                <tr class="table-active">
+                                    <th name="th_service_ref" class="text-center">
+                                        <strong>REFERENCES DE LA DEPENSE</strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="d-flex justify-content-between pl-3 pr-5 border-0">
+                                        <div>
+                                            <u>NATURE DE LA DEPENSE : </u>
+                                            <span t-field="o.description" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="border-0 text-center">(Hors dépenses liées à des contrats/conventions/marchés)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered table-sm o_main_table mt-3">
+                            <thead>
+                                <tr class="table-active">
+                                    <th name="th_service_ref" class="text-center" colspan="3">
+                                        <strong>REFERENCES DE L’ENGAGEMENT COMPTABLE PROVISIONNEL</strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="w-50">
+                                        <table class="w-100">
+                                            <tr>
+                                                <td class="border-0 w-50">
+                                                    <u>ENGAGEMENT INITIAL</u>
+                                                </td>
+                                                <td class="ml-1 mr-1" style="text-align: center;">
+                                                    <t t-if="not o.parent_id">X</t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border-0 w-50">
+                                                    <u>ENG. COMPLEMENTAIRE</u>
+                                                </td>
+                                                <td class="ml-1 mr-1" style="text-align: center;">
+                                                    <t t-if="o.parent_id and o.amount_budget &gt; 0">X</t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border-0 w-50">
+                                                    <u>REDUCTION</u>
+                                                </td>
+                                                <td class="ml-1 mr-1" style="text-align: center;">
+                                                    <t t-if="o.parent_id and o.amount_budget &lt; 0">X</t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border-0 w-50">
+                                                    <u></u>
+                                                    MONTANT DEMANDE (1)
+                                                </td>
+                                                <td class="ml-1 mr-1" style="text-align: center;">
+                                                    <span class="pl-1" t-field=" o.amount_budget" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+
+                                    <td class="border-0 pl-5 w-25" style="vertical-align: middle;">
+                                        <u>N° DE L'ENGAGEMENT</u>
+                                    </td>
+                                    <td class="border-0 p-0 w-25" style="vertical-align:middle;padding-top:20px!important;">
+                                        <div class="border border-right-0">
+                                            <t t-if="o.parent_id">
+                                                <span class="pl-1" t-esc=" initial_code_visa" />
+                                            </t>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered table-sm o_main_table mt-1 p-1" style="page-break-inside: avoid">
+                            <tbody>
+                                <tr>
+                                    <td class="border-0 font-weight-bold w-50 pl-3 pr-3" style="text-align:center;">
+                                        <u>ORGANISME EMETTEUR</u>
+                                    </td>
+                                    <td class="border-0 font-weight-bold w-50 pl-3 pr-3" style="text-align:center;">
+                                        <u>SERVICE DU CONTROLE DE L'ENGAGEMENT</u>
+                                    </td>
+                                </tr>
+                                <tr style="text-align:center;height:250px">
+                                    <td class="border-0 pb-3">
+                                        <t t-if="abs(o.amount_budget) >= o.company_id.signature_delegation_threshold">
+                                            <div>
+                                                <t t-if="no_parent_partner.gender == 'female'">
+                                                    La 
+                                                </t>
+                                                <t t-else="">
+                                                    Le 
+                                                </t>
+                                                <t t-esc="no_parent_partner.job_title"/>
+                                                <t t-if="no_parent_partner.in_charge_of">
+                                                    ,
+                                                    <br/>
+                                                    <small>
+                                                        <i>
+                                                            <t t-esc="no_parent_partner.in_charge_of" />
+                                                        </i>
+                                                    </small>
+                                                </t>
+                                            </div>
+                                            <br/>
+                                            <br/>
+                                            <br/>
+                                            <br/>
+                                            <br/>
+                                            <div t-esc="no_parent_partner.name" />
+                                        </t>
+                                        <t t-else="">
+                                            <div>Nom et prénom de l'agent habilité à engager la dépense</div>
+                                        </t>
+                                    </td>
+                                    <td class="border-0 pl-5 pb-3" style="text-align:initial;">
+                                        <div>Nom et prénom de l'agent habilité à engager la dépense</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div>
+                            <p style="font-size: 12px;">(1) En cas de convention,arrêté, bail, marché, l’engagement doit couvrir la totalité de leurs conséquences financières pour l’année.
+                                Pour les autres dépenses de fonctionnement faisant l’objet d’engagement comptable provisionnel, celui-ci ne peut
+                                dépasser les 9/12èmes des crédits ouverts pour l’année.</p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>
