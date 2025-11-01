@@ -3,4 +3,8 @@
     <record id="res_partner_category_commune" model="res.partner.category">
         <field name="name">Commune</field>
     </record>
+    <record id="res_partner_category_plateforme_booking" model="res.partner.category">
+        <field name="name">Booking</field>
+        <field name="parent_id" ref="os_base.res_partner_category_plateforme"/>
+    </record>
 </odoo>

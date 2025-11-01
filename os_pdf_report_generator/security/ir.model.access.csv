@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+os_pdf_report_generator.access_pdf_report_config,access_pdf_report_config,os_pdf_report_generator.model_pdf_report_config,base.group_user,1,1,1,1
