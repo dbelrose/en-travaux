@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_booking_config_form" model="ir.ui.view">
+        <field name="name">booking.config.form</field>
+        <field name="model">booking.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group string="Configuration Billetweb">
+                            <field name="name"/>
+                            <field name="billetweb_event_id"/>
+                            <field name="billetweb_ticket_id"/>
+                            <field name="billetweb_api_key" password="True"/>
+                            <field name="cgv_url"/>
+                        </group>
+                        <group string="Paramètres de Réservation">
+                            <field name="min_nights"/>
+                            <field name="max_months"/>
+                            <field name="weekly_nights"/>
+                            <field name="weekly_discount"/>
+                            <field name="monthly_nights"/>
+                            <field name="monthly_discount"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_booking_config" model="ir.actions.act_window">
+        <field name="name">Configuration Réservations</field>
+        <field name="res_model">booking.config</field>
+        <field name="view_mode">form</field>
+    </record>
+
+    <menuitem id="menu_booking_root" name="Réservations" sequence="10"/>
+    <menuitem id="menu_booking_config" name="Configuration" parent="menu_booking_root" action="action_booking_config" sequence="100"/>
+</odoo>

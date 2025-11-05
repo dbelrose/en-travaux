@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="accommodation_list" name="Liste des Logements">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-4">
+                    <h1 class="text-center mb-4">Nos Logements</h1>
+                    <div class="row">
+                        <t t-foreach="accommodations" t-as="product">
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <img t-if="product.image_1920" class="card-img-top"
+                                         t-att-src="'/web/image/product.template/%s/image_1920' % product.id"
+                                         alt="Image logement"/>
+                                    <div class="card-body">
+                                        <h5 class="card-title" t-field="product.name"/>
+                                        <p class="card-text" t-field="product.description_sale"/>
+                                        <p class="text-primary">
+                                            <strong t-esc="'%.2f' % product.nightly_rate"/> &#8364; / nuit
+                                        </p>
+                                        <p class="text-muted">
+                                            Capacite: <span t-esc="product.max_occupancy"/> personnes
+                                        </p>
+                                        <a t-attf-href="/booking/new?product_id={{product.id}}"
+                                           class="btn btn-primary">Reserver</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="booking_form" name="Formulaire de Reservation">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-4">
+                    <h1 class="text-center mb-4">Reserver <span t-esc="product.name"/></h1>
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <form action="/booking/submit" method="post" class="card p-4 booking_form">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="product_id" t-att-value="product.id"/>
+
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Nom complet</label>
+                                    <input type="text" class="form-control" id="name" name="name" required="required"/>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" required="required"/>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Telephone</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone"/>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="start_date" class="form-label">Date d'arrivee</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" required="required"/>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="end_date" class="form-label">Date de depart</label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" required="required"/>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Remarques</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                                </div>
+
+                                <div class="alert alert-info price-info">
+                                    <p><strong>Tarif:</strong> <span t-esc="'%.2f' % product.nightly_rate"/> &#8364; / nuit</p>
+                                    <p class="mb-0"><small>Reduction de 10% a partir de 7 nuits, 20% a partir de 30 nuits</small></p>
+                                </div>
+
+                                <div class="availability-alert alert d-none"></div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100">Confirmer la reservation</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="booking_confirmation" name="Confirmation Reservation">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 text-center">
+                            <div class="alert alert-success">
+                                <h2>Reservation confirmee !</h2>
+                                <p class="lead">Votre reservation <strong t-esc="booking.name"/> a ete enregistree.</p>
+                                <p>Un email contenant le lien de paiement vous a ete envoye a <strong t-esc="booking.partner_id.email"/>.</p>
+                                <hr/>
+                                <p class="mb-0">Montant total: <strong t-esc="'%.2f' % booking.total_amount"> &#8364;</strong></p>
+                            </div>
+                            <a href="/booking/list" class="btn btn-primary mt-3">Voir mes reservations</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="booking_list_template" name="Mes Reservations">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-4">
+                    <h1 class="text-center mb-4">Mes Reservations</h1>
+                    <div class="row">
+                        <div class="col-12">
+                            <t t-if="not bookings">
+                                <div class="alert alert-info text-center">
+                                    <p>Vous n'avez aucune reservation pour le moment.</p>
+                                    <a href="/booking" class="btn btn-primary">Decouvrir nos logements</a>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Reference</th>
+                                                <th>Logement</th>
+                                                <th>Dates</th>
+                                                <th>Nuits</th>
+                                                <th>Montant</th>
+                                                <th>Statut</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="bookings" t-as="booking">
+                                                <tr>
+                                                    <td><span t-esc="booking.name"/></td>
+                                                    <td><span t-esc="booking.product_id.name"/></td>
+                                                    <td>
+                                                        <span t-esc="booking.start_date"/> -
+                                                        <span t-esc="booking.end_date"/>
+                                                    </td>
+                                                    <td><span t-esc="booking.nights"/></td>
+                                                    <td><span t-esc="'%.2f' % booking.total_amount"/> &#8364;</td>
+                                                    <td>
+                                                        <span t-if="booking.state == 'draft'" class="badge bg-secondary">Brouillon</span>
+                                                        <span t-if="booking.state == 'confirmed'" class="badge bg-info">Confirme</span>
+                                                        <span t-if="booking.state == 'payment_sent'" class="badge bg-warning">En attente de paiement</span>
+                                                        <span t-if="booking.state == 'paid'" class="badge bg-success">Paye</span>
+                                                        <span t-if="booking.state == 'cancelled'" class="badge bg-danger">Annule</span>
+                                                    </td>
+                                                    <td>
+                                                        <t t-if="booking.state == 'payment_sent' and booking.billetweb_payment_url">
+                                                            <a t-att-href="booking.billetweb_payment_url"
+                                                               class="btn btn-sm btn-primary" target="_blank">
+                                                                Payer
+                                                            </a>
+                                                        </t>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>
