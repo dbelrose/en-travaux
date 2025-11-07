@@ -6,13 +6,24 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_booking_reservation)d" type="action"
+                                class="oe_stat_button" icon="fa-calendar">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Réservations</span>
+                            </div>
+                        </button>
+                    </div>
+
                     <group>
                         <group string="Configuration Billetweb">
                             <field name="name"/>
-                            <field name="billetweb_event_id"/>
-                            <field name="billetweb_ticket_id"/>
-                            <field name="billetweb_api_key" password="True"/>
-                            <field name="cgv_url"/>
+                            <field name="billetweb_user_id" placeholder="Votre ID utilisateur"/>
+                            <field name="billetweb_api_key" password="True"
+                                   placeholder="Format: user:key ou juste la clé"/>
+                            <field name="billetweb_event_id" placeholder="ID de l'événement"/>
+                            <field name="billetweb_ticket_id" placeholder="ID du tarif"/>
+                            <field name="cgv_url" widget="url"/>
                         </group>
                         <group string="Paramètres de Réservation">
                             <field name="min_nights"/>
@@ -23,6 +34,26 @@
                             <field name="monthly_discount"/>
                             <field name="active"/>
                         </group>
+                    </group>
+
+                    <group string="Documentation API Billetweb" class="mt-4">
+                        <div class="alert alert-info" role="alert">
+                            <h4>Configuration de l'API</h4>
+                            <p><strong>Format de la clé API:</strong></p>
+                            <ul>
+                                <li><code>user:key</code> - Tout dans le champ "API Key"</li>
+                                <li>OU séparément: User ID et API Key dans des champs séparés</li>
+                            </ul>
+                            <p><strong>Où trouver vos identifiants:</strong></p>
+                            <ol>
+                                <li>Connectez-vous à votre compte Billetweb</li>
+                                <li>Accédez à <strong>Paramètres > API</strong></li>
+                                <li>Notez votre User ID et votre API Key</li>
+                                <li>Notez l'ID de votre événement</li>
+                                <li>Notez l'ID de votre tarif</li>
+                            </ol>
+                            <p><strong>URL de l'API:</strong> <code>https://www.billetweb.fr/api/</code></p>
+                        </div>
                     </group>
                 </sheet>
             </form>
@@ -35,6 +66,5 @@
         <field name="view_mode">form</field>
     </record>
 
-    <menuitem id="menu_booking_root" name="Réservations" sequence="10"/>
     <menuitem id="menu_booking_config" name="Configuration" parent="menu_booking_root" action="action_booking_config" sequence="100"/>
 </odoo>

@@ -27,7 +27,7 @@
                             invisible="state != 'draft'" class="oe_highlight"/>
                     <button name="action_cancel" string="Annuler" type="object"
                             invisible="state not in ('draft', 'confirmed', 'payment_sent')"/>
-                    <button name="action_mark_paid" string="Marquer paye" type="object"
+                    <button name="action_mark_paid" string="Marquer payé" type="object"
                             invisible="state != 'payment_sent'" groups="base.group_system"/>
                     <field name="state" widget="statusbar"/>
                 </header>
@@ -61,6 +61,12 @@
                     </group>
                     <field name="notes"/>
                 </sheet>
+                <!-- Chatter pour les messages et activités -->
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
@@ -82,6 +88,8 @@
         <field name="res_model">booking.reservation</field>
         <field name="view_mode">tree,form,calendar</field>
     </record>
+
+    <menuitem id="menu_booking_root" name="Réservations" sequence="10"/>
 
     <menuitem id="menu_booking_reservation" name="Réservations" parent="menu_booking_root" action="action_booking_reservation" sequence="10"/>
 </odoo>

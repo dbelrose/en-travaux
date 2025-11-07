@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="os_rental_assets" model="ir.asset">
+        <field name="name">OS Rental Assets</field>
+        <field name="bundle">web.assets_frontend</field>
+        <field name="path">os_rental/static/src/js/booking_form.js</field>
+    </record>
+</odoo>

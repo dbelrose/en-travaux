@@ -1,28 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- IMPORTANT: Changer tous les ID de booking_billetweb.* en os_rental.* -->
+
     <template id="accommodation_list" name="Liste des Logements">
         <t t-call="website.layout">
             <div id="wrap" class="oe_structure">
                 <div class="container mt-4">
                     <h1 class="text-center mb-4">Nos Logements</h1>
                     <div class="row">
+                        <t t-if="not accommodations">
+                            <div class="col-12">
+                                <div class="alert alert-info text-center">
+                                    <p>Aucun logement disponible pour le moment.</p>
+                                </div>
+                            </div>
+                        </t>
                         <t t-foreach="accommodations" t-as="product">
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <img t-if="product.image_1920" class="card-img-top"
                                          t-att-src="'/web/image/product.template/%s/image_1920' % product.id"
-                                         alt="Image logement"/>
-                                    <div class="card-body">
+                                         t-att-alt="product.name"
+                                         style="height: 200px; object-fit: cover;"/>
+                                    <div class="card-body d-flex flex-column">
                                         <h5 class="card-title" t-field="product.name"/>
-                                        <p class="card-text" t-field="product.description_sale"/>
-                                        <p class="text-primary">
-                                            <strong t-esc="'%.2f' % product.nightly_rate"/> &#8364; / nuit
-                                        </p>
-                                        <p class="text-muted">
-                                            Capacite: <span t-esc="product.max_occupancy"/> personnes
-                                        </p>
-                                        <a t-attf-href="/booking/new?product_id={{product.id}}"
-                                           class="btn btn-primary">Reserver</a>
+                                        <p class="card-text flex-grow-1" t-field="product.description_sale"/>
+                                        <div class="mt-auto">
+                                            <p class="text-primary mb-2">
+                                                <strong t-esc="'%.2f' % product.nightly_rate"/> € / nuit
+                                            </p>
+                                            <p class="text-muted mb-3">
+                                                <i class="fa fa-users"/> Capacité: <span t-esc="product.max_occupancy"/> personnes
+                                            </p>
+                                            <div class="d-grid gap-2">
+                                                <a t-attf-href="/booking/new?product_id={{product.id}}"
+                                                   class="btn btn-primary">Réserver</a>
+                                                <a t-attf-href="/booking/calendar/{{product.id}}"
+                                                   class="btn btn-outline-secondary btn-sm">Voir disponibilités</a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -37,35 +53,58 @@
         <t t-call="website.layout">
             <div id="wrap" class="oe_structure">
                 <div class="container mt-4">
-                    <h1 class="text-center mb-4">Reserver <span t-esc="product.name"/></h1>
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-8 mx-auto">
+                            <h1 class="text-center mb-4">Réserver <span t-esc="product.name"/></h1>
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <img t-if="product.image_1920"
+                                                 t-att-src="'/web/image/product.template/%s/image_1920' % product.id"
+                                                 class="img-fluid rounded"
+                                                 t-att-alt="product.name"/>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <p><strong>Tarif:</strong> <span t-esc="'%.2f' % product.nightly_rate"/> € / nuit</p>
+                                            <p><strong>Capacité:</strong> <span t-esc="product.max_occupancy"/> personnes</p>
+                                            <p class="text-muted mb-0">
+                                                <small>
+                                                    <i class="fa fa-info-circle"/> Réduction de 10% à partir de 7 nuits, 20% à partir de 30 nuits
+                                                </small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <form action="/booking/submit" method="post" class="card p-4 booking_form">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <input type="hidden" name="product_id" t-att-value="product.id"/>
 
                                 <div class="mb-3">
-                                    <label for="name" class="form-label">Nom complet</label>
+                                    <label for="name" class="form-label">Nom complet *</label>
                                     <input type="text" class="form-control" id="name" name="name" required="required"/>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
+                                    <label for="email" class="form-label">Email *</label>
                                     <input type="email" class="form-control" id="email" name="email" required="required"/>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="phone" class="form-label">Telephone</label>
+                                    <label for="phone" class="form-label">Téléphone</label>
                                     <input type="tel" class="form-control" id="phone" name="phone"/>
                                 </div>
 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="start_date" class="form-label">Date d'arrivee</label>
+                                        <label for="start_date" class="form-label">Date d'arrivée *</label>
                                         <input type="date" class="form-control" id="start_date" name="start_date" required="required"/>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="end_date" class="form-label">Date de depart</label>
+                                        <label for="end_date" class="form-label">Date de départ *</label>
                                         <input type="date" class="form-control" id="end_date" name="end_date" required="required"/>
                                     </div>
                                 </div>
@@ -76,13 +115,12 @@
                                 </div>
 
                                 <div class="alert alert-info price-info">
-                                    <p><strong>Tarif:</strong> <span t-esc="'%.2f' % product.nightly_rate"/> &#8364; / nuit</p>
-                                    <p class="mb-0"><small>Reduction de 10% a partir de 7 nuits, 20% a partir de 30 nuits</small></p>
+                                    <p class="mb-0">Sélectionnez vos dates pour voir le prix total</p>
                                 </div>
 
                                 <div class="availability-alert alert d-none"></div>
 
-                                <button type="submit" class="btn btn-primary btn-lg w-100">Confirmer la reservation</button>
+                                <button type="submit" class="btn btn-primary btn-lg w-100">Confirmer la réservation</button>
                             </form>
                         </div>
                     </div>
@@ -98,13 +136,20 @@
                     <div class="row justify-content-center">
                         <div class="col-md-6 text-center">
                             <div class="alert alert-success">
-                                <h2>Reservation confirmee !</h2>
-                                <p class="lead">Votre reservation <strong t-esc="booking.name"/> a ete enregistree.</p>
-                                <p>Un email contenant le lien de paiement vous a ete envoye a <strong t-esc="booking.partner_id.email"/>.</p>
+                                <i class="fa fa-check-circle fa-3x mb-3"/>
+                                <h2>Réservation confirmée !</h2>
+                                <p class="lead">Votre réservation <strong t-esc="booking.name"/> a été enregistrée.</p>
+                                <p>Un email contenant le lien de paiement vous a été envoyé à <strong t-esc="booking.partner_id.email"/>.</p>
                                 <hr/>
-                                <p class="mb-0">Montant total: <strong t-esc="'%.2f' % booking.total_amount"> &#8364;</strong></p>
+                                <div class="my-3">
+                                    <p><strong>Logement:</strong> <span t-esc="booking.product_id.name"/></p>
+                                    <p><strong>Du:</strong> <span t-esc="booking.start_date"/> <strong>au:</strong> <span t-esc="booking.end_date"/></p>
+                                    <p><strong>Nombre de nuits:</strong> <span t-esc="booking.nights"/></p>
+                                    <p class="h4 mb-0">Montant total: <strong t-esc="'%.2f' % booking.total_amount"> €</strong></p>
+                                </div>
                             </div>
-                            <a href="/booking/list" class="btn btn-primary mt-3">Voir mes reservations</a>
+                            <a href="/booking/list" class="btn btn-primary mt-3">Voir mes réservations</a>
+                            <a href="/booking" class="btn btn-outline-secondary mt-3 ms-2">Retour aux logements</a>
                         </div>
                     </div>
                 </div>
@@ -116,13 +161,13 @@
         <t t-call="website.layout">
             <div id="wrap" class="oe_structure">
                 <div class="container mt-4">
-                    <h1 class="text-center mb-4">Mes Reservations</h1>
+                    <h1 class="text-center mb-4">Mes Réservations</h1>
                     <div class="row">
                         <div class="col-12">
                             <t t-if="not bookings">
                                 <div class="alert alert-info text-center">
-                                    <p>Vous n'avez aucune reservation pour le moment.</p>
-                                    <a href="/booking" class="btn btn-primary">Decouvrir nos logements</a>
+                                    <p>Vous n'avez aucune réservation pour le moment.</p>
+                                    <a href="/booking" class="btn btn-primary">Découvrir nos logements</a>
                                 </div>
                             </t>
                             <t t-else="">
@@ -130,7 +175,7 @@
                                     <table class="table table-striped">
                                         <thead>
                                             <tr>
-                                                <th>Reference</th>
+                                                <th>Référence</th>
                                                 <th>Logement</th>
                                                 <th>Dates</th>
                                                 <th>Nuits</th>
@@ -149,13 +194,13 @@
                                                         <span t-esc="booking.end_date"/>
                                                     </td>
                                                     <td><span t-esc="booking.nights"/></td>
-                                                    <td><span t-esc="'%.2f' % booking.total_amount"/> &#8364;</td>
+                                                    <td><span t-esc="'%.2f' % booking.total_amount"/> €</td>
                                                     <td>
                                                         <span t-if="booking.state == 'draft'" class="badge bg-secondary">Brouillon</span>
-                                                        <span t-if="booking.state == 'confirmed'" class="badge bg-info">Confirme</span>
+                                                        <span t-if="booking.state == 'confirmed'" class="badge bg-info">Confirmé</span>
                                                         <span t-if="booking.state == 'payment_sent'" class="badge bg-warning">En attente de paiement</span>
-                                                        <span t-if="booking.state == 'paid'" class="badge bg-success">Paye</span>
-                                                        <span t-if="booking.state == 'cancelled'" class="badge bg-danger">Annule</span>
+                                                        <span t-if="booking.state == 'paid'" class="badge bg-success">Payé</span>
+                                                        <span t-if="booking.state == 'cancelled'" class="badge bg-danger">Annulé</span>
                                                     </td>
                                                     <td>
                                                         <t t-if="booking.state == 'payment_sent' and booking.billetweb_payment_url">
@@ -175,6 +220,54 @@
                     </div>
                 </div>
             </div>
+        </t>
+    </template>
+
+    <!-- Nouveau template pour le calendrier de disponibilité -->
+    <template id="booking_calendar_view" name="Calendrier de Disponibilité">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-4">
+                    <h1 class="text-center mb-4">Disponibilités - <span t-esc="product.name"/></h1>
+
+                    <div class="row mb-4">
+                        <div class="col-md-8 mx-auto">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div id="booking_calendar"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
+                                    <span><span class="badge bg-success">Disponible</span></span>
+                                    <span><span class="badge bg-warning">En attente</span></span>
+                                    <span><span class="badge bg-info">Confirmé</span></span>
+                                    <span><span class="badge bg-primary">Payé</span></span>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <a t-attf-href="/booking/new?product_id={{product.id}}" class="btn btn-primary">
+                                    Réserver ce logement
+                                </a>
+                                <a href="/booking" class="btn btn-outline-secondary ms-2">
+                                    Retour aux logements
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simple calendar display avec les réservations -->
+            <script type="text/javascript">
+                document.addEventListener('DOMContentLoaded', function() {
+                    var calendarData = <t t-esc="cal endar_data"/>;
+                    // TODO: Implémenter l'affichage du calendrier avec une bibliothèque comme FullCalendar
+                    console.log('Calendar data:', calendarData);
+                });
+            </script>
         </t>
     </template>
 </odoo>

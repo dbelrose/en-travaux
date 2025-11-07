@@ -8,12 +8,21 @@ class BookingController(http.Controller):
     @http.route('/booking', type='http', auth='public', website=True)
     def accommodation_list(self, **kwargs):
         """Liste des logements disponibles"""
-        accommodation_categ = request.env.ref('os_hospitality_managment.product_category_tdsmdt')
-        accommodations = request.env['product.template'].sudo().search([
-            ('categ_id', '=', accommodation_categ.id),
-            ('is_accommodation', '=', True),
-        ])
-        return request.render('booking_billetweb.accommodation_list', {
+        accommodation_categ = request.env.ref('os_hospitality_managment.product_category_tdsmdt',
+                                              raise_if_not_found=False)
+
+        if not accommodation_categ:
+            # Si la catégorie n'existe pas, afficher tous les logements marqués comme tels
+            accommodations = request.env['product.template'].sudo().search([
+                ('is_accommodation', '=', True),
+            ])
+        else:
+            accommodations = request.env['product.template'].sudo().search([
+                ('categ_id', '=', accommodation_categ.id),
+                ('is_accommodation', '=', True),
+            ])
+
+        return request.render('os_rental.accommodation_list', {
             'accommodations': accommodations,
         })
 
@@ -27,7 +36,7 @@ class BookingController(http.Controller):
         if not product.exists() or not product.is_accommodation:
             return request.redirect('/booking')
 
-        return request.render('booking_billetweb.booking_form', {
+        return request.render('os_rental.booking_form', {
             'product': product,
         })
 
@@ -69,7 +78,7 @@ class BookingController(http.Controller):
             # Confirmation automatique (déclenche la création de commande Billetweb)
             booking.action_confirm()
 
-            return request.render('booking_billetweb.booking_confirmation', {
+            return request.render('os_rental.booking_confirmation', {
                 'booking': booking,
             })
 
@@ -86,7 +95,7 @@ class BookingController(http.Controller):
             ('partner_id', '=', partner.id),
         ], order='create_date desc')
 
-        return request.render('booking_billetweb.booking_list_template', {
+        return request.render('os_rental.booking_list_template', {
             'bookings': bookings,
         })
 
@@ -157,3 +166,23 @@ class BookingController(http.Controller):
             }
         except Exception as e:
             return {'error': str(e)}
+
+    @http.route('/booking/calendar/<int:product_id>', type='http', auth='public', website=True)
+    def booking_calendar(self, product_id, **kwargs):
+        """Affiche le calendrier de disponibilité pour un logement"""
+        product = request.env['product.template'].sudo().browse(product_id)
+
+        if not product.exists() or not product.is_accommodation:
+            return request.redirect('/booking')
+
+        # Récupérer les 6 prochains mois
+        from datetime import date, timedelta
+        start_date = date.today()
+        end_date = start_date + timedelta(days=180)
+
+        calendar_data = product.get_booking_calendar_data(start_date, end_date)
+
+        return request.render('os_rental.booking_calendar_view', {
+            'product': product,
+            'calendar_data': calendar_data,
+        })
