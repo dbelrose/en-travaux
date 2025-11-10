@@ -27,8 +27,8 @@ Référentiels inclus :
 * Formes juridiques françaises (110 à 990)
 * Classes d'effectifs standardisées
     """,
-    'author': 'Votre Entreprise',
-    'website': 'https://www.votresite.com',
+    'author': 'OpalSea',
+    'website': 'https://www.opalsea.site',
     'license': 'LGPL-3',
     'depends': [
         'base',
@@ -45,17 +45,19 @@ Référentiels inclus :
 
         'data/partner_categories.xml',
         'data/partner_company_type_data.xml',
-        'data/partner_employee_quantity_data.xml',
         'data/res.partner.category.csv',
+        'data/res.partner.employee_quantity_range.csv',
         'data/ir_cron.xml',
         'data/ir_config_parameter.xml',
         # 'data/queue_job_channel.xml',
 
         'views/rte_sync_views.xml',
         'views/res_config_settings_view.xml',
-        # 'views/partner_image_wizard_views.xml',
+        'views/partner_image_wizard_views.xml',
         'views/res_partner_image_cache_wizard.xml',
     ],
+    "post_init_hook": "post_init_hook",
+    "uninstall_hook": "uninstall_hook",
     'installable': True,
     'application': False,
     'auto_install': False,

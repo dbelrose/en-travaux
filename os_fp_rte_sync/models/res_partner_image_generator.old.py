@@ -1,4 +1,8 @@
+# Fichier: os_fp_rte_sync/models/res_partner_image_generator.py
+# Imports à mettre à jour en haut du fichier
+
 import base64
+import hashlib
 import io
 import logging
 import os
@@ -125,7 +129,7 @@ class ResPartnerImageGenerator(models.AbstractModel):
             # Restauration
             'restauration': {
                 'keywords': [
-                    (r'\b(pizz[ée]ria)\b', '\uf817', '#e67e22', 'Pizzeria'),
+                    (r'\b(pizz[ae]ria)\b', '\uf817', '#e67e22', 'Pizzeria'),
                     (r'\b(burger|hamburger)\b', '\uf805', '#d35400', 'Burger'),
                     (r'\b(sushi|japonais)\b', '\uf6e2', '#1abc9c', 'Sushi'),
                     (r"\b(tahitien|ma'a)\b", '\uf2e7', '#16a085', 'Tahitien'),
@@ -149,7 +153,7 @@ class ResPartnerImageGenerator(models.AbstractModel):
                     (r'\b(pharmacie)\b', '\uf484', '#e74c3c', 'Pharmacie'),
                     (r'\b(boulangerie|pain)\b', '\uf305', '#d35400', 'Boulangerie'),
                     (r'\b(fleuriste|fleurs)\b', '\uf7ae', '#e91e63', 'Fleuriste'),
-                    (r'\b(librairie|livres)\b', '\uf02d', '#34495e', 'Librairie'),
+                    (r'\b(libr?airie|livres)\b', '\uf02d', '#34495e', 'Librairie'),
                     (r'\b(supermarché)\b', '\uf07a', '#27ae60', 'Supermarché'),
                     (r'\b(bijouterie|perles)\b', '\uf3ff', '#9c27b0', 'Bijouterie'),
                 ],
@@ -203,31 +207,14 @@ class ResPartnerImageGenerator(models.AbstractModel):
             return None
 
     @api.model
-    def _get_image_cache_key(self, unicode_char, color_hex, description=None):
-        """Génère une clé de cache lisible et unique pour une icône/couleur."""
-        # Convertir l'unicode en nom lisible (ex: \uf21a -> f21a)
-        unicode_hex = format(ord(unicode_char), '04x')
-
-        # Nettoyer la couleur (ex: #27ae60 -> 27ae60)
-        color_clean = color_hex.lstrip('#')
-
-        # Si on a une description, l'utiliser (ex: "Va'a" -> "vaa")
-        if description:
-            desc_clean = re.sub(r'[^a-z0-9]', '',
-                                description.lower().replace("'", "").replace("è", "e").replace("é", "e").replace("à",
-                                                                                                                 "a"))
-            # Limiter à 20 caractères
-            desc_clean = desc_clean[:20]
-            base_name = f"fa_{unicode_hex}_{desc_clean}_{color_clean}"
-        else:
-            base_name = f"fa_{unicode_hex}_{color_clean}"
-
-        return base_name
+    def _get_image_cache_key(self, unicode_char, color_hex):
+        """Génère une clé de cache unique pour une icône/couleur."""
+        return hashlib.md5(f"{unicode_char}_{color_hex}".encode()).hexdigest()
 
     @api.model
-    def _get_cached_image(self, unicode_char, color_hex, description=None):
+    def _get_cached_image(self, unicode_char, color_hex):
         """Récupère une image depuis le cache (ir.attachment)."""
-        cache_key = self._get_image_cache_key(unicode_char, color_hex, description)
+        cache_key = self._get_image_cache_key(unicode_char, color_hex)
         attachment = self.env['ir.attachment'].sudo().search([
             ('name', '=', f'partner_icon_{cache_key}.png'),
             ('res_model', '=', 'res.partner'),
@@ -239,9 +226,9 @@ class ResPartnerImageGenerator(models.AbstractModel):
         return None
 
     @api.model
-    def _cache_image(self, unicode_char, color_hex, image_data, description=None):
+    def _cache_image(self, unicode_char, color_hex, image_data):
         """Stocke une image générée dans le cache (ir.attachment)."""
-        cache_key = self._get_image_cache_key(unicode_char, color_hex, description)
+        cache_key = self._get_image_cache_key(unicode_char, color_hex)
 
         existing = self.env['ir.attachment'].sudo().search([
             ('name', '=', f'partner_icon_{cache_key}.png'),
@@ -259,25 +246,24 @@ class ResPartnerImageGenerator(models.AbstractModel):
             'res_id': 0,
             'mimetype': 'image/png',
             'public': False,
-            'description': f'FA Icon: {description or unicode_char} ({color_hex})',
+            'description': f'Generated partner icon: {unicode_char} {color_hex}',
         })
         _logger.info("Image mise en cache : %s (attachment #%s)", cache_key, attachment.id)
         return attachment
 
     @api.model
-    def get_or_generate_image(self, unicode_char, color_hex, description=None):
+    def get_or_generate_image(self, unicode_char, color_hex):
         """Récupère ou génère une image d'icône."""
-        cached_image = self._get_cached_image(unicode_char, color_hex, description)
+        cached_image = self._get_cached_image(unicode_char, color_hex)
         if cached_image:
             return cached_image
 
-        _logger.info("Génération nouvelle image : %s %s (%s)", repr(unicode_char), color_hex,
-                     description or 'no description')
+        _logger.info("Génération nouvelle image : %s %s", repr(unicode_char), color_hex)
         image_data = self._generate_image_from_icon(unicode_char, color_hex)
         if not image_data:
             return None
 
-        self._cache_image(unicode_char, color_hex, image_data, description)
+        self._cache_image(unicode_char, color_hex, image_data)
         return image_data
 
 
@@ -342,8 +328,7 @@ class ResPartner(models.Model):
             return False
 
         generator = self.env['res.partner.image.generator']
-        # Passer la description pour avoir des noms de fichiers explicites
-        image_data = generator.get_or_generate_image(unicode_char, color_hex, description)
+        image_data = generator.get_or_generate_image(unicode_char, color_hex)
         if image_data:
             partner.write({'image_1920': image_data})
             _logger.info("✓ Image auto-assignée '%s' au partenaire '%s' (ID: %s): %s",

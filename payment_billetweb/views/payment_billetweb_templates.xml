@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Formulaire de redirection Billetweb -->
+    <template id="redirect_form" name="Billetweb Redirect Form">
+        <form method="get" t-att-action="api_url" target="_blank">
+            <input type="hidden" name="order_id" t-att-value="billetweb_order_id"/>
+            <div class="text-center">
+                <h3>Redirection vers Billetweb...</h3>
+                <p>Vous allez être redirigé vers la page de paiement sécurisée Billetweb.</p>
+                <button type="submit" class="btn btn-primary btn-lg mt-3">
+                    <i class="fa fa-lock"/> Procéder au paiement
+                </button>
+            </div>
+        </form>
+    </template>
+
+    <!-- Vue inline du formulaire de paiement -->
+    <template id="billetweb_form" name="Billetweb Payment Form">
+        <div class="billetweb-payment-form">
+            <div class="alert alert-info" role="alert">
+                <i class="fa fa-info-circle"/>
+                Vous serez redirigé vers la plateforme sécurisée Billetweb pour finaliser votre paiement.
+            </div>
+        </div>
+    </template>
+
+    <!-- Message de statut personnalisé -->
+    <template id="billetweb_payment_status" name="Billetweb Payment Status">
+        <t t-set="tx_status" t-value="tx.state"/>
+        <div class="billetweb-status">
+            <t t-if="tx_status == 'done'">
+                <div class="alert alert-success">
+                    <h4><i class="fa fa-check-circle"/> Paiement confirmé</h4>
+                    <p>Votre paiement via Billetweb a été traité avec succès.</p>
+                </div>
+            </t>
+            <t t-elif="tx_status == 'pending'">
+                <div class="alert alert-warning">
+                    <h4><i class="fa fa-clock-o"/> Paiement en attente</h4>
+                    <p>Votre paiement est en cours de traitement. Vous recevrez une confirmation par email.</p>
+                </div>
+            </t>
+            <t t-elif="tx_status == 'cancel'">
+                <div class="alert alert-danger">
+                    <h4><i class="fa fa-times-circle"/> Paiement annulé</h4>
+                    <p>Votre paiement a été annulé ou a échoué.</p>
+                </div>
+            </t>
+        </div>
+    </template>
+
+</odoo>

@@ -1,3 +1,0 @@
-"id","debut","fin","taux","type_taxe_id:id"
-"manureva_tva_1","2000-01-01","2099-01-01",5,"manureva.manureva_type_taxe_reduit"
-"manureva_tva_2","2000-01-01","2099-01-01",13,"manureva.manureva_type_taxe_normal"

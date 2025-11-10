@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <data noupdate="1">
-        <!-- Analytic Groups -->
-        <record id="analytic_group_projects" model="account.analytic.group">
-            <field name="name">Projects</field>
-        </record>
-    </data>
-</odoo>

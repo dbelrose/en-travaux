@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="payment_transaction_form_billetweb" model="ir.ui.view">
+        <field name="name">payment.transaction.form.billetweb</field>
+        <field name="model">payment.transaction</field>
+        <field name="inherit_id" ref="payment.payment_transaction_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='provider_reference']" position="after">
+                <field name="billetweb_order_id" readonly="1" invisible="provider_code != 'billetweb' or not billetweb_order_id"/>
+                <field name="billetweb_event_id" readonly="1" invisible="provider_code != 'billetweb' or not billetweb_event_id"/>
+                <field name="billetweb_shop_url" readonly="1" widget="url" invisible="provider_code != 'billetweb' or not billetweb_shop_url"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

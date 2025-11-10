@@ -70,6 +70,32 @@ class RteSyncMixin(models.AbstractModel):
     _name = "rte.sync.mixin"
     _description = "Fonctions utilitaires RTE"
 
+    def _set_employee_range_by_class(self, partner, class_code):
+        """
+        Affecte res.partner.employee_quantity_range depuis le code numérique de Classe_Effectifs.
+        Construit le XML-ID : os_fp_rte_sync.res_partner_employee_quantity_range_XX
+        Retourne True si affecté, False sinon.
+        """
+        if class_code is None or class_code == "":
+            return False
+        try:
+            # classe fournie comme "08" / "7" / 7 --> convertissons en int
+            code = int(str(class_code).strip())
+        except Exception:
+            return False
+
+        # Si tes IDs XML sont 00..09 :
+        xml_id = f"os_fp_rte_sync.res_partner_employee_quantity_range_{code:02d}"
+
+        # Si au contraire tes IDs sont 01..10, décommente la ligne suivante et commente la précédente :
+        # xml_id = f"os_fp_rte_sync.res_partner_employee_quantity_range_{code:02d}"
+
+        rec = self.env.ref(xml_id, raise_if_not_found=False)
+        if rec and "employee_quantity_range_id" in partner._fields:
+            partner.write({"employee_quantity_range_id": rec.id})
+            return True
+        return False
+
     def _get_dataset_meta(self):
         raw = _http_get(f"https://www.data.gouv.fr/api/1/datasets/{DGOUV_DATASET_SLUG}/")
         return json.loads(raw.decode("utf-8"))
@@ -140,8 +166,8 @@ class RteSyncMixin(models.AbstractModel):
         if naf_code:
             naf_name = self._get_naf_name_from_ref(naf_code)
             tags |= self._get_or_create_tag("APE", naf_name)
-        if effectif_label:
-            tags |= self._get_or_create_tag("Effectif", effectif_label.strip())
+        # if effectif_label:
+        #     tags |= self._get_or_create_tag("Effectif", effectif_label.strip())
         if tags:
             partner.write({"category_id": [(4, t.id) for t in tags]})
 
@@ -218,12 +244,7 @@ class RteSyncMixin(models.AbstractModel):
     def _ensure_id_number(self, partner, category_name, value, code=None, date_creation=None):
         """
         Crée ou met à jour un res.partner.id_number avec support des dates.
-
-        :param partner: Recordset res.partner
-        :param category_name: Nom de la catégorie
-        :param value: Valeur du numéro
-        :param code: Code de la catégorie
-        :param date_creation: Date de création/émission (pour date_issued et valid_from)
+        Règle d'unicité : (category_id, name) unique -> ré-attache si existant sur un autre partner.
         """
         if not value:
             return
@@ -231,47 +252,50 @@ class RteSyncMixin(models.AbstractModel):
         cat = self._ensure_id_category(category_name, code=code or category_name.lower())
         IdNum = self.env["res.partner.id_number"].sudo()
 
+        # --- RECHERCHE GLOBALE par (category_id, name), PAS par partner ---
         existing = IdNum.search([
-            ("partner_id", "=", partner.id),
+            ("category_id", "=", cat.id),
             ("name", "=", value),
-            ("category_id", "=", cat.id)
         ], limit=1)
 
-        # Préparer les valeurs
-        vals = {
-            "partner_id": partner.id,
-            "category_id": cat.id,
-            "name": value,
-            "status": 'open'
-        }
-
-        # Ajouter partner_issued_id (ISPF) si applicable
+        vals_common = {"status": "open"}
+        # Emetteur ISPF si applicable
         if code in ('tahiti', 'rte_etab'):
             ispf = self._get_or_create_ispf_partner()
-            vals["partner_issued_id"] = ispf.id
+            vals_common["partner_issued_id"] = ispf.id
 
-        # Ajouter les dates si fournies
+        # Dates
         if date_creation:
-            vals["date_issued"] = date_creation
-            vals["valid_from"] = date_creation
+            vals_common.update({
+                "date_issued": date_creation,
+                "valid_from": date_creation,
+            })
 
         if not existing:
-            IdNum.create(vals)
-            _logger.debug("ID number créé: %s = %s pour partner %s", category_name, value, partner.id)
-        else:
-            # Mettre à jour si nécessaire
-            to_update = {}
-            if date_creation and not existing.date_issued:
-                to_update["date_issued"] = date_creation
-            if date_creation and not existing.valid_from:
-                to_update["valid_from"] = date_creation
-            if code in ('tahiti', 'rte_etab') and not existing.partner_issued_id:
-                ispf = self._get_or_create_ispf_partner()
-                to_update["partner_issued_id"] = ispf.id
+            # Créer directement sur le partner cible
+            create_vals = {"partner_id": partner.id, "category_id": cat.id, "name": value, **vals_common}
+            IdNum.create(create_vals)
+            _logger.debug("ID number créé: %s = %s sur partner %s", category_name, value, partner.id)
+            return
 
-            if to_update:
-                existing.write(to_update)
-                _logger.debug("ID number mis à jour: %s = %s pour partner %s", category_name, value, partner.id)
+        # Ici: déjà existant sur la base -> s'assurer qu'il est rattaché au bon partner
+        to_write = {}
+        if existing.partner_id.id != partner.id:
+            to_write["partner_id"] = partner.id  # -> ré-attache (déplace) l'ID
+
+        # Compléter les méta si manquants
+        if "partner_issued_id" in IdNum._fields and not existing.partner_issued_id and "partner_issued_id" in vals_common:
+            to_write["partner_issued_id"] = vals_common["partner_issued_id"]
+
+        if date_creation:
+            if "date_issued" in IdNum._fields and not existing.date_issued:
+                to_write["date_issued"] = date_creation
+            if "valid_from" in IdNum._fields and not existing.valid_from:
+                to_write["valid_from"] = date_creation
+
+        if to_write:
+            existing.write(to_write)
+            _logger.debug("ID number mis à jour/déplacé: %s = %s -> partner %s", category_name, value, partner.id)
 
     def _set_employee_range(self, partner, effectif_label):
         if not effectif_label:
@@ -310,6 +334,8 @@ class RteSyncMixin(models.AbstractModel):
             "naf_ent": pick("naf2008_ent", "naf_ent", "naf ent"),
             "forme": pick("code_fjur", "forme juridique"),
             "effectif": pick("classe_effectifs", "classe d'effectifs", "classe effectif", "effectif"),
+            "effectif_class": pick("classe_effectifs", "classe_effectifs_code", "classe_effectifs_num",
+                                   "classe_effectifs_id"),
             "rad_ent": pick("rad_ent", "radiation_ent"),
             "rad_etab": pick("rad_etab", "radiation_etab"),
             "insc_ent": pick("insc_ent"),
@@ -420,24 +446,73 @@ class RteSyncRunner(RteSyncMixin, models.AbstractModel):
     _name = "rte.sync.runner"
     _description = "Exécution de la synchronisation RTE"
 
+    # ------------------ Helpers de normalisation (nouveaux) ------------------
+
+    def _canon_id(self, v):
+        """
+        Normalise un identifiant numérique (TAHITI/NUMETA) :
+        - supprime espaces
+        - convertit "123456.0" -> "123456"
+        - conserve uniquement les chiffres
+        """
+        s = ("" if v is None else str(v)).strip()
+        if not s:
+            return ""
+        if re.fullmatch(r"\d+\.0", s):
+            return s[:-2]
+        s = re.sub(r"\s", "", s)
+        if re.fullmatch(r"\d+\.\d+", s):
+            try:
+                f = float(s)
+                if f.is_integer():
+                    return str(int(f))
+            except Exception:
+                pass
+        return re.sub(r"\D", "", s)
+
+    def _canon_etab_key(self, tahiti, numeta, tahiti_etab):
+        """
+        Clé canonique d'établissement :
+        - si `tahiti_etab` fourni, tente d'extraire "TAHITI-NUMETA"
+        - sinon compose "TAHITI-NUMETA" à partir des valeurs normalisées
+        """
+        t = self._canon_id(tahiti)
+        n = self._canon_id(numeta)
+        e = (tahiti_etab or "").strip()
+        if e:
+            parts = re.findall(r"\d+", e)
+            if len(parts) >= 2:
+                return f"{parts[0]}-{parts[1]}"
+        return f"{t}-{n}" if (t and n) else ""
+
+    # -------------------------------------------------------------------------
+
     @job(default_channel='root:rte')
     @api.model
     def run_sync(self, force=False):
         """
-        Synchronisation RTE via queue_job.
-        S'exécute en arrière-plan sans timeout.
+        Synchronisation RTE via l'API tabulaire data.gouv.fr.
+
+        Correctifs principaux :
+        - Pagination robuste via links.next (+ respect page_size <= 50)
+        - Normalisation des identifiants (TAHITI/NUMETA/clé établissement)
+        - Dé-duplication cross-pages et comptage distinct des établissements
+        - Pliage correct des entreprises mono-établissement
         """
         run = self.env["rte.sync.run"].sudo().create({
             "status": "pending",
-            "message": "Synchronisation en cours...",
+            "message": "Synchronisation en cours via API tabulaire...",
         })
-
         try:
-            res_meta = self._get_rte_resource_meta()
-            checksum = (res_meta.get("checksum") or {}).get("value")
-            latest_url = res_meta.get("latest") or res_meta.get("url")
-            last_checksum = self.env["ir.config_parameter"].sudo().get_param("fp_rte_sync.last_checksum")
+            # RID de la ressource
+            rid = self.env["ir.config_parameter"].sudo().get_param(
+                "fp_rte_sync.resource_rid", default=RTE_RESOURCE_RID_DEFAULT
+            )
 
+            # Vérifier si une nouvelle version existe
+            res_meta = self._get_rte_resource_meta(rid)
+            checksum = (res_meta.get("checksum") or {}).get("value")
+            last_checksum = self.env["ir.config_parameter"].sudo().get_param("fp_rte_sync.last_checksum")
             if not force and checksum and last_checksum and checksum == last_checksum:
                 run.write({
                     "status": "skipped",
@@ -447,25 +522,18 @@ class RteSyncRunner(RteSyncMixin, models.AbstractModel):
                 _logger.info("RTE: checksum identique, skip.")
                 return run
 
-            content = _http_get(latest_url, timeout=600)
-            text = None
-            for enc in ("utf-8-sig", "utf-8", "latin-1"):
-                try:
-                    text = content.decode(enc)
-                    break
-                except Exception:
-                    continue
-            if text is None:
-                raise ValueError("Impossible de décoder le CSV (encodage).")
-
-            buf = io.StringIO(text)
-            reader = csv.DictReader(buf)
-            if not reader.fieldnames:
-                raise ValueError("CSV sans entêtes.")
-
-            headers_lc = [h.strip().lower() for h in reader.fieldnames]
+            # -------- API Tabulaire : profil / colonnes
+            base_api_url = f"https://tabular-api.data.gouv.fr/api/resources/{rid}"
+            _logger.info("RTE: Récupération du profil de la ressource...")
+            profile_url = f"{base_api_url}/profile/"
+            profile_raw = _http_get(profile_url, timeout=60)
+            profile_data = json.loads(profile_raw.decode("utf-8"))
+            headers = profile_data.get("profile", {}).get("header", [])
+            if not headers:
+                raise ValueError("Aucun header trouvé dans le profil de la ressource.")
+            headers_lc = [h.strip().lower() for h in headers]
             header_map = self._detect_columns(headers_lc)
-            _logger.info("RTE header_map: %s", header_map)
+            _logger.info(f"RTE header_map: {header_map}")
 
             Partner = self.env["res.partner"].sudo()
             country_pf = self._country_pf()
@@ -474,83 +542,163 @@ class RteSyncRunner(RteSyncMixin, models.AbstractModel):
             import_only_active = self._import_only_active()
             batch_size = self._batch_commit()
 
-            def rv(row_l, key):
+            def rv(row_dict, key):
+                """Retourne la valeur d'une colonne (mappée) en str (ou None)"""
                 col = header_map.get(key)
-                return row_l.get(col) if col else None
+                if not col:
+                    return None
+                for k in row_dict.keys():
+                    if k.strip().lower() == col:
+                        val = row_dict[k]
+                        if val is None:
+                            return None
+                        return str(val) if not isinstance(val, str) else val
+                return None
 
-            # 1ère passe : filtrage + collecte clés
+            # -------- Pagination (respect links.next, page_size <= 50) --------
+            page = 1
+            default_page_size = "50"
+            page_size_cfg = self.env["ir.config_parameter"].sudo().get_param(
+                "fp_rte_sync.api_page_size", default=default_page_size
+            )
+            try:
+                page_size = max(10, min(50, int(page_size_cfg)))
+            except Exception:
+                page_size = 50
+
+            naf_whitelist = self.env["ir.config_parameter"].sudo().get_param(
+                "fp_rte_sync.naf_whitelist", default=""
+            ).strip()
+            naf_filter = ""
+            if naf_whitelist:
+                naf_codes = [self._norm_naf(code.strip()) for code in naf_whitelist.split(",") if code.strip()]
+                if naf_codes:
+                    naf_filter = ",".join(naf_codes)
+
+            total_rows = 0
+            _logger.info(
+                f"RTE: Début sync paginée (page_size={page_size}, naf_filter={naf_filter or 'aucun'})..."
+            )
+
+            all_rows = []
+            next_url = None
+            while True:
+                if next_url:
+                    data_url = next_url
+                else:
+                    data_url = f"{base_api_url}/data/?page={page}&page_size={page_size}"
+                    if naf_filter:
+                        data_url += f"&NAF2008_ETAB__in={naf_filter}"
+                _logger.info(f"RTE: Récupération page {page}...")
+                try:
+                    data_raw = _http_get(data_url, timeout=120)
+                    data_response = json.loads(data_raw.decode("utf-8"))
+                except Exception as e:
+                    _logger.error(f"RTE: Erreur lors de la récupération de la page {page}: {e}")
+                    break
+
+                rows_data = data_response.get("data", [])
+                meta = data_response.get("meta", {})
+                total = meta.get("total", 0)
+                if page == 1:
+                    total_rows = total
+                    _logger.info(f"RTE: Total de lignes à traiter (annonce API): {total_rows}")
+                if not rows_data:
+                    _logger.info("RTE: Aucune donnée sur cette page, fin de pagination.")
+                    break
+
+                _logger.info(f"RTE: Page {page} - {len(rows_data)} lignes récupérées")
+                all_rows.extend(rows_data)
+
+                links = data_response.get("links", {})
+                next_url = links.get("next")
+                if not next_url:
+                    _logger.info("RTE: Dernière page atteinte.")
+                    break
+                page += 1
+
+            _logger.info(f"RTE: {len(all_rows)} lignes totales récupérées via l'API tabulaire")
+
+            # -------- 1ère passe : filtrage + collecte clés (dé-dup) ----------
             rows = []
             tahitis_set, etab_keys_set = set(), set()
+            uniq_etabs_by_tahiti = {}   # tahiti -> set(etab_key)
+            seen_pairs = set()          # (tahiti_norm, etab_key_norm | __NO_ETAB__)
 
-            _logger.info("RTE: 1ère passe - lecteur CSV...")
-            for row in reader:
-                row_l = {(k or "").strip().lower(): v for k, v in row.items()}
-                tahiti = (rv(row_l, "tahiti") or "").strip()
+            _logger.info("RTE: 1ère passe - filtrage et collecte...")
+            for row_dict in all_rows:
+                tahiti_raw = (rv(row_dict, "tahiti") or "").strip()
+                numeta_raw = (rv(row_dict, "numeta") or "").strip()
+                tahiti_etab_raw = (rv(row_dict, "tahiti_etab") or "").strip()
+
+                tahiti = self._canon_id(tahiti_raw)
                 if not tahiti:
                     continue
-                numeta = (rv(row_l, "numeta") or "").strip()
-                tahiti_etab = (rv(row_l, "tahiti_etab") or "").strip()
+                numeta = self._canon_id(numeta_raw)
+                tahiti_etab = tahiti_etab_raw
+
                 is_establishment = bool(tahiti_etab or numeta)
-                etab_key = tahiti_etab or (f"{tahiti}-{numeta}" if numeta else "")
-                naf = (rv(row_l, "naf_etab") or rv(row_l, "naf_ent") or "").strip()
-                rad_ent = (rv(row_l, "rad_ent") or "").strip()
-                rad_etab = (rv(row_l, "rad_etab") or "").strip()
+                etab_key = self._canon_etab_key(tahiti, numeta, tahiti_etab)
+
+                naf = (rv(row_dict, "naf_etab") or rv(row_dict, "naf_ent") or "").strip()
+                rad_ent = (rv(row_dict, "rad_ent") or "").strip()
+                rad_etab = (rv(row_dict, "rad_etab") or "").strip()
                 is_active_row = not bool(rad_etab if is_establishment else rad_ent)
 
-                if self._naf_allowed(naf):
-                    rows.append((row_l, tahiti, is_establishment, etab_key, naf, is_active_row))
-                    tahitis_set.add(tahiti)
-                    if etab_key:
-                        etab_keys_set.add(etab_key)
-                else:
+                if not self._naf_allowed(naf):
                     skipped += 1
+                    continue
+                pair_key = (tahiti, etab_key or "__NO_ETAB__")
+                if pair_key in seen_pairs:
+                    # doublon cross-pages => ignorer
+                    continue
+                seen_pairs.add(pair_key)
 
-            _logger.info("RTE: Lecteur terminé - %s lignes valides, %s ignorées", len(rows), skipped)
+                rows.append((row_dict, tahiti, is_establishment, etab_key, naf, is_active_row))
+                tahitis_set.add(tahiti)
+                if etab_key:
+                    etab_keys_set.add(etab_key)
+                    uniq_etabs_by_tahiti.setdefault(tahiti, set()).add(etab_key)
 
-            # Prefetch existants via res.partner.id_number
+            _logger.info("RTE: Filtrage terminé - %s lignes valides, %s ignorées", len(rows), skipped)
+
+            # -------- Prefetch existants via res.partner.id_number ------------
             by_tahiti = {}
             by_etab = {}
-
             if tahitis_set:
                 id_numbers_tahiti = self.env['res.partner.id_number'].sudo().search([
                     ('name', 'in', list(tahitis_set)),
                     ('category_id.code', '=', 'tahiti')
                 ])
-                by_tahiti = {id_num.name: id_num.partner_id for id_num in id_numbers_tahiti if
-                             id_num.partner_id.is_company}
-
+                by_tahiti = {idn.name: idn.partner_id for idn in id_numbers_tahiti if idn.partner_id}
             if etab_keys_set:
                 id_numbers_etab = self.env['res.partner.id_number'].sudo().search([
                     ('name', 'in', list(etab_keys_set)),
                     ('category_id.code', '=', 'rte_etab')
                 ])
-                by_etab = {id_num.name: id_num.partner_id for id_num in id_numbers_etab}
-
+                by_etab = {idn.name: idn.partner_id for idn in id_numbers_etab if idn.partner_id}
             _logger.info("RTE: Prefetch - %s parents, %s établissements trouvés", len(by_tahiti), len(by_etab))
 
-            # 2e passe : upsert
+            # -------- 2e passe : upsert --------------------------------------
             count = 0
-            for row_l, tahiti, is_est, etab_key, naf, is_active_row in rows:
-                name_ent = (rv(row_l, "name_ent") or "").strip()
-                sigle_ent = (rv(row_l, "sigle_ent") or "").strip()
-                base_name = f"{name_ent} ({sigle_ent})" if (name_ent and sigle_ent) else (
-                        name_ent or f"Entreprise {tahiti}")
+            for row_dict, tahiti, is_est, etab_key, naf, is_active_row in rows:
+                name_ent = (rv(row_dict, "name_ent") or "").strip()
+                sigle_ent = (rv(row_dict, "sigle_ent") or "").strip()
+                base_name = f"{name_ent} ({sigle_ent})" if (name_ent and sigle_ent) else (name_ent or f"Entreprise {tahiti}")
 
                 street = " ".join(
-                    x for x in [(rv(row_l, "street_num") or "").strip(), (rv(row_l, "street_name") or "").strip()] if x
+                    x for x in [(rv(row_dict, "street_num") or "").strip(), (rv(row_dict, "street_name") or "").strip()] if x
                 )
                 street2 = " - ".join(
-                    x
-                    for x in [
-                        (rv(row_l, "street2_a") or "").strip(),
-                        (rv(row_l, "street2_b") or "").strip(),
-                        (rv(row_l, "street2_c") or "").strip(),
-                        (rv(row_l, "street2_d") or "").strip(),
-                    ]
-                    if x
+                    x for x in [
+                        (rv(row_dict, "street2_a") or "").strip(),
+                        (rv(row_dict, "street2_b") or "").strip(),
+                        (rv(row_dict, "street2_c") or "").strip(),
+                        (rv(row_dict, "street2_d") or "").strip(),
+                    ] if x
                 )
-                zip_ent = self._extract_zip(rv(row_l, "zip_ent"))
-                city_etab = (rv(row_l, "city_etab") or "").strip()
+                zip_ent = self._extract_zip(rv(row_dict, "zip_ent"))
+                city_etab = (rv(row_dict, "city_etab") or "").strip()
 
                 base_vals = {
                     "street": street,
@@ -558,19 +706,15 @@ class RteSyncRunner(RteSyncMixin, models.AbstractModel):
                     "zip": zip_ent,
                     "city": city_etab,
                     "x_naf": naf,
-                    # "x_forme_juridique": (rv(row_l, "forme") or "").strip(),
-                    # "x_effectif_classe": (rv(row_l, "effectif") or "").strip(),
                     "x_rte_updated_at": now,
                 }
                 if country_pf:
                     base_vals["country_id"] = country_pf.id
 
-                # Parser la date de création
-                date_creation = self._parse_date((rv(row_l, "insc_ent") or "").strip())
+                date_creation = self._parse_date((rv(row_dict, "insc_ent") or "").strip())
+                ctype_id = self._map_company_type((rv(row_dict, "forme") or "").strip())
 
-                ctype_id = self._map_company_type((rv(row_l, "forme") or "").strip())
                 parent = by_tahiti.get(tahiti)
-
                 if not parent:
                     parent_vals = {
                         "name": base_name,
@@ -584,21 +728,25 @@ class RteSyncRunner(RteSyncMixin, models.AbstractModel):
                     parent = Partner.create(parent_vals)
                     by_tahiti[tahiti] = parent
                     created += 1
-
+                    _logger.debug(f"RTE: Création parent {tahiti}")
                     if not parent.image_1920:
                         try:
                             Partner._auto_assign_image_from_generator(parent)
                         except Exception as e:
                             _logger.warning("Image assignment failed: %s", e)
                 else:
-                    if ctype_id:
+                    _logger.debug(f"RTE: Parent {tahiti} existe déjà (ID: {parent.id})")
+                    if ctype_id and (
+                        not parent.partner_company_type_id or parent.partner_company_type_id.id != ctype_id
+                    ):
                         parent.write({"partner_company_type_id": ctype_id})
 
-                # Pliage si 1 seul ETAB
-                etab_count = sum(1 for _row_l, _t, _is, _ek, *_ in rows if _t == tahiti and _ek)
+                # Comptage distinct des établissements
+                etab_count = len(uniq_etabs_by_tahiti.get(tahiti, set()))
                 fold_single = bool(etab_key and etab_count == 1)
 
                 if is_est and etab_key and not fold_single:
+                    # Plusieurs établissements : enfant distinct
                     child_vals = {
                         "name": f"{base_name}",
                         "parent_id": parent.id,
@@ -609,26 +757,25 @@ class RteSyncRunner(RteSyncMixin, models.AbstractModel):
                     }
                     if ctype_id:
                         child_vals["partner_company_type_id"] = ctype_id
+
                     existing_child = by_etab.get(etab_key)
                     if existing_child:
                         to_write = self._build_diff(existing_child, child_vals)
                         if to_write:
                             existing_child.write(to_write)
                             updated += 1
-                        else:
-                            skipped += 1
+                        child = existing_child
                     else:
                         child = Partner.create(child_vals)
                         created += 1
                         by_etab[etab_key] = child
-
                         if not child.image_1920:
                             try:
                                 Partner._auto_assign_image_from_generator(child)
                             except Exception as e:
                                 _logger.warning("Image assignment failed: %s", e)
 
-                    # Créer les ID numbers avec dates
+                    # ID numbers (avec dates)
                     self._ensure_id_number(parent, "TAHITI", tahiti, code="tahiti", date_creation=date_creation)
                     self._ensure_id_number(
                         by_etab.get(etab_key) or child,
@@ -637,34 +784,41 @@ class RteSyncRunner(RteSyncMixin, models.AbstractModel):
                         code="rte_etab",
                         date_creation=date_creation
                     )
-                    self._apply_tags(parent, naf, (rv(row_l, "effectif") or "").strip())
-                    self._apply_tags(by_etab.get(etab_key) or child, naf, (rv(row_l, "effectif") or "").strip())
-                    self._set_employee_range(parent, (rv(row_l, "effectif") or "").strip())
+
+                    self._apply_tags(parent, naf, (rv(row_dict, "effectif") or "").strip())
+                    self._apply_tags(by_etab.get(etab_key) or child, naf, (rv(row_dict, "effectif") or "").strip())
+                    # self._set_employee_range(parent, (rv(row_dict, "effectif") or "").strip())
+                    # 1) tentative par CODE (Classe_Effectifs)
+                    class_raw = rv(row_dict, "effectif_class")
+                    ok = False
+                    if class_raw is not None:
+                        ok = self._set_employee_range_by_class(parent, class_raw)
+
+                    # 2) fallback par LIBELLÉ (si jamais la colonne est textuelle dans un autre export)
+                    if not ok:
+                        self._set_employee_range(parent, (rv(row_dict, "effectif") or "").strip())
 
                 else:
-                    vals = {
-                        "name": base_name,
-                        "is_company": True,
-                        "company_type": "company",
-                        "active": True,
-                        **base_vals,
-                    }
-                    if ctype_id:
-                        vals["partner_company_type_id"] = ctype_id
-                    to_write = self._build_diff(parent, vals)
-                    if to_write:
-                        parent.write(to_write)
-                        updated += 1
-                    else:
-                        skipped += 1
-
-                    # Créer les ID numbers avec dates
+                    # Un seul établissement (ou pas d'établissement) : tout sur le parent (pliage)
                     self._ensure_id_number(parent, "TAHITI", tahiti, code="tahiti", date_creation=date_creation)
                     if etab_key:
                         self._ensure_id_number(parent, "RTE_ETAB", etab_key, code="rte_etab",
                                                date_creation=date_creation)
-                    self._apply_tags(parent, naf, (rv(row_l, "effectif") or "").strip())
-                    self._set_employee_range(parent, (rv(row_l, "effectif") or "").strip())
+                        # IMPORTANT : éviter la création d'un enfant plus tard
+                        by_etab[etab_key] = parent
+
+                    self._apply_tags(parent, naf, (rv(row_dict, "effectif") or "").strip())
+                    # self._set_employee_range(parent, (rv(row_dict, "effectif") or "").strip())
+
+                    # 1) tentative par CODE (Classe_Effectifs)
+                    class_raw = rv(row_dict, "effectif_class")
+                    ok = False
+                    if class_raw is not None:
+                        ok = self._set_employee_range_by_class(parent, class_raw)
+
+                    # 2) fallback par LIBELLÉ (si jamais la colonne est textuelle dans un autre export)
+                    if not ok:
+                        self._set_employee_range(parent, (rv(row_dict, "effectif") or "").strip())
 
                     if not parent.image_1920:
                         try:
@@ -672,18 +826,18 @@ class RteSyncRunner(RteSyncMixin, models.AbstractModel):
                         except Exception as e:
                             _logger.warning("Image assignment failed: %s", e)
 
-                    if import_only_active and not is_active_row:
-                        if parent and parent.active:
-                            parent.write({"active": False, "x_rte_updated_at": now})
-                            updated += 1
+                # Désactivation si demandé et ligne inactive
+                if import_only_active and not is_active_row:
+                    if parent and parent.active:
+                        parent.write({"active": False, "x_rte_updated_at": now})
+                        updated += 1
 
                 count += 1
-
-                # Commit par lot
                 if count % batch_size == 0:
                     self.env.cr.commit()
                     _logger.info("RTE sync: %s lignes traitées (commit lot)", count)
 
+            # Fin de sync / persistance checksum
             if checksum:
                 self.env["ir.config_parameter"].sudo().set_param("fp_rte_sync.last_checksum", checksum)
 
