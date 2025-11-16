@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================= -->
+    <!-- VUES BOOKING.MONTH -->
+    <!-- ========================================= -->
+
+    <!-- Vue formulaire booking.month -->
+    <record id="view_booking_month_form" model="ir.ui.view">
+        <field name="name">booking.month.form</field>
+        <field name="model">booking.month</field>
+        <field name="arch" type="xml">
+            <form string="Vue mensuelle des réservations">
+                <header>
+                    <button name="action_recalculate"
+                            string="⚙️ Recalculer"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="not total_revenue"
+                    />
+                    <button name="action_generate_booking_invoice"
+                            string="⚙️ Facture plateforme"
+                            type="object"
+                            class="btn-primary"
+                            invisible="booking_invoice_id"
+                    />
+                    <button name="action_generate_both_concierge_invoices"
+                            string="⚙️ Factures concierge"
+                            type="object"
+                            class="btn-primary"
+                            invisible="concierge_invoice_id"
+                    />
+                    <button name="action_generate_all_invoices"
+                            string="⚙️ Toutes les factures"
+                            type="object"
+                            class="btn-primary"
+                            invisible="concierge_invoice_id or booking_invoice_id"
+                    />
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="display_name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Période">
+                            <field name="booking_invoice_id" invisible="1"/>
+                            <field name="concierge_invoice_id" invisible="1"/>
+                            <field name="concierge_client_invoice_id" invisible="1"/>
+                            <field name="tourist_tax_invoice_id" invisible="1"/>
+                            <field name="year"/>
+                            <field name="month"/>
+                            <field name="month_name" readonly="1"/>
+                        </group>
+                        <group string="Période exacte">
+                            <field name="period_start" readonly="1"/>
+                            <field name="period_end" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Statistiques" name="stats">
+                            <group>
+                                <group string="Réservations">
+                                    <field name="total_reservations"
+                                           sum="Nombre total de réservations"
+                                           readonly="1"
+                                    />
+                                    <field name="total_nights"
+                                           sum="Nombre total de nuitées"
+                                           readonly="1"
+                                    />
+                                    <field name="total_guests"
+                                           sum="Nombre total de voyageurs"
+                                           readonly="1"
+                                    />
+                                    <field name="average_stay"
+                                           avg="Durée moyenne du séjour"
+                                           readonly="1"
+                                           digits="[16,1]"
+                                    />
+                                </group>
+                                <group string="Revenus">
+                                    <field name="total_revenue" readonly="1" widget="monetary"/>
+                                    <field name="total_commission_booking" readonly="1" widget="monetary"/>
+                                    <field name="concierge_commission" readonly="1" widget="monetary"/>
+                                    <field name="total_tourist_tax" readonly="1" widget="monetary"/>
+                                    <field name="net_revenue" readonly="1" widget="monetary"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Commissions partenaires" name="commissions">
+                            <group>
+                                <group string="Concierge">
+                                    <field name="concierge_partner_id" readonly="1"/>
+                                    <field name="concierge_commission" readonly="1" widget="monetary"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Factures" name="invoices">
+                            <group>
+                                <group string="État facturation">
+                                    <field name="invoice_state" readonly="1" widget="badge"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Facture Booking.com">
+                                    <field name="booking_invoice_id" readonly="1"/>
+                                </group>
+                                <group string="Facture Concierge">
+                                    <field name="concierge_invoice_id" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ========================================= -->
+    <!-- VUES BOOKING.MONTH MISES À JOUR -->
+    <!-- ========================================= -->
+
+    <!-- Vue formulaire booking.month mise à jour -->
+    <record id="view_booking_month_form_updated" model="ir.ui.view">
+        <field name="name">booking.month.form.updated</field>
+        <field name="model">booking.month</field>
+        <field name="inherit_id" ref="view_booking_month_form"/>
+        <field name="arch" type="xml">
+            <!-- Ajout des informations sur les produits paramétrables -->
+            <page name="commissions" position="replace">
+                <page string="Commissions partenaires" name="commissions">
+                    <group>
+                        <group string="Configuration Conciergerie">
+                            <field name="concierge_partner_id" readonly="1"/>
+                            <field name="concierge_service_id" readonly="1"/>
+                            <field name="concierge_commission_rate" readonly="1" widget="percentage"/>
+                            <field name="concierge_commission" readonly="1" widget="monetary"/>
+                        </group>
+                    </group>
+                    <separator string="Détails de calcul"/>
+                    <group>
+                        <group string="Base de calcul">
+                            <field name="total_revenue" readonly="1" widget="monetary" string="Chiffre d'affaires"/>
+                            <field name="total_commission_booking" readonly="1" widget="monetary" string="- Commission Booking"/>
+                            <field name="total_tourist_tax" readonly="1" widget="monetary" string="- Taxe de séjour"/>
+                        </group>
+                        <group string="Commission calculée">
+                            <div class="o_form_label">Base de commission:</div>
+                            <div><field name="total_revenue" readonly="1" widget="monetary" nolabel="1"/>
+                                - <field name="total_commission_booking" readonly="1" widget="monetary" nolabel="1"/>
+                                - <field name="total_tourist_tax" readonly="1" widget="monetary" nolabel="1"/>
+                            </div>
+                            <field name="concierge_commission" readonly="1" widget="monetary" string="Commission finale"/>
+                        </group>
+                    </group>
+                </page>
+            </page>
+        </field>
+    </record>
+
+    <!-- Vue liste booking.month -->
+    <record id="view_booking_month_tree" model="ir.ui.view">
+        <field name="name">booking.month.tree</field>
+        <field name="model">booking.month</field>
+        <field name="arch" type="xml">
+            <tree string="Vues mensuelles">
+                <field name="display_name" optional="hide"/>
+                <field name="year"/>
+                <field name="month"/>
+                <field name="total_reservations"
+                       sum="Nombre total de réservations"
+                />
+                <field name="total_revenue"
+                       sum="Total CA"
+                       widget="monetary"
+                />
+                <field name="total_commission_booking"
+                       sum="Total commission plateforme"
+                       widget="monetary"
+                />
+                <field name="concierge_commission"
+                       sum="Total commission concierge"
+                       widget="monetary"
+                />
+                <field name="net_revenue"
+                       sum="Total net"
+                       widget="monetary"
+                />
+                <field name="invoice_state_progress"
+                       widget="progressbar"
+                       avg="Avancement de la facturation"
+                />
+                <field name="company_currency_id"
+                       column_invisible="1"
+                />
+                <button name="action_generate_all_invoices"
+                        string="⚙️ Factures fournisseurs"
+                        type="object"
+                        icon="fa-file-text-o"
+                />
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue kanban booking.month -->
+    <record id="view_booking_month_kanban" model="ir.ui.view">
+        <field name="name">booking.month.kanban</field>
+        <field name="model">booking.month</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="display_name"/>
+                <field name="total_reservations"/>
+                <field name="total_revenue"/>
+                <field name="net_revenue"/>
+                <field name="invoice_state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <strong><t t-esc="record.display_name.value"/></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_content">
+                                <div><t t-esc="record.total_reservations.value"/> réservations</div>
+                                <div>CA: <t t-esc="record.total_revenue.value"/> XPF</div>
+                                <div>Net: <t t-esc="record.net_revenue.value"/> XPF</div>
+                            </div>
+                            <div class="o_kanban_card_footer">
+                                <span class="badge" t-att-class="record.invoice_state.value == 'both' ? 'badge-success' :
+                                                                  record.invoice_state.value == 'none' ? 'badge-secondary' : 'badge-warning'">
+                                    <t t-esc="record.invoice_state.value"/>
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Action booking.month -->
+    <record id="action_booking_month" model="ir.actions.act_window">
+        <field name="name">Déclarations mensuelles</field>
+        <field name="res_model">booking.month</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

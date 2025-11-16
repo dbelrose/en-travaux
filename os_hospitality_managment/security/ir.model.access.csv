@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_booking_import_user,booking.import.user,model_booking_import,base.group_user,1,1,1,1
+access_booking_quarter_user,booking.quarter.user,model_booking_quarter,base.group_user,1,1,1,1
+access_booking_month_user,booking.month.user,model_booking_month,base.group_user,1,1,1,1
+access_booking_import_user,booking.import.user,model_booking_import,base.group_user,1,1,1,1
+access_booking_import_line_user,booking.import.line.user,model_booking_import_line,base.group_user,1,1,1,1
+access_booking_import_wizard_user,booking.import.wizard.user,model_booking_import_wizard,base.group_user,1,1,1,1
+access_booking_manual_wizard_user,booking.manual.wizard.user,model_booking_manual_wizard,base.group_user,1,1,1,1
+access_booking_import_line_wizard_user,booking.import.line.wizard.user,model_booking_import_line_wizard,base.group_user,1,1,1,1
+access_booking_import_manager,booking.import.manager,model_booking_import,account.group_account_manager,1,1,1,1
+access_booking_import_line_manager,booking.import.line.manager,model_booking_import_line,account.group_account_manager,1,1,1,1
+access_customer_invoice_config_wizard_manager,customer.invoice.config.wizard manager,model_customer_invoice_config_wizard,account.group_account_manager,1,1,1,1
+access_customer_invoice_config_wizard_user,customer.invoice.config.wizard user,model_customer_invoice_config_wizard,account.group_account_invoice,1,1,1,0
