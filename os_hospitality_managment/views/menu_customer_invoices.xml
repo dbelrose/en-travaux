@@ -30,7 +30,16 @@ message = f"{success_count} lots de factures clients générées"
 if error_count > 0:
     message += f", {error_count} erreurs"
     
-env.user.notify_success(message=message)
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Génération des factures clients manquantes',
+        'message': message,
+        'type': 'success' if error_count == 0 else 'warning',
+        'sticky': False,
+    }
+}
         </field>
     </record>
 

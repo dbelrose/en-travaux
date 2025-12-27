@@ -310,15 +310,28 @@
             <field name="state">code</field>
             <field name="code">
 count = 0
+error_count = 0
 for record in records:
-    if record.invoice_state in ['none', 'booking_only', 'concierge_only']:
+    if record.invoice_state != 'all':
         try:
             record.action_generate_all_invoices()
             count += 1
         except Exception as e:
+            error_count += 1
             pass
 
-env.user.notify_success(message=f'{count} factures générées')
+message = f'{count} factures générées'
+
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Génération des factures manquantes',
+        'message': message,
+        'type': 'success' if error_count == 0 else 'warning',
+        'sticky': False,
+    }
+}
             </field>
         </record>
 

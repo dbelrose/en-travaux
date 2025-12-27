@@ -49,6 +49,33 @@ class BookingMonth(models.Model):
         ('all', 'Toutes les factures'),
     ], string='État facturation', compute='_compute_invoice_state', store=True)
 
+    # 0 / 33 / 66 / 100 pour la barre de progression
+    invoice_state_progress = fields.Integer(
+        string='Facturation',
+        compute='_compute_invoice_state_progress',
+        store=True,
+        readonly=True,
+        help='Avancement facturation (%) : 0=Aucune facture, 33-66=Partiel, 100=Toutes les factures'
+    )
+
+    @api.depends('invoice_state')
+    def _compute_invoice_state_progress(self):
+        """Mappe invoice_state -> pourcentage.
+           none -> 0, partial -> 50, complete -> 100.
+        """
+        mapping = {
+            'none': 0,
+            'booking_only': 33,
+            'concierge_only': 33,
+            'customer_only': 33,
+            'booking_concierge': 66,
+            'booking_customer': 66,
+            'concierge_customer': 66,
+            'all': 100,
+        }
+        for rec in self:
+            rec.invoice_state_progress = mapping.get(rec.invoice_state or 'none', 0)
+
     @api.depends('customer_invoice_ids', 'customer_invoice_ids.amount_total')
     def _compute_customer_invoices_stats(self):
         for record in self:
@@ -58,12 +85,13 @@ class BookingMonth(models.Model):
             record.total_customer_invoices = len(customer_invoices)
             record.customer_invoices_amount = sum(customer_invoices.mapped('amount_total'))
 
-    @api.depends('booking_invoice_id', 'concierge_invoice_id', 'customer_invoices_generated')
+    @api.depends('booking_invoice_id', 'concierge_invoice_id', 'customer_invoice_ids')
     def _compute_invoice_state(self):
         for record in self:
             has_booking = bool(record.booking_invoice_id)
             has_concierge = bool(record.concierge_invoice_id)
-            has_customer = record.customer_invoices_generated
+            has_customer = bool(record.customer_invoice_ids)
+            # has_customer = record.customer_invoices_generated
 
             if has_booking and has_concierge and has_customer:
                 record.invoice_state = 'all'
@@ -84,50 +112,69 @@ class BookingMonth(models.Model):
 
     def action_generate_customer_invoices(self):
         """Génère les factures clients pour toutes les réservations du mois"""
-        self.ensure_one()
-
-        if self.customer_invoices_generated:
-            raise UserError("Les factures clients ont déjà été générées pour ce mois.")
-
-        # Récupérer les réservations du mois
-        reservations = self._get_month_reservations()
-
-        if not reservations:
-            raise UserError("Aucune réservation trouvée pour ce mois.")
-
-        # Récupérer la configuration
-        config = self.env.context.get('customer_invoice_config', {})
-        group_by_customer = config.get('group_by_customer', True)
+        # Pas de ensure_one() - permet le traitement multiple
 
         invoices_created = 0
+        errors = []
 
-        if group_by_customer:
-            # Grouper par client
-            customers = reservations.mapped('partner_id')
+        for record in self:
+            # Vérifier si déjà généré
+            if record.customer_invoice_ids:
+                continue  # Passer au suivant au lieu de lever une erreur
 
-            for customer in customers:
-                customer_reservations = reservations.filtered(lambda r: r.partner_id == customer)
-                invoice = self._create_customer_invoice(customer, customer_reservations)
+            record.customer_invoices_generated = False
 
-                if invoice:
-                    invoices_created += 1
+            # Récupérer les réservations du mois
+            reservations = record._get_month_reservations()
+
+            if not reservations:
+                continue  # Pas de réservations, passer au suivant
+
+            # Récupérer la configuration
+            config = self.env.context.get('customer_invoice_config', {})
+            group_by_customer = config.get('group_by_customer', True)
+
+            try:
+                if group_by_customer:
+                    # Grouper par client
+                    customers = reservations.mapped('partner_id')
+
+                    for customer in customers:
+                        customer_reservations = reservations.filtered(lambda r: r.partner_id == customer)
+                        invoice = record._create_customer_invoice(customer, customer_reservations)
+
+                        if invoice:
+                            invoices_created += 1
+                else:
+                    # Une facture par réservation
+                    for reservation in reservations:
+                        if reservation.partner_id:
+                            invoice = record._create_customer_invoice(reservation.partner_id, [reservation])
+                            if invoice:
+                                invoices_created += 1
+
+                # Marquer comme généré
+                record.customer_invoices_generated = True
+
+            except Exception as e:
+                errors.append(f"{record.display_name}: {str(e)}")
+
+        # Retourner une notification appropriée
+        if errors:
+            message = f"{invoices_created} facture(s) générée(s), {len(errors)} erreur(s)"
+            notif_type = 'warning'
         else:
-            # Une facture par réservation
-            for reservation in reservations:
-                if reservation.partner_id:
-                    invoice = self._create_customer_invoice(reservation.partner_id, [reservation])
-                    if invoice:
-                        invoices_created += 1
-
-        # Marquer comme généré
-        self.customer_invoices_generated = True
+            message = f"{invoices_created} facture(s) client(s) générée(s)"
+            notif_type = 'success'
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'message': f'{invoices_created} facture(s) client(s) générée(s)',
-                'type': 'success'
+                'title': 'Génération de factures clients',
+                'message': message,
+                'type': notif_type,
+                'sticky': False,
             }
         }
 
@@ -214,7 +261,7 @@ class BookingMonth(models.Model):
     def _get_tax_product(self, accommodation_product):
         """Récupère ou crée le produit taxe de séjour"""
 
-        product = self.env["product.template"].browse(accommodation_product.id)
+        product = self.env["product.template"].sudo().browse(accommodation_product.id)
         category = product.categ_id
 
         # Retourne un tuple (module, name) si l'xml_id existe
@@ -264,7 +311,7 @@ class BookingMonth(models.Model):
         result = super().action_generate_all_invoices()
 
         # Ajouter la génération des factures clients si pas encore fait
-        if not self.customer_invoices_generated:
+        if not bool(self.customer_invoice_ids):
             try:
                 self.action_generate_customer_invoices()
             except Exception as e:

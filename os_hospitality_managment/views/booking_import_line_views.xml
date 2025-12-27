@@ -15,12 +15,14 @@
                         </group>
                         <group string="Réservation">
                             <field name="import_id" readonly="1"/>
+                            <field name="reservation_date" required="1"/>
                             <field name="property_type_id" required="1"/>
                         </group>
                     </group>
                     <group>
                         <group string="Détails du séjour">
                             <field name="arrival_date" required="1"/>
+                            <field name="departure_date" required="1"/>
                             <field name="duration_nights" required="1"/>
                             <field name="pax_nb" required="1"/>
                             <field name="children"/>

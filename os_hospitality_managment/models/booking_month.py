@@ -453,39 +453,6 @@ class BookingMonth(models.Model):
     concierge_client_invoice_id = fields.Many2one('account.move', string='Facture client concierge')
     tourist_tax_invoice_id = fields.Many2one('account.move', string='Facture concierge')
 
-    invoice_state = fields.Selection([
-        ('none', 'Aucune facture'),
-        ('partial', 'Partiel'),
-        ('complete', 'Toutes les factures'),
-    ],
-        string='Facturation',
-        compute='_compute_invoice_state',
-        help='Indique si les factures ont été générées pour cette période',
-        store=True
-    )
-
-    # 0 / 50 / 100 pour la barre de progression
-    invoice_state_progress = fields.Integer(
-        string='Facturation',
-        compute='_compute_invoice_state_progress',
-        store=True,
-        readonly=True,
-        help='Avancement facturation (%) : 0=Aucune facture, 50=Partiel, 100=Toutes les factures'
-    )
-
-    @api.depends('invoice_state')
-    def _compute_invoice_state_progress(self):
-        """Mappe invoice_state -> pourcentage.
-           none -> 0, partial -> 50, complete -> 100.
-        """
-        mapping = {
-            'none': 0,
-            'partial': 50,
-            'complete': 100,
-        }
-        for rec in self:
-            rec.invoice_state_progress = mapping.get(rec.invoice_state or 'none', 0)
-
     # Dates de période
     period_start = fields.Date(
         string='🟢 Début',
@@ -763,6 +730,7 @@ class BookingMonth(models.Model):
     def action_generate_booking_invoice(self):
         """Génère les factures Booking.com avec produit paramétrable"""
         _logger.info(f"Génération facture Booking.com pour {self.display_name} - Début")
+
         # Rechercher le produit commission Booking
         booking_service = self.env['product.product'].search([
             ('default_code', '=', 'COMMISSION_BOOKING'),
@@ -770,7 +738,6 @@ class BookingMonth(models.Model):
         ], limit=1)
 
         if not booking_service:
-            # Fallback : recherche par nom
             _logger.info("Produit 'COMMISSION_BOOKING' introuvable, recherche par nom...")
             booking_service = self.env['product.product'].search([
                 ('name', 'ilike', 'commission booking'),
@@ -799,8 +766,16 @@ class BookingMonth(models.Model):
         if not partner_booking:
             raise ValueError("Le partenaire 'Booking.com' n'existe pas!")
 
-        # Traiter les réservations du mois
-        reservations = self._get_month_reservations()
+        # ✅ CORRECTION : Récupérer TOUTES les réservations du mois pour la société
+        reservations = self.env['booking.import.line'].search([
+            ('arrival_date', '>=', self.period_start),
+            ('arrival_date', '<=', self.period_end),
+            ('company_id', '=', self.company_id.id),
+            ('status', '=', 'ok'),
+            ('commission_amount', '>', 0)  # Seulement celles avec commission Booking
+        ])
+
+        _logger.info(f"Réservations trouvées avec commission Booking : {len(reservations)}")
 
         # Regroupement par mois d'arrivée
         grouped_invoices = {}
@@ -825,7 +800,6 @@ class BookingMonth(models.Model):
                     'account_id': account_id.id,
                 }
 
-                # Ajouter le produit si disponible
                 if booking_service:
                     line_data['product_id'] = booking_service.id
 
@@ -872,16 +846,24 @@ class BookingMonth(models.Model):
                         'invoice_payment_term_id': payment_term_30.id if payment_term_30 else False,
                     })
 
-                    # Lier la facture au mois correspondant
-                    if key == f"{self.year}-{self.month:02d}":
-                        self.booking_invoice_id = invoice
+                    # ✅ Lier la facture à TOUS les booking.month du mois concerné
+                    year_month = key.split('-')
+                    monthly_records = self.env['booking.month'].search([
+                        ('year', '=', int(year_month[0])),
+                        ('month', '=', int(year_month[1])),
+                        ('company_id', '=', self.company_id.id)
+                    ])
+                    monthly_records.write({'booking_invoice_id': invoice.id})
 
                     invoice.action_post()
                     created_invoices.append(invoice.id)
 
+                    _logger.info(f"Facture Booking créée : {invoice.name} avec {len(vals['invoice_line_ids'])} lignes")
+
                 except Exception as e:
                     _logger.error(f"Erreur création facture Booking: {str(e)}")
 
+        _logger.info(f"Total factures Booking créées : {len(created_invoices)}")
         return len(created_invoices)
 
     @api.model
@@ -1110,40 +1092,40 @@ class BookingMonth(models.Model):
             else:
                 record.profit_margin = 0.0
 
-    @api.depends('booking_invoice_id', 'concierge_invoice_id', 'tourist_tax_invoice_id')
-    def _compute_invoice_state(self):
-        """Calcule l'état de facturation"""
-        for record in self:
-            invoices_expected = []
-            invoices_created = []
-
-            # Facture Booking.com
-            if record.total_commission_booking > 0:
-                invoices_expected.append('booking')
-                if record.booking_invoice_id:
-                    invoices_created.append('booking')
-
-            # Facture concierge
-            if record.concierge_commission > 0:
-                invoices_expected.append('concierge')
-                if record.concierge_invoice_id:
-                    invoices_created.append('concierge')
-
-            # Facture taxe de séjour (si applicable)
-            if record.total_tourist_tax > 0:
-                invoices_expected.append('tourist_tax')
-                if record.tourist_tax_invoice_id:
-                    invoices_created.append('tourist_tax')
-
-            # Déterminer l'état
-            if not invoices_expected:
-                record.invoice_state = 'none'
-            elif len(invoices_created) == len(invoices_expected):
-                record.invoice_state = 'complete'
-            elif invoices_created:
-                record.invoice_state = 'partial'
-            else:
-                record.invoice_state = 'none'
+    # @api.depends('booking_invoice_id', 'concierge_invoice_id', 'tourist_tax_invoice_id')
+    # def _compute_invoice_state(self):
+    #     """Calcule l'état de facturation"""
+    #     for record in self:
+    #         invoices_expected = []
+    #         invoices_created = []
+    #
+    #         # Facture Booking.com
+    #         if record.total_commission_booking > 0:
+    #             invoices_expected.append('booking')
+    #             if record.booking_invoice_id:
+    #                 invoices_created.append('booking')
+    #
+    #         # Facture concierge
+    #         if record.concierge_commission > 0:
+    #             invoices_expected.append('concierge')
+    #             if record.concierge_invoice_id:
+    #                 invoices_created.append('concierge')
+    #
+    #         # Facture taxe de séjour (si applicable)
+    #         if record.total_tourist_tax > 0:
+    #             invoices_expected.append('tourist_tax')
+    #             if record.tourist_tax_invoice_id:
+    #                 invoices_created.append('tourist_tax')
+    #
+    #         # Déterminer l'état
+    #         if not invoices_expected:
+    #             record.invoice_state = 'none'
+    #         elif len(invoices_created) == len(invoices_expected):
+    #             record.invoice_state = 'complete'
+    #         elif invoices_created:
+    #             record.invoice_state = 'partial'
+    #         else:
+    #             record.invoice_state = 'none'
 
     # ========================================
     # MÉTHODES UTILITAIRES

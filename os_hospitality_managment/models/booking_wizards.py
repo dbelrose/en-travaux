@@ -411,7 +411,10 @@ class BookingImportLineWizard(models.TransientModel):
                     'name': self.partner_name,
                     'phone': self.partner_phone,
                     'country_id': self.partner_country_id.id if self.partner_country_id else False,
-                    'company_id': self.env.user.company_id.id
+                    'company_id': self.env.user.company_id.id,
+                    'customer_rank': 1,
+                    'category_id': [
+                        (6, 0, self.env.ref('os_hospitality_managment.res_partner_category_plateforme_booking').ids)]
                 })
         else:
             partner = self.partner_id

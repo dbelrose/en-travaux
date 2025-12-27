@@ -168,6 +168,7 @@
         <field name="model">booking.month</field>
         <field name="arch" type="xml">
             <tree string="Vues mensuelles">
+                <field name="invoice_state" widget="badge" optional="hide"/>
                 <field name="display_name" optional="hide"/>
                 <field name="year"/>
                 <field name="month"/>
@@ -201,6 +202,7 @@
                         string="⚙️ Factures fournisseurs"
                         type="object"
                         icon="fa-file-text-o"
+                        invisible="invoice_state == 'all' or (concierge_commission &lt;= 0 and total_commission_booking &lt;= 0)"
                 />
             </tree>
         </field>
@@ -223,19 +225,19 @@
                             <div class="o_kanban_card_header">
                                 <div class="o_kanban_card_header_title">
                                     <div class="o_primary">
-                                        <strong><t t-esc="record.display_name.value"/></strong>
+                                        <strong><t t-out="record.display_name.value"/></strong>
                                     </div>
                                 </div>
                             </div>
                             <div class="o_kanban_card_content">
-                                <div><t t-esc="record.total_reservations.value"/> réservations</div>
-                                <div>CA: <t t-esc="record.total_revenue.value"/> XPF</div>
-                                <div>Net: <t t-esc="record.net_revenue.value"/> XPF</div>
+                                <div><t t-out="record.total_reservations.value"/> réservations</div>
+                                <div>CA: <t t-out="record.total_revenue.value"/> XPF</div>
+                                <div>Net: <t t-out="record.net_revenue.value"/> XPF</div>
                             </div>
                             <div class="o_kanban_card_footer">
                                 <span class="badge" t-att-class="record.invoice_state.value == 'both' ? 'badge-success' :
                                                                   record.invoice_state.value == 'none' ? 'badge-secondary' : 'badge-warning'">
-                                    <t t-esc="record.invoice_state.value"/>
+                                    <t t-out="record.invoice_state.value"/>
                                 </span>
                             </div>
                         </div>

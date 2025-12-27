@@ -35,7 +35,18 @@ if error_count > 0:
     message_parts.append(f"{error_count} erreurs")
 
 message = ", ".join(message_parts) if message_parts else "Aucune facture à générer"
-env.user.notify_success(message=message)
+
+# Retourner une notification client
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Génération de factures clients',
+        'message': message,
+        'type': 'success' if error_count == 0 else 'warning',
+        'sticky': False,
+    }
+}
         </field>
     </record>
 
@@ -50,29 +61,6 @@ env.user.notify_success(message=message)
         <field name="binding_model_id" ref="model_booking_month"/>
         <field name="binding_view_types">form</field>
     </record>
-
-    <!-- Action pour regénérer les factures clients (avec confirmation) -->
-<!--    <record id="action_regenerate_customer_invoices" model="ir.actions.server">-->
-<!--        <field name="name">Regénérer factures clients</field>-->
-<!--        <field name="model_id" ref="model_booking_month"/>-->
-<!--        <field name="binding_model_id" ref="model_booking_month"/>-->
-<!--        <field name="binding_view_types">list,form</field>-->
-<!--        <field name="state">code</field>-->
-<!--        <field name="code">-->
-<!--# Cette action nécessite une confirmation utilisateur-->
-<!--for record in records:-->
-<!--    if record.customer_invoices_generated:-->
-<!--        # Marquer comme non généré pour permettre la regénération-->
-<!--        record.customer_invoices_generated = False-->
-<!--        -->
-<!--        # Optionnel : supprimer les anciennes factures en brouillon-->
-<!--        draft_invoices = record.customer_invoice_ids.filtered(lambda inv: inv.state == 'draft')-->
-<!--        if draft_invoices:-->
-<!--            draft_invoices.unlink()-->
-
-<!--env.user.notify_success(message=f"Réinitialisation effectuée pour {len(records)} mois. Vous pouvez maintenant regénérer les factures.")-->
-<!--        </field>-->
-<!--    </record>-->
 
     <!-- Menu d'actions rapides -->
     <record id="menu_quick_actions" model="ir.ui.menu">
@@ -125,8 +113,18 @@ for invoice in draft_invoices:
 message = f"{validated_count} factures validées"
 if error_count > 0:
     message += f", {error_count} erreurs"
-    
-env.user.notify_success(message=message)
+
+# Retourner une notification client
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Validation de factures',
+        'message': message,
+        'type': 'success' if error_count == 0 else 'warning',
+        'sticky': False,
+    }
+}
         </field>
     </record>
 

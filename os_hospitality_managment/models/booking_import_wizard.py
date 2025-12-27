@@ -260,7 +260,10 @@ class BookingImportWizard(models.TransientModel):
                 'name': customer_name,
                 'phone': row.get('Numéro de téléphone', ''),
                 'country_id': country_id,
-                'company_id': self.env.user.company_id.id
+                'company_id': self.env.user.company_id.id,
+                'customer_rank': 1,
+                'category_id': [
+                    (6, 0, self.env.ref('os_hospitality_managment.res_partner_category_plateforme_booking').ids)]
             })
         return partner
 

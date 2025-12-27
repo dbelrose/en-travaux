@@ -11,11 +11,20 @@ class BookingImportLine(models.Model):
     _order = 'arrival_date desc, id desc'
     _rec_name = 'display_name'
 
+    @api.onchange('arrival_date', 'departure_date')
+    def _default_duration_nights(self):
+        for record in self:
+            if record.arrival_date and record.departure_date:
+                delta = record.departure_date - record.arrival_date
+                record.duration_nights = delta.days if delta.days > 0 else 0
+            else:
+                record.duration_nights = 0
+
     # Relation avec l'import parent
     import_id = fields.Many2one(
         'booking.import',
         string='Import',
-        required=True,
+        required=False,
         ondelete='cascade'
     )
     booking_month_id = fields.Many2one(
@@ -108,7 +117,6 @@ class BookingImportLine(models.Model):
     property_type_id = fields.Many2one(
         'product.template',
         string='Hébergement',
-        domain="[('company_id', '=', company_id)]",
         help='Type de propriété réservé',
         required=True
 )
@@ -131,9 +139,10 @@ class BookingImportLine(models.Model):
     )
     duration_nights = fields.Integer(
         string='🌙 Nuitées',
-        required=True,
-        default=1
+        required=False,
+        default=_default_duration_nights,
     )
+
     pax_nb = fields.Integer(
         string='👥 Personnes',
         required=True,
