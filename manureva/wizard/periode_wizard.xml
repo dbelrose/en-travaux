@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="periode_wizard_form_view" model="ir.ui.view">
+            <field name="name">manureva.periode_wizard.form</field>
+            <field name="model">manureva.periode_wizard</field>
+            <field name="arch" type="xml">
+                <form string="Facturer des périodes">
+                    <sheet>
+                        <group>
+                            <field name="periode_ids" widget="many2many_list" nolabel="1">
+                                <tree>
+                                    <field name="annee"/>
+                                    <field name="mois"/>
+                                    <field name="usager_id"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <footer>
+                            <button name="facturer_periode"
+                                    string="Facturer"
+                                    class="oe_right oe_highlight"
+                                    type="object"/>
+                            <button string="Cancel"
+                                    class="oe_right"
+                                    special="cancel"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="periode_wizard_action"  model="ir.actions.act_window">
+            <field name="name">Facturer</field>
+            <field name="res_model">manureva.periode_wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="binding_model_id" ref="manureva.model_manureva_periode"/>
+            <field name="binding_view_types">list</field>
+        </record>
+</odoo>

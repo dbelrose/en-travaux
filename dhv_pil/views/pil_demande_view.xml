@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="pil_demande_form_view" model="ir.ui.view">
+            <field name="name">pil.demande.form</field>
+            <field name="model">pil.demande</field>
+            <field name="arch" type="xml">
+                <form string="Demande">
+
+                    <sheet>
+                        <header>
+                            <!--                        <button class="oe_highlight" string="Print" id="print_action" name="action_print_tbd" type="object"/>-->
+                            <field name="state" widget="statusbar"
+                                   statusbar_visible="encours,traite"
+                                   options="{'cliquable':'0'}"
+                                   statusbar_colors="{'encours':'red','traite':'green'}"/>
+                        </header>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1>
+                                <field name="name" placeholder="Title"/>
+                            </h1>
+                        </div>
+                        <div class="oe_inline">
+                                <group>
+
+                                    <group string="Demandeur">
+                                        <field name="company_id" invisible="1"/>
+                                        <field name="date_demande" string="Date de réception de la demande"/>
+                                        <field name="tel"  string="Téléhone" placeholder="Téléphone"/>
+                                        <field name="mail" string="Emails" placeholder="Emails"/>
+                                        <field name="ref_lieu_id" string="Localisation de l’immeuble"/>
+                                        <field name="company_id" invisible="1"/>
+
+<!--                                        <field name="commune_id" domain="[('country_id','=',174)]" placeholder="Commune" class="oe_no_button"/>-->
+                                        <field name="typeusager_id"/>
+                                        <field name="type_contact" string="Type de contact" placeholder="Type de contact"/>
+                                        <field name="naturelogement_id" string="Nature du bien" domain="[('categorie','=','naturebien')]" class="oe_no_button"/>
+                                        <field name="origine" widget="radio" string="Origine de la demande" options="{'horizontal': true}"/>
+                                        <field name="ref_origine_demandeur_id" attrs="{'required':[('origine', '=', 'PF')],'invisible':[('origine', '=', 'HORS')]}"/>
+
+                                    </group>
+
+                                    <group>
+
+                                        <group colspan="2">
+                                            <field name="user_id" class="oe_no_button" domain="[('company_id','=',company_id)]" />
+                                        </group>
+                                        <group colspan="2">
+                                            <field name="lieu_commune"  string="Commune de localisation" readonly="1"/>
+                                            <field name="ile_id" readonly="1" string="Ile"/>
+                                            <field name="archipel_id" string="Archipel" readonly="1"/>
+                                        </group>
+                                        <group colspan="2">
+                                            <field name="origine_commune" string="Commune du demandeur" readonly="1"/>
+                                            <field name="origine_ile" readonly="1" string="Ile"/>
+                                            <field name="origine_archipel" readonly="1" string="Archipel"/>
+                                        </group>
+
+                                    </group>
+                                </group>
+                                <group>
+                                    <group string="Question" border="1" >
+                                        <field name="rubrique" />
+                                        <field name="ssrubrique_id" domain="ssrubrique_id_domain"/>
+                                        <field name="ssrubrique_id_domain" invisible="1"/>
+                                        <field name="question" nolabel="1" placeholder="Question" colspan="2" class="oe_no_button"/>
+                                    </group>
+                                        <group string="Traitement">
+                                            <field name="type_solution_ids" domain="[('categorie','=','solution')]"  widget="many2many_tags"/>
+                                            <field name="reponse" attrs="{'required':[('state', '=', 'traite')]}"/>
+                                            <field name="date_reponse" string="Date de réponse" attrs="{'required':['|',('reponse', '=', True),('state', '=', 'traite')]}"/>
+                                            <field name="duree_traitement" domain="[('categorie','=','dureetraitement')]"  attrs="{'required':['|',('reponse', '=', True),('state', '=', 'traite')]}"/>
+                                       </group>
+                                </group>
+                                <group>
+                                        <group string="Création">
+                                            <field name="create_date" string="Créée le" />
+                                            <field name="create_uid" string="Créée par"/>
+                                        </group>
+                                        <group string="Modification">
+                                            <field name="write_date" string="Dernière modification le"/>
+                                            <field name="write_uid" string="Dernière modification par"/>
+                                        </group>
+
+                                    </group>
+
+                        </div>
+                    </sheet>
+                        <!-- -->
+                        <!--
+
+                        <div class="oe_chatter">
+                                                   <field name="message_follower_ids"/>
+                                <field name="message_ids"/>
+                                <field name="activity_ids"/>
+                        </div>
+                        -->
+                                        </form>
+                                    </field>
+                                </record>
+
+                                <record id="pil_demande_tree_view" model="ir.ui.view">
+                                    <field name="name">pil.demande.tree</field>
+                                    <field name="model">pil.demande</field>
+                                    <field name="arch" type="xml">
+                                        <tree string="Liste des Demandes">
+                                            <field name="date_demande"/>
+                                            <field name="user_id" optional="show"/>
+                                            <field name="tel" optional="show"/>
+                                            <field name="mail" optional="hide"/>
+                                            <field name="type_contact" optional="show"/>
+                                            <field name="typeusager_id" optional="show"/>
+                                            <field name="naturelogement_id" optional="show"/>
+                                            <field name="ref_lieu_id" string="localisation du bien"/>
+                                            <field name="commune" string="Commune de localisation" optional="show"/>
+                                            <field name="archipel_id" optional="hide"/>
+                                            <field name="ile_id" optional="hide"/>
+                                            <field name="origine" optional="show"/>
+                                            <field name="ref_origine_demandeur_id"/>
+                                            <field name="origine_commune" string="commune du demandeur" optional="hide"/>
+                                            <field name="origine_ile" string="ile du demandeur" optional="hide"/>
+                                            <field name="origine_archipel" string="archipel du demandeur" optional="hide"/>
+                                            <field name="rubrique" optional="show"/>
+                                            <field name="ssrubrique_id" optional="show"/>
+                                            <field name="type_solution_ids" widget="many2many_tags" optional="show"/>
+                                            <field name="date_reponse" optional="show"/>
+                                            <field name="reponse" optional="show"/>
+                                            <field name="state" string="Etat" optional="show"/>
+                                            <field name="duree_traitement" string="Durée Traitement" optional="show"/>
+                                        </tree>
+                                    </field>
+                                </record>
+
+                                <record id="pil_demande_calendar_view" model="ir.ui.view">
+                                    <field name="name">pil.demande.calendar</field>
+                                    <field name="model">pil.demande</field>
+                                    <field name="arch" type="xml">
+                                        <calendar string="Demande" date_start="date_demande" color="">
+                                            <field name="date_demande"/>
+                                        </calendar>
+                                    </field>
+                                </record>
+
+                                <record id="pil_demande_graph_view" model="ir.ui.view">
+                                    <field name="name">pil.demande.graph</field>
+                                    <field name="model">pil.demande</field>
+                                    <field name="arch" type="xml">
+                                        <graph string="Repartition des demandes">
+                                            <field name="date_demande" type="col" interval="month"/>
+                                            <field name="rubrique" type="col"/>
+                                            <field name="type_contact" string="Type de contact"/>
+                                            <field name="typeusager_id" string="Type d'usager"/>
+                                            <field name="naturelogement_id" string="Nature du logement"/>
+                                        </graph>
+                                    </field>
+                                </record>
+
+                                <record id="pil_demande_pivot_view" model="ir.ui.view">
+                                    <field name="name">pil.demande.pivot</field>
+                                    <field name="model">pil.demande</field>
+                                    <field name="arch" type="xml">
+                                        <pivot string="TBC">
+                                            <field name="date_demande" type="col" interval="month"/>
+                                            <field name="type_contact" type="col"/>
+                                            <field name="naturelogement_id" type="col"/>
+                                            <field name="archipel_id" type="row"/>
+                                            <field name="commune" type="row"/>
+                                            <field name="ile_id" type="row"/>
+                                        </pivot>
+                                    </field>
+                                </record>
+
+                                <record id="pil_demande_search_view" model="ir.ui.view">
+                                    <field name="name">pil.demande.search</field>
+                                    <field name="model">pil.demande</field>
+                                    <field name="arch" type="xml">
+                                        <search string="Demande">
+                                            <field name="date_demande"/>
+                                            <field name="name"/>
+                                            <field name="typeusager_id"/>
+                                            <field name="naturelogement_id"/>
+                                            <field name="commune"/>
+                                            <field name="archipel_id"/>
+                                            <field name="ile_id"/>
+                                            <field name="rubrique"/>
+                                            <field name="ssrubrique_id"/>
+                                            <field name="type_solution_ids"/>
+                                            <field name="type_solution_ids"/>
+                                            <group expand="Commune" string="Group By">
+                                                <filter string="Commune de l'immeuble" name="commune" domain="[]"
+                                                        context="{'group_by':'commune'}"/>
+                                            </group>
+<!--                                            <group expand="1" string="Group By">-->
+<!--                                                <filter name="annee_en_cours"-->
+<!--                                                        string="Année calendaire en cours"-->
+<!--                                                        domain="[('date_demande', '=', context_today().strftime('%Y'))]" />-->
+<!--                                            </group>-->
+                                        </search>
+                                    </field>
+                                </record>
+
+                                <record id="pil_demande_kanban_view" model="ir.ui.view">
+                                    <field name="name">pil.demande.kanban</field>
+                                    <field name="model">pil.demande</field>
+                                    <field name="arch" type="xml">
+                                        <kanban>
+                                            <field name="name"/>
+                                            <templates>
+                                                <t t-name="kanban-box">
+                                                    <div class="oe_kanban_global_click o_res_partner_kanban">
+                                                        <div class="oe_kanban_details">
+                                                            <strong class="o_kanban_record_title oe_partner_heading">
+                                                                <field name="user_id"/>
+                                                                <field name="date_demande"/>
+                                                                <field name="typeusager_id"/>
+                                                                <field name="type_contact"/>
+                                                                <field name="tel"/>
+                                                                <field name="mail"/>
+                                                                <field name="naturelogement_id"/>
+                                                                <field name="rubrique"/>
+                                                                <field name="ssrubrique_id"/>
+                                                                <field name="type_solution_ids"/>
+                                                                <field name="date_reponse"/>
+                                                                <field name="reponse"/>
+                                                            </strong>
+                                                        </div>
+                                                    </div>
+                                                </t>
+                                            </templates>
+                                        </kanban>
+                                    </field>
+                                </record>
+
+                                <record id="pil_demande_act_window" model="ir.actions.act_window">
+                                    <field name="name">Demande</field>
+                                    <field name="type">ir.actions.act_window</field>
+                                    <field name="res_model">pil.demande</field>
+                                    <field name="view_mode">tree,form,calendar,graph,pivot</field>
+                                    <field name="context">{"search_default_name":''}</field>
+                                    <field name="help" type="html">
+                                        <p class="oe_view_nocontent_create">
+                                            There is no examples click here to add new ModelTitle.
+                                        </p>
+                                    </field>
+                                </record>
+
+                                <menuitem name="Liste demandes" id="pil_demande_menu" parent="menu_demande" action="pil_demande_act_window"/>
+
+                            </data>
+                        </odoo>

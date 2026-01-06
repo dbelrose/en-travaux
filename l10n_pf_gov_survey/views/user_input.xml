@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="survey_user_input_view_tree_inherit" model="ir.ui.view">
+            <field name="name">PF: GOV: Survey user input view tree</field>
+            <field name="model">survey.user_input</field>
+            <field name="inherit_id" ref="survey.survey_user_input_view_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//tree" position="attributes">
+                    <attribute name="default_order">write_date desc</attribute>
+                    <attribute name="sample">true</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="survey_user_input_view_search_inherit" model="ir.ui.view">
+            <field name="name">PF: GOV: Survey user input view search</field>
+            <field name="model">survey.user_input</field>
+            <field name="inherit_id" ref="survey.survey_user_input_view_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//search" position="inside">
+                    <filter name="write_uid"
+                            string="Mes enregistrements"
+                            domain="[('write_uid', '=', uid)]"/>
+                    <separator/>
+                    <filter name="annee_en_cours"
+                            string="Année calendaire en cours"
+                            domain="[('input_year', '=', context_today().strftime('%Y'))]" />
+                    <filter name="annee_precedente"
+                            string="Année calendaire précédente"
+                            domain="[('input_year', '=', (context_today() + relativedelta(years=-1)).strftime('%Y'))]" />
+                    <filter name="annee_glissante"
+                            string="Année glissante"
+                            domain="[('write_date', '&gt;=', (context_today() - datetime.timedelta(days=365)).strftime('%%Y-%%m-%%d'))]"/>
+                </xpath>
+                <xpath expr="//group" position="inside">
+                    <filter string="Année" name="input_year" domain="[]"
+                            context="{'group_by':'write_date:year'}"/>
+                </xpath>
+           </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_survey_user_input">
+            <field name="name">Participations</field>
+            <field name="res_model">survey.user_input</field>
+            <field name="view_mode">tree</field>
+            <field name="search_view_id" ref="survey_user_input_view_search_inherit"/>
+            <field name="view_id" ref="survey_user_input_view_tree_inherit"/>
+        </record>
+
+        <menuitem name="Participations"
+            id="survey.menu_survey_type_form1"
+            action="action_survey_user_input"
+            parent="survey.survey_menu_user_inputs"
+            sequence="1"/>
+
+    </data>
+</odoo>

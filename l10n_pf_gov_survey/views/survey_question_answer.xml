@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="survey_question_answer_tree_inherit" model="ir.ui.view">
+            <field name="name">survey.question.answer.view.tree</field>
+            <field name="model">survey.question.answer</field>
+            <field name="inherit_id" ref="survey.survey_question_answer_view_tree"/>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <xpath expr="//tree" position="attributes">
+                    <attribute name="create">true</attribute>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

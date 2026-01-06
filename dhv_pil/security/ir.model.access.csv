@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+parametre_group_dhv_pil_manager,parametre group_dhv_pil_manager,model_pil_parametrage,group_dhv_pil_manager,1,1,1,1
+demande_group_dhv_pil_manager,demande group_dhv_pil_manager,model_pil_demande,group_dhv_pil_manager,1,1,1,1
+demande_group_dhv_pil_user,demande group_dhv_pil_user,model_pil_demande,group_dhv_pil_user,1,1,1,0
+parametre_group_dhv_pil_user,parametre group_dhv_pil_user,model_pil_parametrage,group_dhv_pil_user,1,0,0,0
+pil_params_stats_group_dhv_pil_user,pil_params_stats group_dhv_pil_user,model_pil_params_stats,group_dhv_pil_user,1,1,1,0
