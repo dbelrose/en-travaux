@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="external_layout_background_gov" inherit_id="web.external_layout_background">
+        <xpath expr="//div[hasclass('o_background_header')]" position="attributes">
+            <t t-if="o_table=='hr_expense_sheet'">
+                <attribute name="class">o_background_header first-page</attribute>
+            </t>
+        </xpath>
+        <xpath expr="//div[hasclass('float-left', 'company_address')]/div[1]" position="before">
+            POLYNESIE FRANCAISE
+        </xpath>
+    </template>
+
+    <template id="external_layout_boxed_gov" inherit_id="web.external_layout_boxed">
+        <xpath expr="//div[hasclass('o_boxed_header')]" position="attributes">
+            <t t-if="o_table=='hr_expense_sheet'">
+                <attribute name="class">o_boxed_header first-page</attribute>
+            </t>
+        </xpath>
+        <xpath expr="//span[hasclass('company_address')]" position="before">
+            POLYNESIE FRANCAISE
+        </xpath>
+    </template>
+
+    <template id="external_layout_clean_gov" inherit_id="web.external_layout_clean">
+        <xpath expr="//div[hasclass('o_clean_header')]" position="attributes">
+            <t t-if="o_table=='hr_expense_sheet'">
+                <attribute name="class">o_clean_header first-page</attribute>
+            </t>
+        </xpath>
+        <xpath expr="//div[@name='company_address']/ul[hasclass('list-unstyled')]//li[1]" position="before">
+            POLYNESIE FRANCAISE
+        </xpath>
+    </template>
+
+    <template id="external_layout_standard_gov" inherit_id="web.external_layout_standard">
+        <xpath expr="//div[@t-attf-class='header o_company_#{company.id}_layout']" position="attributes">
+            <t t-if="o_table=='hr_expense_sheet'">
+                <attribute name="t-attf-class">header o_company_#{company.id}_layout first-page</attribute>
+            </t>
+        </xpath>
+        <xpath expr="//div[@name='company_address']/.." position="before">
+            POLYNESIE FRANCAISE
+        </xpath>
+    </template>
+
+</odoo>

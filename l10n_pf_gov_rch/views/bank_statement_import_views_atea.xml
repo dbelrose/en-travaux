@@ -1,0 +1,29 @@
+<odoo>
+    <record id="view_bank_statement_import_atea_form" model="ir.ui.view">
+        <field name="name">bank.statement.import.atea.form</field>
+        <field name="model">bank.statement.import.atea</field>
+        <field name="arch" type="xml">
+            <form string="Importation de relevés bancaires de Atea">
+                <group>
+                    <field name="file_data"
+                           filename="file_name"
+                           widget="binary"
+                           options="{'accept': ['.csv', '.CSV']}"
+                    />
+                    <field name="file_name" readonly="1" />
+                </group>
+                <footer>
+                    <button type="object" name="action_bank_statement_import_atea" string="Importer" class="btn-primary" />
+                    <button string="Annuler" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bank_statement_import_atea" model="ir.actions.act_window">
+        <field name="name">Importation Relevés Atea</field>
+        <field name="res_model">bank.statement.import.atea</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2004-2025 DSI
+  @author: Didier Belrose <didier.belrose@administration.gov.pf>
+  Licence LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0).
+-->
+<odoo>
+    <data>
+        <!-- Hériter de la vue kanban du tableau de bord comptabilité -->
+        <record id="account_journal_dashboard_kanban_view_inherit" model="ir.ui.view">
+            <field name="name">account.journal.dashboard.kanban.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="inherit_id" ref="account.account_journal_dashboard_kanban_view"/>
+            <field name="arch" type="xml">
+                <!-- Ajouter l'option Importer dans le menu contextuel -->
+                <xpath expr="//div[@name='bank_cash_commands']" position="before">
+                    <div role="separator" class="dropdown-divider"/>
+                    <a class="dropdown-item" type="object" name="action_import_moves">
+                        <i class="fa fa-upload"/> Importer
+                    </a>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

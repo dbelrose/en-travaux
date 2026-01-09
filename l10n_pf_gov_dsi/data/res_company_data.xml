@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<odoo noupdate="1">
+
+    <record id="base.main_company" model="res.company">
+        <field name="sequence" eval="650"/>
+        <field name="partner_id" ref="base.main_partner"/>
+        <field name="currency_id" ref="base.XPF"/>
+        <field name="parent_id" ref="l10n_pf_gov_mef.res_company_pf_mef"/>
+        <field name="country_id" ref="base.pf"/>
+        <field name="favicon" type="base64" file="l10n_pf_gov_dsi/static/description/icon.png"/>
+        <field name="logo" type="base64" file="l10n_pf_gov_dsi/static/description/icon.png"/>
+        <field name="code">SI</field>
+        <field name="name">Service de l'informatique</field>
+        <field name="chart_template_id" ref="l10n_fr.l10n_fr_pcg_chart_template"/>
+    </record>
+
+</odoo>
