@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vue formulaire pour l'importateur PDF Airbnb -->
+        <record id="view_airbnb_pdf_importer_form" model="ir.ui.view">
+            <field name="name">airbnb.pdf.importer.form</field>
+            <field name="model">airbnb.pdf.importer</field>
+            <field name="arch" type="xml">
+                <form string="️⬆️ Importer PDF Airbnb">
+                    <div class="alert alert-info" role="alert">
+                        <strong>Instructions :</strong>
+                        <ul>
+                            <li>Sélectionnez le fichier PDF de la réservation Airbnb</li>
+                            <li>Le système extraira automatiquement toutes les informations nécessaires</li>
+                            <li>Les doublons seront détectés automatiquement</li>
+                        </ul>
+                    </div>
+
+                    <group>
+                        <field name="import_id" invisible="1"/>
+                        <field name="file_name" invisible="1"/>
+                        <field name="pdf_file"
+                               widget="binary"
+                               filename="file_name"
+                               placeholder="Sélectionner un fichier PDF Airbnb..."/>
+                    </group>
+
+                    <footer>
+                        <button name="import_airbnb_pdf"
+                                string="Importer la réservation"
+                                type="object"
+                                class="btn-primary"/>
+                        <button string="Annuler"
+                                class="btn-secondary"
+                                special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Extension de la vue formulaire booking.import pour Airbnb -->
+        <record id="view_booking_import_form_airbnb" model="ir.ui.view">
+            <field name="name">booking.import.form.airbnb</field>
+            <field name="model">booking.import</field>
+            <field name="inherit_id" ref="os_hospitality_managment.view_booking_import_form"/>
+            <field name="arch" type="xml">
+                <!-- Ajout du bouton Importer PDF Airbnb dans le header -->
+                <xpath expr="//form/header/button[@name='action_add_reservation']" position="before">
+                    <button name="import_airbnb_pdf"
+                            string=" Importer PDF Airbnb"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state in ['imported', 'processed'] or import_type == 'file'"
+                            help="Importer une réservation depuis un PDF Airbnb"/>
+                </xpath>
+
+                <!-- Ajout des champs PDF dans la section fichier -->
+                <group name="group_file" position="replace">
+                    <field name="file_data"
+                           filename="file_name"
+                           string="Fichier PDF Airbnb"/>
+                    <field name="file_name" invisible="1"/>
+                </group>
+
+                <!-- Ajout des statistiques par origine -->
+                <field name="duplicate_reservations" position="after">
+                    <field name="airbnb_reservations" readonly="1"/>
+                    <field name="booking_com_reservations" readonly="1"/>
+                    <field name="other_reservations" readonly="1"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Extension de la vue liste pour afficher l'origine -->
+        <record id="view_booking_import_line_tree_origin" model="ir.ui.view">
+            <field name="name">booking.import.line.tree.origin</field>
+            <field name="model">booking.import.line</field>
+            <field name="inherit_id" ref="os_hospitality_managment.view_booking_import_line_tree"/>
+            <field name="arch" type="xml">
+                <field name="import_id" position="after">
+                    <field name="origin" widget="badge"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Extension de la vue recherche pour filtrer par origine -->
+        <record id="view_booking_import_line_search_origin" model="ir.ui.view">
+            <field name="name">booking.import.line.search.origin</field>
+            <field name="model">booking.import.line</field>
+            <field name="inherit_id" ref="os_hospitality_managment.view_booking_import_line_search"/>
+            <field name="arch" type="xml">
+                <filter name="status_ok" position="after">
+                    <separator/>
+                    <filter string="Airbnb" name="origin_airbnb"
+                            domain="[('origin', '=', 'airbnb')]"/>
+                    <filter string="Booking.com" name="origin_booking"
+                            domain="[('origin', '=', 'booking.com')]"/>
+                    <filter string="Autres" name="origin_other"
+                            domain="[('origin', '=', 'other')]"/>
+                </filter>
+
+                <filter name="group_arrival" position="after">
+                    <filter string="Origine" name="group_origin"
+                            context="{'group_by': 'origin'}"/>
+                </filter>
+            </field>
+        </record>
+
+        <!-- Action pour voir les imports contenant des réservations Airbnb -->
+        <record id="action_airbnb_imports" model="ir.actions.act_window">
+            <field name="name">Imports Airbnb</field>
+            <field name="res_model">booking.import</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('airbnb_reservations', '>', 0), ('origin', '=', 'airbnb')]</field>
+            <field name="context">{'default_import_type': 'manual'}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Créer votre premier import de réservations Airbnb
+                </p>
+                <p>
+                    Importez vos réservations Airbnb depuis les fichiers PDF fournis par Airbnb.
+                    <br/>Le système extraira automatiquement toutes les informations nécessaires.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu pour voir les imports Airbnb -->
+        <menuitem id="menu_airbnb_imports_simple"
+                  name="⬆️ Airbnb"
+                  parent="os_hospitality_managment.menu_import_root"
+                  action="action_airbnb_imports"
+                  sequence="25"/>
+    </data>
+</odoo>
