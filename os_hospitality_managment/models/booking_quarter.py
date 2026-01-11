@@ -30,6 +30,12 @@ class BookingQuarter(models.Model):
     property_type_id = fields.Many2one('product.template', string='Type d\'hébergement', required=True)
     company_id = fields.Many2one('res.company', string='Société', required=True,
                                  default=lambda self: self.env.company)
+    reservation_ids = fields.One2many(
+        'booking.import.line',
+        inverse_name='booking_quarter_id',
+        string='Réservations',
+        help='Réservations associées à ce trimestre'
+    )
 
     # Nom d'affichage calculé
     display_name = fields.Char(string='Nom', compute='_compute_display_name', store=True)
@@ -186,7 +192,8 @@ class BookingQuarter(models.Model):
             ('name', '=', 'Mairie de Punaauia')
         ], limit=1)
 
-    @api.depends('year', 'quarter', 'property_type_id')
+    @api.depends('year', 'quarter', 'property_type_id', 'reservation_ids',
+                 'reservation_ids.nights_adults', 'reservation_ids.nights_children')
     def _compute_nights_data(self):
         """Calcule les nuitées depuis les réservations importées"""
         for record in self:
@@ -194,17 +201,11 @@ class BookingQuarter(models.Model):
                 record._reset_nights_data()
                 continue
 
+            reservations = record.reservation_ids.filtered(lambda r: r.status == 'ok')
+
             # Calculer les mois du trimestre
             start_month = (int(record.quarter) - 1) * 3 + 1
             months = [start_month, start_month + 1, start_month + 2]
-
-            # Rechercher toutes les réservations pour ce type de propriété et cette période
-            reservations = self.env['booking.import.line'].search([
-                ('property_type_id', '=', record.property_type_id.id),
-                ('arrival_date', '>=', f"{record.year}-{months[0]:02d}-01"),
-                ('arrival_date', '<', f"{record.year + (1 if months[2] > 12 else 0)}-{(months[2] % 12) + 1:02d}-01"),
-                ('status', '=', 'ok')  # Seules les réservations confirmées
-            ])
 
             # Initialiser les compteurs
             nights_data = {

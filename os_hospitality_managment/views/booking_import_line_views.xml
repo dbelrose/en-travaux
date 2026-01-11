@@ -17,6 +17,7 @@
                             <field name="import_id" readonly="1"/>
                             <field name="reservation_date" required="1"/>
                             <field name="property_type_id" required="1"/>
+                            <field name="rate"/>
                         </group>
                     </group>
                     <group>

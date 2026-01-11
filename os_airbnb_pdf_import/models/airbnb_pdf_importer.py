@@ -471,6 +471,11 @@ class AirbnbPdfImporter(models.TransientModel):
         rate_xpf = data.get('rate', 0) * 1000 / 8.38  # taux plus précis
         commission_xpf = data.get('commission_amount', 0) * 1000 / 8.38
 
+        # Gestion robuste des adultes et enfants
+        pax_nb = data.get('pax_nb') or 1
+        adults = data.get('adults') or pax_nb
+        children = max(0, pax_nb - adults)
+
         booking_vals = {
             'import_id': self.import_id.id,
             'partner_id': partner.id,
@@ -480,17 +485,19 @@ class AirbnbPdfImporter(models.TransientModel):
             'departure_date': data.get('departure_date'),
             'reservation_date': data.get('reservation_date', fields.Date.today()),
             'duration_nights': data.get('duration_nights', 1),
-            'pax_nb': data.get('pax_nb', 1),
-            'adults': data.get('adults', data.get('pax_nb', 1)),
-            'children': max(0, data.get('pax_nb', 1) - data.get('adults', 1)),
+            'pax_nb': pax_nb,
+            # 'adults': adults,
+            'children': children,
             'booking_reference': data.get('booking_reference', ''),
             'booking_id': data.get('booking_reference', ''),  # Même valeur pour Airbnb
             'payment_status': 'Entièrement payée',  # Par défaut pour Airbnb
             'status': 'ok',
             'rate': rate_xpf,
             'commission_amount': commission_xpf,
-            'origin': data.get('origin', 'airbnb'),  # Définir l'origine comme Airbnb
-            'import_type': data.get('import_type', 'pdf'),
+            # 'origin': data.get('origin', 'airbnb'),  # Définir l'origine comme Airbnb
+            'origin': 'airbnb',  # Définir l'origine comme Airbnb
+            # 'import_type': data.get('import_type', 'pdf'),
+            'import_type': 'pdf',
         }
 
         # Supprimer les champs qui n'existent peut-être pas
@@ -543,43 +550,43 @@ class AirbnbPdfImporter(models.TransientModel):
 
         return category
 
-    def import_airbnb_pdf(self):
-        """Méthode principale d'import"""
-        if not self.pdf_file:
-            raise UserError(_("Veuillez sélectionner un fichier PDF."))
-
-        try:
-            # Valoriser le type d'import
-            self.import_id.import_type = 'pdf'
-
-            # Valoriser l'origine de l'import
-            self.import_id.origin = 'airbnb'
-
-            # Extraction du texte
-            text = self._extract_text_from_pdf(self.pdf_file)
-
-            # Parsing des données
-            data = self._parse_airbnb_data(text)
-
-            # Création du partner
-            partner = self._create_partner(data)
-
-            # Création de la ligne de réservation
-            booking_line = self._create_booking_line(data, partner)
-            self._add_booking_line_to_booking_month(booking_line)
-
-            return {
-                'type': 'ir.actions.act_window',
-                'name': _('Réservation importée'),
-                'view_mode': 'form',
-                'res_model': 'booking.import.line',
-                'res_id': booking_line.id,
-                'target': 'current',
-            }
-
-        except Exception as e:
-            _logger.error(f"Erreur lors de l'import Airbnb: {e}")
-            raise UserError(_("Erreur lors de l'import: %s") % str(e))
+    # def import_airbnb_pdf(self):
+    #     """Méthode principale d'import"""
+    #     if not self.pdf_file:
+    #         raise UserError(_("Veuillez sélectionner un fichier PDF."))
+    #
+    #     try:
+    #         # Valoriser le type d'import
+    #         self.import_id.import_type = 'pdf'
+    #
+    #         # Valoriser l'origine de l'import
+    #         self.import_id.origin = 'airbnb'
+    #
+    #         # Extraction du texte
+    #         text = self._extract_text_from_pdf(self.pdf_file)
+    #
+    #         # Parsing des données
+    #         data = self._parse_airbnb_data(text)
+    #
+    #         # Création du partner
+    #         partner = self._create_partner(data)
+    #
+    #         # Création de la ligne de réservation
+    #         booking_line = self._create_booking_line(data, partner)
+    #         self._add_booking_line_to_booking_month(booking_line)
+    #
+    #         return {
+    #             'type': 'ir.actions.act_window',
+    #             'name': _('Réservation importée'),
+    #             'view_mode': 'form',
+    #             'res_model': 'booking.import.line',
+    #             'res_id': booking_line.id,
+    #             'target': 'current',
+    #         }
+    #
+    #     except Exception as e:
+    #         _logger.error(f"Erreur lors de l'import Airbnb: {e}")
+    #         raise UserError(_("Erreur lors de l'import: %s") % str(e))
 
     def _add_booking_line_to_booking_month(self, booking_line):
         """
@@ -679,17 +686,88 @@ class AirbnbPdfImporter(models.TransientModel):
         month_clean = month_str.lower().strip('.').strip()
         return french_months.get(month_clean)
 
-# class BookingImport(models.Model):
-#     _inherit = 'booking.import'
-#     _description = 'Import de réservations'
-#
-#     def action_import_airbnb_pdf(self):
-#         """Action pour ouvrir l'assistant d'import PDF"""
-#         return {
-#             'type': 'ir.actions.act_window',
-#             'name': _('Importer PDF Airbnb'),
-#             'view_mode': 'form',
-#             'res_model': 'airbnb.pdf.importer',
-#             'target': 'new',
-#             'context': {'default_import_id': self.id}
-#         }
+    def import_airbnb_pdf(self):
+        """Méthode principale d'import - Version avec wizard de confirmation"""
+        if not self.pdf_file:
+            raise UserError(_("Veuillez sélectionner un fichier PDF."))
+
+        try:
+            # Valoriser le type d'import
+            self.import_id.import_type = 'pdf'
+            self.import_id.origin = 'airbnb'
+
+            # Extraction du texte
+            text = self._extract_text_from_pdf(self.pdf_file)
+
+            # Parsing des données
+            data = self._parse_airbnb_data(text)
+
+            # Création du partner
+            partner = self._create_partner(data)
+
+            # ✅ NOUVEAU : Ouvrir le wizard de confirmation au lieu de créer directement
+            return self._open_confirmation_wizard(data, partner, text)
+
+        except Exception as e:
+            _logger.error(f"Erreur lors de l'import Airbnb: {e}")
+            raise UserError(_("Erreur lors de l'import: %s") % str(e))
+
+    def _open_confirmation_wizard(self, data, partner, raw_text):
+        """Ouvre le wizard de confirmation avec les données extraites"""
+        import json
+
+        _logger.info(f"Ouverture du wizard de confirmation pour {partner.name}")
+
+        # Préparer les données pour le wizard
+        wizard_vals = {
+            'import_id': self.import_id.id,
+            'partner_id': partner.id,
+            'parsed_data': json.dumps(data, default=str),  # Sérialiser les dates
+
+            # Informations client
+            'partner_name': f"{data.get('first_name', '')} {data.get('last_name', '')}".strip() or partner.name,
+            'partner_phone': data.get('phone_raw', ''),
+            'partner_city': data.get('city', ''),
+            'partner_country': data.get('country', ''),
+            'partner_image': data.get('image_1920', False),
+
+            # Informations réservation
+            'property_type': data.get('property_type', 'Logement Airbnb'),
+            'booking_reference': data.get('booking_reference', ''),
+            'arrival_date': data.get('arrival_date'),
+            'departure_date': data.get('departure_date'),
+            'reservation_date': data.get('reservation_date', fields.Date.today()),
+            'duration_nights': data.get('duration_nights', 1),
+
+            # Informations financières
+            'rate_eur': data.get('rate', 0),
+            'rate_xpf': data.get('rate', 0) * 1000 / 8.38,
+            'commission_eur': data.get('commission_amount', 0),
+            'commission_xpf': data.get('commission_amount', 0) * 1000 / 8.38,
+
+            # Voyageurs (valeurs par défaut ajustables)
+            'pax_nb': data.get('pax_nb', 1),
+            'children': data.get('children', 0),
+        }
+
+        _logger.info(f"Valeurs du wizard: pax_nb={wizard_vals['pax_nb']}, children={wizard_vals['children']}")
+
+        # Créer le wizard
+        wizard = self.env['airbnb.import.confirm.wizard'].create(wizard_vals)
+
+        _logger.info(f"Wizard créé avec ID: {wizard.id}")
+
+        # Retourner l'action pour ouvrir le wizard
+        action = {
+            'type': 'ir.actions.act_window',
+            'name': _('Confirmer l\'import Airbnb'),
+            'view_mode': 'form',
+            'res_model': 'airbnb.import.confirm.wizard',
+            'res_id': wizard.id,
+            'target': 'new',
+            'views': [(False, 'form')],
+        }
+
+        _logger.info(f"Action retournée: {action}")
+
+        return action

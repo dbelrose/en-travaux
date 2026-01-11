@@ -21,7 +21,7 @@ class BookingImport(models.Model):
     airbnb_reservations = fields.Integer(
         string='Réservations Airbnb',
         compute='_compute_origin_stats',
-        store=False  # Important: pas de stockage pour éviter les problèmes
+        store=True  # Important: pas de stockage pour éviter les problèmes
     )
 
     def _compute_origin_stats(self):
@@ -173,3 +173,28 @@ class BookingImport(models.Model):
                     'sticky': False,
                 },
             }
+
+    def action_test_wizard(self):
+        """Bouton de test pour vérifier que le wizard s'ouvre"""
+        self.ensure_one()
+
+        # Créer un wizard de test
+        wizard = self.env['airbnb.import.confirm.wizard'].create({
+            'import_id': self.id,
+            'partner_id': self.env.user.partner_id.id,
+            'parsed_data': '{"test": true}',
+            'partner_name': 'Test Voyageur',
+            'pax_nb': 2,
+            'children': 0,
+            'duration_nights': 3,
+        })
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Test Wizard',
+            'view_mode': 'form',
+            'res_model': 'airbnb.import.confirm.wizard',
+            'res_id': wizard.id,
+            'target': 'new',
+            'views': [(False, 'form')],
+        }

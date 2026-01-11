@@ -46,6 +46,7 @@
             <field name="arch" type="xml">
                 <!-- Ajout du bouton Importer PDF Airbnb dans le header -->
                 <xpath expr="//form/header/button[@name='action_add_reservation']" position="before">
+                    <button name="action_test_wizard" string="🧪 Test Wizard" type="object" class="btn-warning"/>
                     <button name="import_airbnb_pdf"
                             string=" Importer PDF Airbnb"
                             type="object"

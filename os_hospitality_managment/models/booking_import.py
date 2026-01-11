@@ -87,12 +87,16 @@ class BookingImport(models.Model):
         store=False
     )
 
-    @api.depends('import_date', 'file_name', 'import_type')
+    @api.depends('import_date', 'file_name', 'import_type', 'line_ids')
     def _compute_display_name(self):
         for record in self:
             if record.import_type == 'manual':
-                date_str = record.import_date.strftime('%d/%m/%Y %H:%M') if record.import_date else ''
-                record.display_name = f"Saisie manuelle {date_str}"
+                date_str = record.import_date.strftime('%d/%m/%Y') if record.import_date else ''
+                nb_lines = len(record.line_ids)
+                if nb_lines > 0:
+                    record.display_name = f"Saisies manuelles {date_str} ({nb_lines} rés.)"
+                else:
+                    record.display_name = f"Saisies manuelles {date_str}"
             else:
                 if record.file_name:
                     record.display_name = f"Import {record.file_name}"
@@ -416,3 +420,18 @@ class BookingImport(models.Model):
             f"Réservation {booking_line.booking_reference} liée à "
             f"{booking_month.display_name}"
         )
+
+    def is_manual_container(self):
+        """Indique si cet import est un conteneur de saisies manuelles"""
+        self.ensure_one()
+        return self.import_type == 'manual' and self.origin == 'other'
+
+    @api.depends('line_ids.origin', 'line_ids')
+    def _compute_origin_stats(self):
+        for record in self:
+            record.booking_com_reservations = len(
+                record.line_ids.filtered(lambda l: l.origin == 'booking.com')
+            )
+            record.other_reservations = len(
+                record.line_ids.filtered(lambda l: l.origin == 'other')
+            )

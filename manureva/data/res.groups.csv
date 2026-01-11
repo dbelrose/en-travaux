@@ -1,3 +1,0 @@
-"id","name","category_id/id","implied_ids/id"
-"group_manureva_user","Utilisateur","l10n_pf_gov_dac.module_category_dac","base.group_user"
-"group_manureva_manager","Gestionnaire","l10n_pf_gov_dac.module_category_dac","manureva.group_manureva_user"

@@ -47,8 +47,11 @@ Compatibilité :
     },
     'data': [
         'data/res_partner_category_data.xml',
+
         'security/ir.model.access.csv',
+
         'views/airbnb_pdf_importer_views.xml',
+        'views/airbnb_import_confirm_wizard_views.xml',
     ],
     'demo': [],
     'installable': True,

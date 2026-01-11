@@ -103,8 +103,25 @@
             <search string="Rechercher vues mensuelles">
                 <field name="year"/>
                 <field name="month"/>
+                <field name="property_type_id"/>
                 <field name="display_name"/>
                 <separator/>
+                <!-- ← NOUVEAU FILTRE : 3 derniers mois complets -->
+                <filter string="3 derniers mois" name="last_3_months"
+                        domain="[
+                            '|', '|',
+                            '&amp;', ('year', '=', (context_today() - relativedelta(months=3)).year),
+                                     ('month', '=', (context_today() - relativedelta(months=3)).month),
+                            '&amp;', ('year', '=', (context_today() - relativedelta(months=2)).year),
+                                     ('month', '=', (context_today() - relativedelta(months=2)).month),
+                            '&amp;', ('year', '=', (context_today() - relativedelta(months=1)).year),
+                                     ('month', '=', (context_today() - relativedelta(months=1)).month)
+                        ]"/>
+                <filter string="Mois dernier" name="last_month"
+                        domain="[
+                            ('year', '=', (context_today() - relativedelta(months=1)).year),
+                            ('month', '=', (context_today() - relativedelta(months=1)).month)
+                        ]"/>
                 <filter string="Année courante" name="current_year"
                         domain="[('year', '=', context_today().year)]"/>
                 <filter string="Mois courant" name="current_month"
@@ -125,6 +142,7 @@
                 <group expand="0" string="Regrouper par">
                     <filter string="Année" name="group_year" context="{'group_by': 'year'}"/>
                     <filter string="Mois" name="group_month" context="{'group_by': 'month'}"/>
+                    <filter string="Type d'hébergement" name="group_property" context="{'group_by': 'property_type_id'}"/>
                     <filter string="État facturation" name="group_invoice_state" context="{'group_by': 'invoice_state'}"/>
                 </group>
             </search>

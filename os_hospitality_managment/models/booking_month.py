@@ -282,7 +282,7 @@ class BookingMonth(models.Model):
     @api.depends('reservation_ids', 'reservation_ids.rate', 'reservation_ids.origin')
     def _compute_revenue_direct(self):
         for record in self:
-            record.revenue_direct = sum(r.rate for r in record.reservation_ids if r.origin == 'manual')
+            record.revenue_direct = sum(r.rate for r in record.reservation_ids if r.origin == 'other')
 
     revenue_other_channels = fields.Monetary(
         string='Autre chiffre d\'affaires',

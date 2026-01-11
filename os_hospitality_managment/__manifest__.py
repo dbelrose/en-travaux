@@ -1,6 +1,6 @@
 {
     'name': 'Booking.com Import Manager',
-    'version': '17.0.1.0.2',
+    'version': '17.0.1.0.3',
     'category': 'Accounting/Accounting',
     'summary': 'Import et gestion des réservations Booking.com avec génération automatique de factures',
     'description': """
