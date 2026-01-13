@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <record id="aeronef_form_view" model="ir.ui.view">
+            <field name="name">manureva.aeronef.form</field>
+            <field name="model">manureva.aeronef</field>
+            <field name="arch" type="xml">
+                <form string="ModelTitle">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1>
+                                <field name="name" placeholder="Title"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="usager_id"/>
+                            </group>
+                            <group>
+                                <field name="type_aeronef_id"/>
+                                <field name="pax"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+	<record id="view_aeronef_tree" model="ir.ui.view">
+		<field name="name">manureva.aeronef.tree</field>
+		<field name="model">manureva.aeronef</field>
+        <field name="arch" type="xml">
+			<tree string="Aéronefs">
+				<field name="usager_id"/>
+				<field name="name" string="Immatriculation"/>
+				<field name="constructeur_id"/>
+                <field name="typ_oaci" string="Type OACI"/>
+                <field name="tonnage" string="MTOW"/>
+                <field name="pax"/>
+            </tree>
+		</field>
+	</record>
+
+        <record id="aeronef_search_view" model="ir.ui.view">
+            <field name="name">manureva.aeronef.search</field>
+            <field name="model">manureva.aeronef</field>
+            <field name="arch" type="xml">
+                <search string="ModelTitle">
+                    <field name="usager_id" string="Opérateur"/>
+                    <field name="name" string="Immatriculation"/>
+                    <field name="type_aeronef_id" string="Type d'aéronef"/>
+                    <field name="constructeur_id" string="Constructeur"/>
+                    <group expand="1" string="Group By">
+                        <filter string="Type d'aéronef" name="type_aeronef_id" domain="[]"
+                                context="{'group_by':'type_aeronef_id'}"/>
+                        <filter string="Opérateur" name="usager_id" domain="[]"
+                                context="{'group_by':'usager_id'}"/>
+                        <filter string="Constructeur" name="constructeur_id" domain="[]"
+                                context="{'group_by':'constructeur_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_aeronef" model="ir.actions.act_window">
+            <field name="name">Aéronefs</field>
+            <field name="res_model">manureva.aeronef</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Créez votre premier aéronef
+                </p>
+            </field>
+        </record>
+
+    	<menuitem id="menu_aeronef"
+                  parent="menu_aeronefs"
+                  name="Aéronefs"
+                  action="action_aeronef"
+                  sequence="10"
+        />
+
+</odoo>
