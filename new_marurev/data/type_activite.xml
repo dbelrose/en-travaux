@@ -1,0 +1,14 @@
+<!--
+   Copyright 2019 Polynésie française
+   @author: Didier Belrose <didier.belrose@informatique.gov.pf>
+   License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl)
+--> 
+<odoo noupdate="1">
+  <record id="manureva_type_activite_transport_aerien_public" model="type_activite">
+    <field name="name">Transport aérien public</field>
+  </record>
+
+  <record id="manureva_type_activite_aviation_generale" model="type_activite">
+    <field name="name">Aviation générale</field>
+  </record>
+</odoo>

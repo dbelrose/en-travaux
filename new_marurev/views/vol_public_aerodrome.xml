@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <record id="vol_public_aerodrome_tree_view" model="ir.ui.view">
+            <field name="name">manureva.vol_public_aerodrome.tree</field>
+            <field name="model">manureva.vol_public_aerodrome</field>
+            <field name="arch" type="xml">
+                <tree editable="top" string="Vols de transport aérien public - Aérodrome">
+                    <field name="fc02"/>
+                    <field name="fc03"  domain="[('cie_oaci','!=',None)]"/>
+                    <field name="fc13"/>
+                    <field name="fc14"/>
+                    <field name="fc15"/>
+                    <field name="fc16"/>
+                    <field name="fc27"/>
+                    <field name="fc32"/>
+                    <field name="fc33"/>
+                    <field name="fc34"/>
+                    <field name="fc35"/>
+                    <field name="fc42"/>
+                    <field name="fc43"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="vol_public_aerodrome_search_view" model="ir.ui.view">
+            <field name="name">manureva.vol_public_aerodrome.search</field>
+            <field name="model">manureva.vol_public_aerodrome</field>
+            <field name="arch" type="xml">
+                <search string="Rechercher les mouvements">
+                    <field name="fc02" string="Aérodrome"/>
+                    <field name="fc03" string="Opérateur"/>
+                    <field name="fc13" string="Aéronef"/>
+                    <field name="fc32" string="Date bloc réelle"/>
+                    <field name="fc33" string="Heure bloc réelle"/>
+                    <filter string="Départs"
+                            name="mouvement"
+                            domain="[('fc15','=','D')]"/>
+                    <filter string="Arrivées"
+                            name="mouvement"
+                            domain="[('fc15','=','A')]"/>
+                    <filter string="Balisage en service"
+                            name="balisage"
+                            domain="[('fc43','=','S')]"/>
+                    <filter string="Balisage non en service"
+                            name="balisage"
+                            domain="[('fc43','=','N')]"/>
+                    <group expand="1" string="Group By">
+                        <filter string="Aérodrome source" name="fc02" domain="[]"
+                                context="{'group_by':'fc02'}"/>
+                        <filter string="Aéronef" name="fc13" domain="[]"
+                                context="{'group_by':'fc13'}"/>
+                        <filter string="Date bloc réelle" name="fc32" domain="[]"
+                                context="{'group_by':'fc32'}"/>
+                        <filter string="Mouvement" name="fc15" domain="[]"
+                                context="{'group_by':'fc15'}"/>
+                        <filter string="Opérateur" name="fc03" domain="[]"
+                                context="{'group_by':'fc03'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="vol_public_aerodrome_act_window" model="ir.actions.act_window">
+            <field name="name">Vols de transport aérien public - Aérodrome</field>
+            <field name="res_model">manureva.vol_public_aerodrome</field>
+            <field name="view_mode">tree</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Il n'y a pas de vols de transport aérien public - Aérodrome.
+                </p>
+            </field>
+        </record>
+
+        <menuitem name="Vols de transport aérien public - Aérodrome"
+                  id="vol_public_aerodrome_menu"
+                  parent="menu_fichier_tiers"
+                  action="vol_public_aerodrome_act_window"/>
+
+</odoo>
