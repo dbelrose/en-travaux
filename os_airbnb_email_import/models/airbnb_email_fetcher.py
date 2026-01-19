@@ -70,29 +70,67 @@ class AirbnbEmailFetcher(models.TransientModel):
             # Sélection du dossier
             mail.select(company.airbnb_imap_folder or 'INBOX')
 
+            # DEBUG: Compter tous les emails
+            status_all, messages_all = mail.search(None, 'ALL')
+            total_emails = len(messages_all[0].split()) if messages_all[0] else 0
+            _logger.info(f"📊 Total emails dans {company.airbnb_imap_folder or 'INBOX'}: {total_emails}")
+
+            # DEBUG: Compter emails Airbnb (lus ou non)
+            # Construire la requête IMAP depuis les adresses configurées
+            sender_emails = company.airbnb_sender_emails or 'automated@airbnb.com'
+            sender_list = [email.strip() for email in sender_emails.split(',')]
+
+            # Construire la requête OR pour IMAP
+            if len(sender_list) == 1:
+                search_query = f'(FROM "{sender_list[0]}")'
+            else:
+                from_queries = [f'(FROM "{addr}")' for addr in sender_list]
+                search_query = '(OR ' + ' '.join(from_queries) + ')'
+
+            _logger.info(f"🔍 Recherche emails de: {sender_emails}")
+
+            status_airbnb, messages_airbnb = mail.search(None, search_query)
+            airbnb_emails = len(messages_airbnb[0].split()) if messages_airbnb[0] else 0
+            _logger.info(f"📊 Total emails Airbnb potentiels (lus + non lus): {airbnb_emails}")
+
             # Recherche des emails Airbnb non lus
-            status, messages = mail.search(None, '(FROM "automated@airbnb.com" UNSEEN)')
+            status, messages = mail.search(None, f'{search_query} UNSEEN')
 
             if status != 'OK':
-                _logger.warning(f"Aucun email trouvé pour {company.name}")
+                _logger.warning(f"⚠️ Erreur recherche emails pour {company.name}: {status}")
                 mail.logout()
                 return {'processed': 0, 'errors': 0}
 
             email_ids = messages[0].split()
-            _logger.info(f"🔍 {len(email_ids)} email(s) non lu(s) trouvé(s) pour {company.name}")
+
+            # Si aucun email non lu, vérifier s'il y a des emails lus récents (dernières 24h)
+            if not email_ids and airbnb_emails > 0:
+                _logger.info(f"ℹ️ Aucun email non lu, recherche emails récents (24h)...")
+                import datetime
+                yesterday = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%d-%b-%Y")
+                status, messages = mail.search(None, f'{search_query} SINCE {yesterday}')
+                if status == 'OK':
+                    email_ids = messages[0].split()
+                    _logger.info(f"📊 {len(email_ids)} email(s) Airbnb trouvé(s) dans les dernières 24h")
+
+            _logger.info(f"🔍 {len(email_ids)} email(s) à traiter pour {company.name}")
 
             # Traitement de chaque email
             for email_id in email_ids:
                 try:
                     # Récupération de l'email
                     status, msg_data = mail.fetch(email_id, '(RFC822)')
-                    
+
                     if status != 'OK':
                         continue
 
                     # Parsing de l'email
                     raw_email = msg_data[0][1]
                     msg = email.message_from_bytes(raw_email)
+
+                    # DEBUG: Afficher l'expéditeur
+                    from_addr = msg.get('From', '')
+                    _logger.info(f"📧 Email de: {from_addr}")
 
                     # Traitement de l'email
                     self._process_email(msg, company)

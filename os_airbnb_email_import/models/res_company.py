@@ -53,6 +53,12 @@ class ResCompany(models.Model):
         help='Dossier à surveiller (INBOX par défaut)'
     )
 
+    airbnb_sender_emails = fields.Char(
+        string='Adresses expéditeurs',
+        default='automated@airbnb.com',
+        help='Adresses email à surveiller (séparées par des virgules). Ex: automated@airbnb.com,votreadresse@gmail.com'
+    )
+
     airbnb_last_fetch = fields.Datetime(
         string='Dernière récupération',
         readonly=True,

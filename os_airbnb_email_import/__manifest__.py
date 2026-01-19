@@ -76,4 +76,8 @@ Compatible avec :
     'auto_install': False,
     'license': 'LGPL-3',
     'sequence': 95,
+
+    # HOOKS pour gérer la migration
+    'pre_init_hook': 'pre_init_hook',
+    'post_init_hook': 'post_init_hook',
 }

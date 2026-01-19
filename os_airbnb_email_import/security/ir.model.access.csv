@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_airbnb_email_fetcher_user,airbnb.email.fetcher.user,model_airbnb_email_fetcher,base.group_user,1,1,1,1
+access_airbnb_email_log_user,airbnb.email.log.user,model_airbnb_email_log,base.group_user,1,1,1,1
+access_airbnb_email_parser_user,airbnb.email.parser.user,model_airbnb_email_parser,base.group_user,1,1,1,1
+access_airbnb_email_processor_user,airbnb.email.processor.user,model_airbnb_email_processor,base.group_user,1,1,1,1
+access_airbnb_email_log_manager,airbnb.email.log.manager,model_airbnb_email_log,base.group_system,1,1,1,1

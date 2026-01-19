@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Menu principal : Email Airbnb -->
+    <menuitem id="menu_airbnb_email_root"
+              name="📧 Email Airbnb"
+              parent="os_hospitality_managment.menu_import_root"
+              sequence="20"/>
+
+    <!-- Sous-menu : Leads Airbnb -->
+    <menuitem id="menu_airbnb_email_leads"
+              name="Leads CRM"
+              parent="menu_airbnb_email_root"
+              action="action_crm_lead_airbnb"
+              sequence="10"/>
+
+    <!-- Sous-menu : Journal emails -->
+    <menuitem id="menu_airbnb_email_logs"
+              name="Journal emails"
+              parent="menu_airbnb_email_root"
+              action="action_airbnb_email_log"
+              sequence="20"/>
+
+    <!-- Séparateur -->
+    <menuitem id="menu_airbnb_email_separator"
+              parent="menu_airbnb_email_root"
+              sequence="30"/>
+
+    <!-- Sous-menu : Configuration -->
+    <menuitem id="menu_airbnb_email_config"
+              name="⚙️ Configuration"
+              parent="menu_airbnb_email_root"
+              sequence="90"/>
+
+    <!-- Configuration : Sociétés (lien vers paramètres) -->
+    <menuitem id="menu_airbnb_email_companies"
+              name="Paramètres IMAP"
+              parent="menu_airbnb_email_config"
+              action="base.action_res_company_form"
+              sequence="10"/>
+
+    <!-- Configuration : Stages CRM -->
+    <record id="action_crm_stage_airbnb" model="ir.actions.act_window">
+        <field name="name">Stages Airbnb</field>
+        <field name="res_model">crm.stage</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('name', 'in', ['📧 Nouveau', '✅ Confirmé', '🏠 Arrivé', '🎉 Terminé', '❌ Erreur'])]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Configuration des stages du pipeline Airbnb
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_airbnb_email_stages"
+              name="Stages CRM"
+              parent="menu_airbnb_email_config"
+              action="action_crm_stage_airbnb"
+              sequence="20"/>
+</odoo>

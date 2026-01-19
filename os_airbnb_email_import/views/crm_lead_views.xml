@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Extension formulaire CRM Lead pour Airbnb -->
+    <record id="view_crm_lead_form_airbnb" model="ir.ui.view">
+        <field name="name">crm.lead.form.airbnb</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Ajout boutons dans button_box -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_booking" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-bed"
+                        invisible="booking_line_id == False">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Réservation</span>
+                    </div>
+                </button>
+                <button name="action_view_email_log" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-envelope"
+                        invisible="email_log_id == False">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Email source</span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Ajout onglet Airbnb -->
+            <xpath expr="//notebook" position="inside">
+                <page string="📧 Airbnb" name="airbnb" invisible="is_airbnb_lead == False">
+                    <group>
+                        <group string="Informations Airbnb">
+                            <field name="is_airbnb_lead" invisible="1"/>
+                            <field name="airbnb_confirmation_code"/>
+                            <field name="booking_line_id" readonly="1"/>
+                            <field name="email_log_id" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extension vue liste pour filtrer leads Airbnb -->
+    <record id="view_crm_lead_tree_airbnb" model="ir.ui.view">
+        <field name="name">crm.lead.tree.airbnb</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="airbnb_confirmation_code" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Extension vue recherche -->
+    <record id="view_crm_lead_search_airbnb" model="ir.ui.view">
+        <field name="name">crm.lead.search.airbnb</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="airbnb_confirmation_code"/>
+            </field>
+            
+            <search position="inside">
+                <separator/>
+                <filter string="Leads Airbnb" name="airbnb_leads" 
+                        domain="[('is_airbnb_lead', '=', True)]"/>
+                <filter string="Stage Nouveau" name="stage_new" 
+                        domain="[('stage_id.name', '=', '📧 Nouveau')]"/>
+                <filter string="Stage Confirmé" name="stage_confirmed" 
+                        domain="[('stage_id.name', '=', '✅ Confirmé')]"/>
+                <filter string="Stage Arrivé" name="stage_arrived" 
+                        domain="[('stage_id.name', '=', '🏠 Arrivé')]"/>
+                <filter string="Stage Terminé" name="stage_completed" 
+                        domain="[('stage_id.name', '=', '🎉 Terminé')]"/>
+            </search>
+
+        </field>
+    </record>
+
+    <!-- Action pour voir tous les leads Airbnb -->
+    <record id="action_crm_lead_airbnb" model="ir.actions.act_window">
+        <field name="name">Leads Airbnb</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">kanban,tree,form,calendar,graph,activity</field>
+        <field name="domain">[('is_airbnb_lead', '=', True)]</field>
+        <field name="context">{'search_default_stage_new': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun lead Airbnb pour le moment
+            </p>
+            <p>
+                Les leads Airbnb sont créés automatiquement lors de la réception d'emails de réservation.<br/>
+                Vérifiez la configuration IMAP dans Settings > Companies > onglet Email Airbnb.
+            </p>
+        </field>
+    </record>
+</odoo>
