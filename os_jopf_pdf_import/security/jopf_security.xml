@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="group_jopf_manager" model="res.groups">
+        <field name="name">JOPF Manager</field>
+        <field name="category_id" ref="base.module_category_administration"/>
+    </record>
+</odoo>

@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_jopf_import_all,jopf.import,model_jopf_import,base.group_user,1,1,1,1
+access_jopf_line_all,jopf.line,model_jopf_import_line,base.group_user,1,1,1,1
