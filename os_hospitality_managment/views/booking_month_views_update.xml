@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Mise à jour de la vue formulaire booking.month pour les factures clients -->
+    <record id="view_booking_month_form_customer_invoices" model="ir.ui.view">
+        <field name="name">booking.month.form.customer.invoices</field>
+        <field name="model">booking.month</field>
+        <field name="inherit_id" ref="view_booking_month_form"/>
+        <field name="arch" type="xml">
+            <!-- Ajout du bouton pour générer les factures clients -->
+            <button name="action_generate_both_concierge_invoices" position="after">
+                <button name="action_generate_customer_invoices"
+                        string="⚙️ Factures clients"
+                        type="object"
+                        class="btn-primary"
+                        invisible="total_customer_invoices &gt; 0"/>
+                <button name="action_view_customer_invoices"
+                        string="👁️ Factures clients"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="total_customer_invoices &lt;= 0"/>
+            </button>
+
+            <!-- Ajout des statistiques clients dans la page statistiques -->
+            <page name="stats" position="inside">
+                <group string="Facturation clients">
+                    <field name="customer_invoices_generated" readonly="1"/>
+                    <field name="total_customer_invoices" readonly="1"/>
+                    <field name="customer_invoices_amount" readonly="1" widget="monetary"/>
+                </group>
+            </page>
+
+            <!-- Mise à jour de la page factures -->
+            <page name="invoices" position="replace">
+                <page string="Factures" name="invoices">
+                    <group>
+                        <group string="État facturation">
+                            <field name="invoice_state" readonly="1" widget="badge"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Factures fournisseurs">
+                            <field name="booking_invoice_id" readonly="1"/>
+                            <field name="concierge_invoice_id" readonly="1"/>
+                        </group>
+                        <group string="Factures clients">
+                            <field name="total_customer_invoices" readonly="1"/>
+                            <field name="customer_invoices_amount" readonly="1" widget="monetary"/>
+                        </group>
+                    </group>
+
+                    <!-- Liste des factures clients si générées -->
+                    <group string="Détail factures clients" invisible="not customer_invoices_generated">
+                        <field name="customer_invoice_ids" nolabel="1">
+                            <tree>
+                                <field name="name"/>
+                                <field name="partner_id"/>
+                                <field name="invoice_date"/>
+                                <field name="amount_total" widget="monetary"/>
+                                <field name="state" widget="badge"/>
+                                <field name="company_currency_id" invisible="1"/>
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </page>
+        </field>
+    </record>
+
+    <!-- Mise à jour de la vue liste pour inclure les informations clients -->
+    <record id="view_booking_month_tree_customer_invoices" model="ir.ui.view">
+        <field name="name">booking.month.tree.customer.invoices</field>
+        <field name="model">booking.month</field>
+        <field name="inherit_id" ref="view_booking_month_tree"/>
+        <field name="arch" type="xml">
+            <!-- Ajout de colonnes pour les factures clients -->
+            <field name="net_revenue" position="after">
+                <field name="customer_invoices_generated" column_invisible="1"/>
+                <field name="total_customer_invoices" optional="show"/>
+                <field name="customer_invoices_amount"
+                       sum="Total facturé clients"
+                       widget="monetary"
+                       optional="show"
+                />
+            </field>
+
+            <!-- Ajout d'un bouton spécifique pour les factures clients -->
+            <button name="action_generate_all_invoices" position="after">
+                <button name="action_generate_customer_invoices"
+                        string="⚙️ Factures clients"
+                        type="object"
+                        icon="fa-user"
+                        invisible="total_customer_invoices &gt; 0"/>
+            </button>
+        </field>
+    </record>
+
+    <!-- Vue recherche pour booking.month avec filtres factures clients -->
+    <record id="view_booking_month_search" model="ir.ui.view">
+        <field name="name">booking.month.search</field>
+        <field name="model">booking.month</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher vues mensuelles">
+                <field name="year"/>
+                <field name="month"/>
+                <field name="property_type_id"/>
+                <field name="display_name"/>
+                <separator/>
+                <!-- ← NOUVEAU FILTRE : 3 derniers mois complets -->
+                <filter string="3 derniers mois" name="last_3_months"
+                        domain="[
+                            '|', '|',
+                            '&amp;', ('year', '=', (context_today() - relativedelta(months=3)).year),
+                                     ('month', '=', (context_today() - relativedelta(months=3)).month),
+                            '&amp;', ('year', '=', (context_today() - relativedelta(months=2)).year),
+                                     ('month', '=', (context_today() - relativedelta(months=2)).month),
+                            '&amp;', ('year', '=', (context_today() - relativedelta(months=1)).year),
+                                     ('month', '=', (context_today() - relativedelta(months=1)).month)
+                        ]"/>
+                <filter string="Mois dernier" name="last_month"
+                        domain="[
+                            ('year', '=', (context_today() - relativedelta(months=1)).year),
+                            ('month', '=', (context_today() - relativedelta(months=1)).month)
+                        ]"/>
+                <filter string="Année courante" name="current_year"
+                        domain="[('year', '=', context_today().year)]"/>
+                <filter string="Mois courant" name="current_month"
+                        domain="[('year', '=', context_today().year), ('month', '=', context_today().month)]"/>
+                <separator/>
+                <filter string="Avec revenus" name="with_revenue"
+                        domain="[('total_revenue', '>', 0)]"/>
+                <filter string="Factures clients générées" name="customer_invoiced"
+                        domain="[('customer_invoices_generated', '=', True)]"/>
+                <filter string="Factures clients manquantes" name="customer_not_invoiced"
+                        domain="[('customer_invoices_generated', '=', False), ('total_revenue', '>', 0)]"/>
+                <separator/>
+                <filter string="Facturation complète" name="all_invoices"
+                        domain="[('invoice_state', '=', 'all')]"/>
+                <filter string="Facturation incomplète" name="incomplete_invoices"
+                        domain="[('invoice_state', '!=', 'all'), ('total_revenue', '>', 0)]"/>
+                <separator/>
+                <group expand="0" string="Regrouper par">
+                    <filter string="Année" name="group_year" context="{'group_by': 'year'}"/>
+                    <filter string="Mois" name="group_month" context="{'group_by': 'month'}"/>
+                    <filter string="Type d'hébergement" name="group_property" context="{'group_by': 'property_type_id'}"/>
+                    <filter string="État facturation" name="group_invoice_state" context="{'group_by': 'invoice_state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action pour voir toutes les factures clients d'hospitality -->
+    <record id="action_hospitality_customer_invoices" model="ir.actions.act_window">
+        <field name="name">Factures clients Hospitality</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[
+            ('move_type', '=', 'out_invoice'),
+            ('booking_month_id', '!=', False)
+        ]</field>
+        <field name="context">{
+            'default_move_type': 'out_invoice'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune facture client d'hospitality trouvée
+            </p>
+            <p>
+                Les factures clients sont générées automatiquement depuis les vues mensuelles
+                en utilisant le bouton "Factures clients".
+            </p>
+        </field>
+    </record>
+
+</odoo>

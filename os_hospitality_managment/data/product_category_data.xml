@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+
+    <!-- Catégorie pour les commissions -->
+    <record id="product_category_commissions" model="product.category">
+        <field name="name">Commissions</field>
+        <field name="parent_id" ref="product.product_category_all"/>
+    </record>
+
+    <!-- Catégories pour les hébergements -->
+    <record id="product_category_tdsadj" model="product.category">
+        <field name="name">Auberges de jeunesse</field>
+    </record>
+
+    <record id="product_category_tdsavt" model="product.category">
+        <field name="name">Autres hébergements à vocation touristique</field>
+    </record>
+
+    <record id="product_category_tdsmdt" model="product.category">
+        <field name="name">Meublé de tourisme</field>
+    </record>
+
+    <record id="product_category_tdspdf" model="product.category">
+        <field name="name">Pensions de famille</field>
+    </record>
+
+    <record id="product_category_tdstdc" model="product.category">
+        <field name="name">Terrains de camping</field>
+    </record>
+
+</odoo>

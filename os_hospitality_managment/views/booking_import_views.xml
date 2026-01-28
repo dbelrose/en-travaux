@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vue formulaire booking.import -->
+    <record id="view_booking_import_form" model="ir.ui.view">
+        <field name="name">booking.import.form.revised</field>
+        <field name="model">booking.import</field>
+        <field name="arch" type="xml">
+            <form string="Import de réservations">
+                <header>
+                    <button name="action_import_excel_file"
+                            string="⬆️ Fichier Excel"
+                            help="Importer un fichier Excel contenant des réservations"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state in ['imported', 'processed'] or import_type != 'file'"
+                    />
+                    <button name="action_add_reservation"
+                            string="➕ Réservation"
+                            help="Ajouter une réservation manuellement"
+                            type="object"
+                            class="btn-secondary"
+                    />
+                    <button name="action_process_import"
+                            string="⚙️ Traiter l'import"
+                            help="Créer les réservations à partir des lignes importées"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'imported'"
+                    />
+                    <button name="action_view_quarters"
+                            string="👁️ Déclarations"
+                            type="object"
+                            class="btn-secondary"
+                    />
+                    <button name="action_view_months"
+                            string="👁️ Vues mensuelles"
+                            help="Voir les réservations importées par mois"
+                            type="object"
+                            class="btn-secondary"
+                    />
+                    <field name="state" widget="statusbar"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="display_name" readonly="1"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Informations import">
+                            <field name="import_date" readonly="1"/>
+                            <field name="import_type" readonly="1"/>
+                            <field name="file_name" readonly="1" invisible="import_type != 'file'"/>
+                        </group>
+                        <group string="Statistiques">
+                            <field name="total_reservations" readonly="1"/>
+                            <field name="new_reservations" readonly="1"/>
+                            <field name="duplicate_reservations" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Période couverte" invisible="not date_from or not date_to">
+                        <group>
+                            <field name="date_from" readonly="1"/>
+                            <field name="date_to" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="property_type_ids" readonly="1" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    
+                    <group name="group_file" string="Fichier" invisible="import_type != 'file' or state != 'draft'">
+                        <field name="file_data" filename="file_name"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Réservations" name="reservations">
+                            <field name="line_ids">
+                                <tree editable="bottom" create="false">
+                                    <field name="partner_id"/>
+                                    <field name="arrival_date"/>
+                                    <field name="duration_nights"/>
+                                    <field name="pax_nb" optional="hide"/>
+                                    <field name="children" optional="hide"/>
+                                    <field name="adults"/>
+                                    <field name="status"  optional="hide" widget="badge"/>
+                                    <field name="rate" widget="monetary"/>
+                                    <field name="commission_amount" optional="hide" widget="monetary"/>
+                                    <field name="tax_amount" widget="monetary"/>
+                                    <field name="concierge_commission" widget="monetary"/>
+                                    <field name="company_currency_id"
+                                           column_invisible="1"
+                                    />
+                                    <button name="action_edit" 
+                                            string="Modifier"
+                                            type="object"
+                                            icon="fa-edit"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue liste booking.import -->
+    <record id="view_booking_import_tree" model="ir.ui.view">
+        <field name="name">booking.import.tree.revised</field>
+        <field name="model">booking.import</field>
+        <field name="arch" type="xml">
+            <tree string="Imports Booking.com">
+                <field name="display_name"/>
+                <field name="import_date"/>
+                <field name="import_type" widget="badge"/>
+                <field name="origin" widget="badge"/>
+                <field name="total_reservations"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action booking.import -->
+    <record id="action_booking_import" model="ir.actions.act_window">
+        <field name="name">Imports de réservations</field>
+        <field name="res_model">booking.import</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_booking_import_tree"/>
+        <field name="domain">[('origin', '=', 'booking.com')]</field>
+    </record>
+</odoo>

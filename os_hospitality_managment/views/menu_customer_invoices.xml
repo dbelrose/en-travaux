@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ajout du menu pour les factures clients dans le sous-menu Réservations -->
+    <menuitem id="menu_hospitality_customer_invoices"
+              name="Factures clients"
+              parent="menu_hospitality_bookings"
+              action="action_hospitality_customer_invoices"
+              sequence="30"/>
+
+    <!-- Action serveur pour générer toutes les factures clients manquantes -->
+    <record id="action_generate_all_customer_invoices" model="ir.actions.server">
+        <field name="name">Générer toutes les factures clients</field>
+        <field name="model_id" ref="model_booking_month"/>
+        <field name="binding_model_id" ref="model_booking_month"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+success_count = 0
+error_count = 0
+
+for record in records:
+    if not record.customer_invoices_generated and record.total_revenue > 0:
+        try:
+            record.action_generate_customer_invoices()
+            success_count += 1
+        except Exception as e:
+            error_count += 1
+            
+message = f"{success_count} lots de factures clients générées"
+if error_count > 0:
+    message += f", {error_count} erreurs"
+    
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Génération des factures clients manquantes',
+        'message': message,
+        'type': 'success' if error_count == 0 else 'warning',
+        'sticky': False,
+    }
+}
+        </field>
+    </record>
+
+    <!-- Mise à jour du menu de rapports pour inclure les factures clients -->
+    <record id="action_customer_invoices_report" model="ir.actions.act_window">
+        <field name="name">Rapport factures clients</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="domain">[
+            ('move_type', '=', 'out_invoice'),
+            ('booking_month_id', '!=', False)
+        ]</field>
+        <field name="context">{
+            'group_by': ['booking_month_id', 'partner_id']
+        }</field>
+    </record>
+
+    <menuitem id="menu_customer_invoices_report"
+              name="Factures clients"
+              parent="menu_hospitality_reports"
+              action="action_customer_invoices_report"
+              sequence="30"/>
+
+    <!-- Vue graphique spécifique pour les factures clients -->
+    <record id="view_customer_invoices_graph" model="ir.ui.view">
+        <field name="name">hospitality.customer.invoices.graph</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <graph string="Évolution factures clients" type="line">
+                <field name="invoice_date" type="row" interval="month"/>
+                <field name="amount_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Vue pivot pour les factures clients -->
+    <record id="view_customer_invoices_pivot" model="ir.ui.view">
+        <field name="name">hospitality.customer.invoices.pivot</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <pivot string="Analyse factures clients">
+                <field name="booking_month_id" type="row"/>
+                <field name="partner_id" type="col"/>
+                <field name="amount_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Action pour le tableau de bord avec factures clients -->
+    <record id="action_hospitality_dashboard_extended" model="ir.actions.act_window">
+        <field name="name">Tableau de bord Hospitality complet</field>
+        <field name="res_model">booking.month</field>
+        <field name="view_mode">kanban,tree,graph,pivot</field>
+        <field name="domain">[
+            ('year', '=', datetime.datetime.now().year),
+            ('month', '>=', datetime.datetime.now().month - 5)
+        ]</field>
+        <field name="context">{
+            'group_by': 'month'
+        }</field>
+    </record>
+
+    <!-- Mise à jour de l'action existante du tableau de bord -->
+    <record id="action_hospitality_dashboard" model="ir.actions.act_window">
+        <field name="view_mode">kanban,tree,graph,pivot</field>
+    </record>
+
+    <!-- Actions rapides dans le menu Configuration -->
+    <record id="action_quick_customer_invoice_setup" model="ir.actions.act_window">
+        <field name="name">Configuration factures clients</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[
+            ('name', 'in', ['Hébergement touristique', 'Taxe de séjour']),
+            ('sale_ok', '=', True)
+        ]</field>
+        <field name="context">{
+            'default_type': 'service',
+            'default_sale_ok': True,
+            'default_purchase_ok': False
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Configuration des produits pour facturation clients
+            </p>
+            <p>
+                Ces produits sont utilisés automatiquement lors de la génération
+                des factures clients. Vous pouvez ajuster les prix ici.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_customer_invoice_setup"
+              name="Produits facturation clients"
+              parent="menu_hospitality_products"
+              action="action_quick_customer_invoice_setup"
+              sequence="40"/>
+
+    <!-- Action pour configurer les séquences de factures -->
+    <record id="action_hospitality_sequences" model="ir.actions.act_window">
+        <field name="name">Séquences factures Hospitality</field>
+        <field name="res_model">ir.sequence</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[
+            ('code', '=', 'account.move')
+        ]</field>
+    </record>
+
+    <menuitem id="menu_hospitality_sequences"
+              name="Séquences factures"
+              parent="menu_hospitality_advanced"
+              action="action_hospitality_sequences"
+              sequence="30"
+              groups="base.group_system"/>
+
+</odoo>

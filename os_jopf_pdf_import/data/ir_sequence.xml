@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<odoo>
-    <record id="seq_jopf_import" model="ir.sequence">
-        <field name="name">JOPF Import</field>
-        <field name="code">jopf.import</field>
-        <field name="prefix">JOPF</field>
-        <field name="padding">5</field>
-    </record>
-</odoo>

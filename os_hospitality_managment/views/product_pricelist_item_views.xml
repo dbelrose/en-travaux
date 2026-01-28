@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ========================================= -->
+    <!-- ACTIONS DE CONFIGURATION RAPIDE -->
+    <!-- ========================================= -->
+
+    <!-- Action pour configurer les tarifs -->
+    <record id="action_configure_hospitality_rates" model="ir.actions.act_window">
+        <field name="name">Configuration des tarifs</field>
+        <field name="res_model">product.pricelist.item</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[
+            ('pricelist_id.name', 'in', ['Tarifs Municipalité', 'Tarifs Conciergerie']),
+            ('product_tmpl_id.default_code', 'in', ['TAXE_SEJOUR', 'COMMISSION_CONCIERGE'])
+        ]</field>
+        <field name="context">{
+            'default_applied_on': '1_product',
+            'default_compute_price': 'fixed'
+        }</field>
+    </record>
+
+    <!-- Vue simplifiée pour la configuration des tarifs -->
+    <record id="view_hospitality_rates_config_tree" model="ir.ui.view">
+        <field name="name">hospitality.rates.config.tree</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="arch" type="xml">
+            <tree string="Configuration des tarifs" editable="bottom">
+                <field name="pricelist_id" readonly="1"/>
+                <field name="product_tmpl_id" readonly="1"/>
+                <field name="fixed_price" widget="monetary"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="min_quantity"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Remplacer la vue par défaut pour l'action de configuration -->
+    <record id="action_configure_hospitality_rates_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_hospitality_rates_config_tree"/>
+        <field name="act_window_id" ref="action_configure_hospitality_rates"/>
+    </record>
+
+</odoo>
