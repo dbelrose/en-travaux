@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Extension formulaire product.template pour ajouter la couleur -->
+        <record id="view_product_template_form_color" model="ir.ui.view">
+            <field name="name">product.template.form.color</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="arch" type="xml">
+                <!-- Ajouter le champ couleur après le nom -->
+                <field name="name" position="after">
+                    <field name="color" widget="color_picker"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Vue kanban pour gérer facilement les couleurs des logements -->
+        <record id="view_product_template_kanban_accommodation" model="ir.ui.view">
+            <field name="name">product.template.kanban.accommodation</field>
+            <field name="model">product.template</field>
+            <field name="arch" type="xml">
+                <kanban>
+                    <field name="id"/>
+                    <field name="name"/>
+                    <field name="description_sale"/>
+                    <field name="color"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_card oe_kanban_global_click">
+                                <div class="oe_kanban_content">
+                                    <div class="o_kanban_record_top">
+                                        <div class="o_kanban_record_headings">
+                                            <strong class="o_kanban_record_title">
+                                                <field name="name"/>
+                                            </strong>
+                                        </div>
+                                    </div>
+                                    <div class="o_kanban_record_body">
+                                        <field name="description_sale"/>
+                                    </div>
+                                    <div class="o_kanban_record_bottom">
+                                        <div class="oe_kanban_bottom_left">
+                                            <span>Couleur: <field name="color" widget="color_picker"/></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Action pour gérer les logements avec couleurs -->
+        <record id="action_product_accommodation_colors" model="ir.actions.act_window">
+            <field name="name">Logements - Couleurs</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('categ_id.name', '=', 'Hébergements')]</field>
+            <field name="context">{
+                'default_type': 'service',
+                'default_sale_ok': True,
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Configurez les couleurs de vos logements
+                </p>
+                <p>
+                    Chaque logement peut avoir une couleur différente pour faciliter la lecture du calendrier.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu pour gérer les couleurs -->
+        <menuitem id="menu_product_accommodation_colors"
+                  name="Couleurs logements"
+                  parent="os_airbnb_email_import.menu_airbnb_email_config"
+                  action="action_product_accommodation_colors"
+                  sequence="30"/>
+
+    </data>
+</odoo>

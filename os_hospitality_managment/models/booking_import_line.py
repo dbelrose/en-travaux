@@ -601,10 +601,25 @@ class BookingImportLine(models.Model):
                 record.booking_month_id = booking_month.id
 
                 booking_quarter = self.env['booking.quarter'].create_or_update_quarter(
-                    record.property_type_id.id, year, month
+                    record.property_type_id.id, year, month, record.company_id.id
                 )
 
                 record.booking_quarter_id = booking_quarter.id
+
+                # ============================================
+                # CRÉATION/MISE À JOUR DÉCLARATION ANNUELLE
+                # ============================================
+
+                booking_year = self.env['booking.year'].sudo().create_or_update_year(
+                    year=year,
+                    company_id=record.company_id.id
+                )
+
+                # record.booking_year_id = booking_year.id
+
+                _logger.info(
+                    f"✅ Déclaration annuelle mise à jour : {booking_year.display_name}"
+                )
 
         # ← AJOUTER : Forcer le recalcul des statistiques
         # Recalculer les imports
@@ -642,11 +657,17 @@ class BookingImportLine(models.Model):
         months_before = self.mapped('booking_month_id')
         quarters_before = self.mapped('booking_quarter_id')
 
+        years_to_update = set()
+        for record in self:
+            if record.arrival_date:
+                years_to_update.add((record.arrival_date.year, record.company_id.id))
+
         for record in self:
             old_values.append({
                 'id': record.id,
                 'arrival_date': record.arrival_date,
-                'property_type_id': record.property_type_id.id if record.property_type_id else False
+                'property_type_id': record.property_type_id.id if record.property_type_id else False,
+                'company_id': record.company_id.id if record.company_id else self.env.company.id
             })
 
         result = super(BookingImportLine, self).write(vals)
@@ -658,12 +679,12 @@ class BookingImportLine(models.Model):
             if old_val['arrival_date'] and old_val['property_type_id']:
                 old_year = old_val['arrival_date'].year
                 old_month = old_val['arrival_date'].month
-                periods_to_update.add((old_val['property_type_id'], old_year, old_month))
+                periods_to_update.add((old_val['property_type_id'], old_year, old_month, old_val['company_id']))
 
             if record.arrival_date and record.property_type_id:
                 new_year = record.arrival_date.year
                 new_month = record.arrival_date.month
-                periods_to_update.add((record.property_type_id.id, new_year, new_month))
+                periods_to_update.add((record.property_type_id.id, new_year, new_month, record.company_id.id))
 
                 if 'arrival_date' in vals or 'property_type_id' in vals:
                     booking_quarter = self.env['booking.quarter'].search([
@@ -676,13 +697,19 @@ class BookingImportLine(models.Model):
                     if booking_quarter:
                         record.booking_quarter_id = booking_quarter.id
 
-        for property_type_id, year, month in periods_to_update:
-            self.env['booking.quarter'].create_or_update_quarter(property_type_id, year, month)
+        for property_type_id, year, month, company_id in periods_to_update:
+            self.env['booking.year'].sudo().create_or_update_year(
+                year=year,
+                company_id=company_id
+            )
+
+            self.env['booking.quarter'].create_or_update_quarter(property_type_id, year, month, company_id)
 
             self.env['booking.month'].create_or_update_month(
                 property_type_id=property_type_id,
                 year=year,
-                month=month
+                month=month,
+                company_id=company_id
             )
 
         # Distribution du rate si nécessaire
@@ -721,6 +748,14 @@ class BookingImportLine(models.Model):
                 quarters_to_update.mapped('total_taxable_nights')
                 quarters_to_update.mapped('total_tax_amount')
 
+            # Recalculer les déclarations annuelles
+            # years_after = self.mapped('booking_year_id')
+            years_to_update = years_before | years_after
+            if years_to_update:
+                years_to_update.mapped('ligne_19')
+                years_to_update.mapped('ligne_a_p_c')
+                years_to_update.mapped('ligne_c')
+
         return result
 
     def unlink(self):
@@ -731,22 +766,29 @@ class BookingImportLine(models.Model):
         imports_to_update = self.mapped('import_id')
         months_to_update = self.mapped('booking_month_id')
         quarters_to_update = self.mapped('booking_quarter_id')
-
+        # years_to_update = self.mapped('booking_year_id')
+        years_to_update = set()
         for record in self:
             if record.arrival_date and record.property_type_id:
                 year = record.arrival_date.year
                 month = record.arrival_date.month
-                periods_to_update.add((record.property_type_id.id, year, month))
+                periods_to_update.add((record.property_type_id.id, year, month, record.company_id.id))
 
         result = super(BookingImportLine, self).unlink()
 
         # Mettre à jour les déclarations et vues
-        for property_type_id, year, month in periods_to_update:
-            self.env['booking.quarter'].create_or_update_quarter(property_type_id, year, month)
+        for property_type_id, year, month, company_id in periods_to_update:
+            self.env['booking.year'].create_or_update_year(
+                year=year,
+                company_id=company_id
+            )
+
+            self.env['booking.quarter'].create_or_update_quarter(property_type_id, year, month, company_id)
             self.env['booking.month'].create_or_update_month(
                 property_type_id=property_type_id,
                 year=year,
-                month=month
+                month=month,
+                company_id=company_id
             )
 
         # Forcer le recalcul après suppression
@@ -765,6 +807,11 @@ class BookingImportLine(models.Model):
         if quarters_to_update.exists():
             quarters_to_update.mapped('total_taxable_nights')
             quarters_to_update.mapped('total_tax_amount')
+
+        if years_to_update.exists():
+            years_to_update.mapped('ligne_19')
+            years_to_update.mapped('ligne_a_p_c')
+            years_to_update.mapped('ligne_c')
 
         return result
 

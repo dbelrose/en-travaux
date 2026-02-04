@@ -449,7 +449,7 @@ class BookingQuarter(models.Model):
         }
 
     @api.model
-    def create_or_update_quarter(self, property_type_id, year, month):
+    def create_or_update_quarter(self, property_type_id, year, month, company_id):
         """Crée ou met à jour une déclaration trimestrielle"""
         quarter = str(((month - 1) // 3) + 1)
 
@@ -457,7 +457,8 @@ class BookingQuarter(models.Model):
             ('year', '=', year),
             ('quarter', '=', quarter),
             ('property_type_id', '=', property_type_id),
-            ('company_id', '=', self.env.company.id)
+            ('company_id', '=', company_id)
+            # ('company_id', '=', self.env.company.id)
         ], limit=1)
 
         if not quarter_record:

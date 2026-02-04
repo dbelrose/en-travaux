@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Stage 1 : Nouveau (Email reçu) -->
+        <record id="crm_stage_airbnb_new" model="crm.stage">
+            <field name="name">📧 Nouveau</field>
+            <field name="sequence">1</field>
+            <field name="fold" eval="False"/>
+            <field name="is_won" eval="False"/>
+        </record>
+
+        <!-- Stage 2 : Confirmé (Réservation créée) -->
+        <record id="crm_stage_airbnb_confirmed" model="crm.stage">
+            <field name="name">✅ Confirmé</field>
+            <field name="sequence">2</field>
+            <field name="fold" eval="False"/>
+            <field name="is_won" eval="False"/>
+        </record>
+
+        <!-- Stage 3 : Arrivé (Check-in effectué) -->
+        <record id="crm_stage_airbnb_arrived" model="crm.stage">
+            <field name="name">🏠 Arrivé</field>
+            <field name="sequence">3</field>
+            <field name="fold" eval="False"/>
+            <field name="is_won" eval="False"/>
+        </record>
+
+        <!-- Stage 4 : Terminé (Check-out effectué) -->
+        <record id="crm_stage_airbnb_completed" model="crm.stage">
+            <field name="name">🎉 Terminé</field>
+            <field name="sequence">4</field>
+            <field name="fold" eval="False"/>
+            <field name="is_won" eval="True"/>
+        </record>
+
+        <!-- Stage Erreur : Pour les traitements en échec -->
+        <record id="crm_stage_airbnb_error" model="crm.stage">
+            <field name="name">❌ Erreur</field>
+            <field name="sequence">99</field>
+            <field name="fold" eval="True"/>
+            <field name="is_won" eval="False"/>
+        </record>
+    </data>
+</odoo>

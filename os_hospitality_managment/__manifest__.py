@@ -84,6 +84,7 @@ Ce module permet de gérer les réservations Booking.com de deux façons :
         'views/booking_month_views_update.xml',
         'views/booking_month_context_buttons.xml',
         'views/booking_quarter_views.xml',
+        'views/booking_year_views.xml',
         'views/booking_wizards_views.xml',
         'views/booking_import_line_views.xml',
 

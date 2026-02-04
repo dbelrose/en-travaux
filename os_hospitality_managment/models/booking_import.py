@@ -42,6 +42,7 @@ class BookingImport(models.Model):
     duplicate_reservations = fields.Integer(string='Doublons évités', compute='_compute_stats', store=True)
 
     # Période couverte par l'import
+    year = fields.Integer(string='Année', compute='_compute_period', store=True)
     date_from = fields.Date(string='Date début', compute='_compute_period', store=True)
     date_to = fields.Date(string='Date fin', compute='_compute_period', store=True)
 
@@ -119,6 +120,10 @@ class BookingImport(models.Model):
             if record.line_ids:
                 dates = record.line_ids.mapped('arrival_date')
                 record.date_from = min(dates) if dates else False
+                if record.date_from:
+                    record.year = record.date_from.year
+                else:
+                    record.year = False
                 record.date_to = max(dates) if dates else False
             else:
                 record.date_from = False

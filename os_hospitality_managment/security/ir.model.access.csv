@@ -13,3 +13,5 @@ access_customer_invoice_config_wizard_manager,customer.invoice.config.wizard man
 access_customer_invoice_config_wizard_user,customer.invoice.config.wizard user,model_customer_invoice_config_wizard,account.group_account_invoice,1,1,1,1
 access_hospitality_config_wizard,access_hospitality_config_wizard,os_hospitality_managment.model_hospitality_config_wizard,base.group_user,1,1,1,1
 access_booking_reservation_wizard,access_booking_reservation_wizard,os_hospitality_managment.model_booking_reservation_wizard,base.group_user,1,1,1,1
+access_booking_year_user,booking.year.user,model_booking_year,base.group_user,1,1,1,1
+access_booking_year_manager,booking.year.manager,model_booking_year,base.group_system,1,1,1,1

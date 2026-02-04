@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Extension formulaire res.company -->
+        <record id="view_company_form_airbnb_email" model="ir.ui.view">
+            <field name="name">res.company.form.airbnb.email</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                <!-- Ajout onglet Configuration Email Airbnb -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="📧 Email Airbnb" name="airbnb_email">
+                        <group>
+                            <group string="Connexion IMAP">
+                                <field name="airbnb_imap_host" placeholder="mail.belroseplace.site"/>
+                                <field name="airbnb_imap_port"/>
+                                <field name="airbnb_imap_ssl"/>
+                                <field name="airbnb_imap_folder"/>
+                                <field name="airbnb_sender_emails" placeholder="automated@airbnb.com,votreadresse@gmail.com"/>
+                            </group>
+                            <group string="Authentification">
+                                <field name="airbnb_imap_user" placeholder="contact@belroseplace.site"/>
+                                <field name="airbnb_imap_password" password="True"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Options">
+                                <field name="airbnb_auto_process"/>
+                                <field name="airbnb_last_fetch" readonly="1"/>
+                            </group>
+                            <group string="Actions">
+                                <button name="action_test_imap_connection"
+                                        string="🔧 Tester la connexion"
+                                        type="object"
+                                        class="btn-secondary"/>
+                                <button name="action_fetch_airbnb_emails"
+                                        string="📧 Récupérer les emails maintenant"
+                                        type="object"
+                                        class="btn-primary"
+                                        invisible="airbnb_auto_process == False"/>
+                            </group>
+                        </group>
+
+                        <group string="ℹ️ Aide">
+                            <div class="alert alert-info" role="alert">
+                                <h4>Configuration Email Airbnb</h4>
+                                <p>
+                                    Ce module récupère automatiquement les emails Airbnb depuis votre compte email
+                                    et crée les réservations automatiquement.
+                                </p>
+                                <ul>
+                                    <li><strong>Serveur IMAP</strong> : Adresse du serveur email (ex: mail.belroseplace.site)</li>
+                                    <li><strong>Port</strong> : 993 pour SSL/TLS (recommandé), 143 pour non-sécurisé</li>
+                                    <li><strong>Utilisateur</strong> : Adresse email complète</li>
+                                    <li><strong>Dossier</strong> : INBOX par défaut</li>
+                                    <li><strong>Adresses expéditeurs</strong> : automated@airbnb.com ou vos adresses de transfert séparées par des virgules</li>
+                                    <li><strong>Traitement automatique</strong> : Les emails sont vérifiés toutes les 15 minutes</li>
+                                </ul>
+                                <p class="text-muted">
+                                    <strong>Sécurité</strong> : Le mot de passe est chiffré dans la base de données.
+                                </p>
+                                <p class="text-muted">
+                                    <strong>Emails transférés</strong> : Si vous transférez les emails Airbnb depuis une autre adresse (ex: Gmail),
+                                    ajoutez cette adresse dans "Adresses expéditeurs" : automated@airbnb.com,votreadresse@gmail.com
+                                </p>
+                            </div>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
