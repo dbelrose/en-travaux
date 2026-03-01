@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Règles de parsing email fournisseur — Vue formulaire
+    ════════════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_supplier_email_rule_form" model="ir.ui.view">
+        <field name="name">supplier.email.rule.form</field>
+        <field name="model">supplier.email.rule</field>
+        <field name="arch" type="xml">
+            <form string="Règle de parsing email fournisseur">
+                <sheet>
+                    <widget name="web_ribbon" title="Archivé"
+                            bg_color="text-bg-danger"
+                            invisible="active"/>
+
+                    <!-- Bouton smart : factures créées -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_bills"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text-o"
+                                invisible="bill_count == 0">
+                            <field name="bill_count"
+                                   string="Factures"
+                                   widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name"
+                                   placeholder="Ex : EDT Électricité"/>
+                        </h1>
+                    </div>
+
+                    <!-- Indicateur de dernier import -->
+                    <div class="alert alert-info" role="alert"
+                         invisible="not last_import_date">
+                        <strong>Dernier import :</strong>
+                        <field name="last_import_result" readonly="1"/>
+                        (<field name="last_import_date" widget="datetime" readonly="1"/>)
+                    </div>
+
+                    <!-- ── Alias email ──────────────────────────────── -->
+                    <group string="📬 Adresse email de réception automatique">
+                        <div class="alert alert-info" role="alert">
+                            <p>
+                                <strong>Configurez une règle de transfert</strong>
+                                dans votre client mail (Gmail, Outlook…) pour
+                                rediriger automatiquement les emails de ce
+                                fournisseur vers l'adresse ci-dessous.
+                            </p>
+                            <p>
+                                Odoo traitera chaque email reçu, extraira les
+                                données et créera la facture fournisseur
+                                <strong>sans intervention manuelle</strong>.
+                            </p>
+                        </div>
+                        <field name="alias_id"
+                               widget="mail_alias_setting"
+                               string="Alias email"/>
+                    </group>
+
+                    <group>
+                        <group string="Identification de l'email (sécurité)">
+                            <field name="active" invisible="1"/>
+                            <field name="sequence"/>
+                            <field name="sender_email_pattern"
+                                   placeholder="efacture@.*edt\.engie\.pf"/>
+                            <field name="subject_pattern"
+                                   placeholder="facture (optionnel)"/>
+                        </group>
+                        <group string="Comptabilité">
+                            <field name="partner_id"/>
+                            <field name="journal_id"/>
+                            <field name="account_id"/>
+                            <field name="currency_code"/>
+                            <field name="analytic_plan_id"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Regex ────────────────────────────────────── -->
+                    <group string="Extraction des données (expressions régulières)">
+                        <div class="alert alert-secondary" role="alert">
+                            Chaque champ contient une regex Python avec
+                            <strong>un groupe capturant</strong> ( … )
+                            qui extrait la valeur souhaitée du corps de l'email.
+                            <br/>
+                            Email EDT exemple :
+                            <em>« facture F202602042089 du 10/02/2026
+                            d'un montant de 3 354 FCFP pour le
+                            contrat 01-2022-000194 »</em>
+                        </div>
+                        <group>
+                            <field name="regex_invoice_number"
+                                   placeholder="facture\s+(\S+)\s+du"/>
+                            <field name="regex_invoice_date"
+                                   placeholder="du\s+(\d{2}/\d{2}/\d{4})"/>
+                            <field name="regex_amount"
+                                   placeholder="montant de ([\d\s\u00a0\u202f,\.]+?)\s*(?:FCFP|XPF)"/>
+                            <field name="regex_contract"
+                                   placeholder="contrat\s+([\w\-]+)"/>
+                        </group>
+                    </group>
+
+                    <group string="Lien produit / logement">
+                        <field name="product_attribute_name"
+                               placeholder="N° de contrat EDT"/>
+                    </group>
+                </sheet>
+
+                <!-- Chatter : historique des emails reçus -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Vue liste ─────────────────────────────────────────────────────── -->
+
+    <record id="view_supplier_email_rule_tree" model="ir.ui.view">
+        <field name="name">supplier.email.rule.tree</field>
+        <field name="model">supplier.email.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Règles de parsing email">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="alias_id"/>
+                <field name="last_import_date"/>
+                <field name="last_import_result"/>
+                <field name="bill_count" string="Factures"/>
+                <field name="active" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ── Action ────────────────────────────────────────────────────────── -->
+
+    <record id="action_supplier_email_rule" model="ir.actions.act_window">
+        <field name="name">Règles import email fournisseurs</field>
+        <field name="res_model">supplier.email.rule</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre première règle de parsing
+            </p>
+            <p>
+                Chaque règle crée automatiquement un alias email Odoo.
+                Configurez un transfert automatique dans votre messagerie
+                vers cet alias pour une comptabilisation 100% automatique.
+            </p>
+        </field>
+    </record>
+
+</odoo>

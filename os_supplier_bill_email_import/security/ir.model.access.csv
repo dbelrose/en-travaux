@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_supplier_email_rule_manager,supplier.email.rule manager,model_supplier_email_rule,account.group_account_manager,1,1,1,1
+access_supplier_email_rule_invoice,supplier.email.rule invoice,model_supplier_email_rule,account.group_account_invoice,1,0,0,0
+access_import_eml_wizard_invoice,import.eml.wizard invoice,model_import_eml_wizard,account.group_account_invoice,1,1,1,1
+access_import_eml_wizard_line_invoice,import.eml.wizard.line invoice,model_import_eml_wizard_line,account.group_account_invoice,1,1,1,1

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Accès depuis Comptabilité > Fournisseurs -->
+    <menuitem id="menu_import_eml_wizard"
+              name="Importer factures email (.eml)"
+              parent="account.menu_finance_payables"
+              action="action_import_eml_wizard"
+              sequence="30"
+              groups="account.group_account_invoice"/>
+
+    <!-- Configuration dans Comptabilité > Configuration -->
+    <menuitem id="menu_supplier_email_rule"
+              name="Règles import email fournisseurs"
+              parent="account.menu_finance_configuration"
+              action="action_supplier_email_rule"
+              sequence="80"
+              groups="account.group_account_manager"/>
+
+    <!--
+        Le raccourci vers les serveurs de messagerie entrants a été supprimé :
+        il nécessitait une dépendance explicite à 'fetchmail' qui n'est pas
+        requise par la logique du module.
+        Accès direct : Paramètres > Technique > Email > Serveurs entrants
+    -->
+
+</odoo>

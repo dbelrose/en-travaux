@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Assistant d'import EML
+    ════════════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_import_eml_wizard_form" model="ir.ui.view">
+        <field name="name">import.eml.wizard.form</field>
+        <field name="model">import.eml.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Importer des factures email (.eml)">
+                <sheet>
+
+                    <!-- ── État DRAFT ────────────────────────────────── -->
+                    <group invisible="state != 'draft'">
+                        <div class="alert alert-info" role="alert">
+                            <strong>Mode d'emploi :</strong>
+                            <ol>
+                                <li>Enregistrez vos emails depuis Gmail/Thunderbird
+                                    en format <strong>.eml</strong>.</li>
+                                <li>Attachez-les ci-dessous (multi-sélection possible).</li>
+                                <li>Laissez la règle vide pour une détection automatique,
+                                    ou forcez une règle spécifique.</li>
+                                <li>Cliquez sur <strong>Importer</strong>.</li>
+                            </ol>
+                        </div>
+                        <group string="Fichiers à importer">
+                            <field name="attachment_ids"
+                                   widget="many2many_binary"
+                                   string="Fichiers .eml"/>
+                        </group>
+                        <group string="Options">
+                            <field name="rule_id"
+                                   placeholder="Détection automatique"/>
+                        </group>
+                    </group>
+
+                    <!-- ── État DONE ─────────────────────────────────── -->
+                    <group invisible="state != 'done'">
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <div class="card text-bg-success text-center p-2">
+                                    <div class="fs-3 fw-bold">
+                                        <field name="result_ok_count" readonly="1"/>
+                                    </div>
+                                    <div>Importé(s)</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card text-bg-warning text-center p-2">
+                                    <div class="fs-3 fw-bold">
+                                        <field name="result_dup_count" readonly="1"/>
+                                    </div>
+                                    <div>Doublon(s)</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card text-bg-danger text-center p-2">
+                                    <div class="fs-3 fw-bold">
+                                        <field name="result_err_count" readonly="1"/>
+                                    </div>
+                                    <div>Erreur(s)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <field name="result_line_ids" readonly="1">
+                            <tree decoration-success="status == 'ok'"
+                                  decoration-warning="status == 'duplicate'"
+                                  decoration-danger="status == 'error'">
+                                <field name="filename"/>
+                                <field name="status"/>
+                                <field name="invoice_number"/>
+                                <field name="contract_number"/>
+                                <field name="amount" widget="monetary"/>
+                                <field name="rule_id"/>
+                                <field name="move_id" optional="show"/>
+                                <field name="message" optional="show"/>
+                            </tree>
+                        </field>
+                    </group>
+
+                    <field name="state" invisible="1"/>
+
+                </sheet>
+                <footer>
+                    <button name="action_import"
+                            string="Importer"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_view_bills"
+                            string="Voir les factures"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'done' or result_ok_count == 0"/>
+                    <button name="action_reset"
+                            string="Nouvel import"
+                            type="object"
+                            invisible="state != 'done'"/>
+                    <button string="Fermer"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_import_eml_wizard" model="ir.actions.act_window">
+        <field name="name">Importer des factures (.eml)</field>
+        <field name="res_model">import.eml.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
