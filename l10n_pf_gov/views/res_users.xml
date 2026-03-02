@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+        <!-- Hérite de la vue de formulaire de l'utilisateur -->
+        <record id="view_users_form_inherit" model="ir.ui.view">
+            <field name="name">res.users.form.inherit</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="base.view_users_form"/>
+            <field name="arch" type="xml">
+                <!-- Supprime le bouton "Modifier le mot de passe" -->
+                <xpath expr="//button[@name='action_reset_password']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            </field>
+        </record>
+
+    	<menuitem
+				groups="res_groups_pf_gov_manager"
+				id="l10n_pf_gov_menu_action_utilisateurs"
+				name="Utilisateurs"
+				sequence="900"
+				web_icon="l10n_pf_gov,static/description/res_users_icon.png"/>
+		<menuitem
+				action="base.action_res_users"
+				id="l10n_pf_gov_menu_action_res_users"
+				name="Utilisateurs"
+				parent="l10n_pf_gov_menu_action_utilisateurs"
+				sequence="900"/>
+</odoo>

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<odoo noupdate="1">
+
+    <record id="mail_multi_domain.ir_config_parameter_split_server_mail" model="ir.config_parameter">
+        <field name="key">mail.split_server_mail_by_user</field>
+        <field name="value">True</field>
+    </record>
+
+    <record id="mail_multi_domain.ir_config_parameter_use_different_signature" model="ir.config_parameter">
+        <field name="key">mail.use_different_signature</field>
+        <field name="value">False</field>
+    </record>
+
+</odoo>

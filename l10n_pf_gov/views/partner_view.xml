@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record model="ir.ui.view" id="view_partner_form">
+        <field name="name">Partner form</field>
+        <field name="model">res.partner</field>
+        <field name="priority">20</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <field name="name" position="before">
+                <field name="initials" invisible="not initials"/>
+            </field>
+            <field name="name" position="after">
+                <field name="report_header"/>
+            </field>
+            <field name="name" position="replace">
+                <field name="first_name" class="oe_edit_only"/>
+                <field name="last_name" class="oe_edit_only"/>
+                <field name="name" class="oe_read_only"/>
+            </field>
+            <field name="name" position="after">
+                <field name="full_name"/>
+            </field>
+        </field>
+    </record>
+</odoo>

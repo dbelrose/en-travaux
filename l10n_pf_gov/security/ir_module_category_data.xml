@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+        <record model="ir.module.category" id="module_category_pf_gov_app_hidden">
+             <field name="name">Applications</field>
+             <field name="sequence">5</field>
+             <field name="visible" eval="0" />
+        </record>
+
+        <record model="ir.module.category" id="module_category_pf_gov">
+             <field name="name">Global</field>
+             <field name="sequence">40</field>
+             <field name="parent_id" ref="module_category_pf_gov_app_hidden"/>
+        </record>
+
+</odoo>

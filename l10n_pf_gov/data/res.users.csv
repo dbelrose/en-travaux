@@ -1,0 +1,2 @@
+id,name,login,lang,tz,company_id:id,company_ids:id,active
+res_users_pf_talend,Talend,talend@gov.pf,fr_FR,Pacific/Tahiti,res_company_main,res_company_main,False

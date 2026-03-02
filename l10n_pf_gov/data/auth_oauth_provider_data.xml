@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<odoo>
+
+	<data noupdate="0">
+		<record id="auth_oauth.provider_openerp" model="auth.oauth.provider">
+			<field name="enabled" eval="False"/>
+		</record>
+	</data>
+
+	<data noupdate="1">
+		<record id="auth_oauth_provider_pf_gov" model="auth.oauth.provider">
+			<field name="name">Auth Gov</field>
+			<field name="enabled" eval="True"/>
+			<field name="client_id">odoo-gestion</field>
+			<field name="body">Auth Gov</field>
+			<field name="scope">profile</field>
+			<field name="sequence" eval="1"/>
+			<field name="auth_endpoint">https://auth.gov.pf/auth/realms/Odoo-Manureva/protocol/openid-connect/auth</field>
+			<field name="validation_endpoint">https://auth.gov.pf/auth/realms/Odoo-Manureva/protocol/openid-connect/userinfo</field>
+			<field name="css_class">fa fa-fw fa-sign-in text-primary</field>
+		</record>
+	</data>
+
+</odoo>
