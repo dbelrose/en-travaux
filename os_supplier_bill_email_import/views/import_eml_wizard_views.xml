@@ -2,7 +2,7 @@
 <odoo>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         Assistant d'import EML
+         Assistant d'import EML — v2
     ════════════════════════════════════════════════════════════════════════ -->
 
     <record id="view_import_eml_wizard_form" model="ir.ui.view">
@@ -25,6 +25,16 @@
                                 <li>Cliquez sur <strong>Importer</strong>.</li>
                             </ol>
                         </div>
+
+                        <!-- Alerte si moteur PDF manquant -->
+                        <div class="alert alert-warning" role="alert"
+                             invisible="pdf_available">
+                            <strong>⚠ Moteur PDF non disponible.</strong>
+                            L'exploitation des pièces jointes PDF est désactivée.
+                            Installez <code>pdfminer.six</code> sur le serveur :
+                            <code>pip install pdfminer.six</code>
+                        </div>
+
                         <group string="Fichiers à importer">
                             <field name="attachment_ids"
                                    widget="many2many_binary"
@@ -71,9 +81,14 @@
                                   decoration-danger="status == 'error'">
                                 <field name="filename"/>
                                 <field name="status"/>
+                                <field name="parsing_source" optional="show"/>
                                 <field name="invoice_number"/>
                                 <field name="contract_number"/>
                                 <field name="amount" widget="monetary"/>
+                                <field name="pdf_lines_count" optional="show"
+                                       string="Lignes PDF"/>
+                                <field name="payment_registered" optional="show"
+                                       string="Payée"/>
                                 <field name="rule_id"/>
                                 <field name="move_id" optional="show"/>
                                 <field name="message" optional="show"/>
@@ -82,6 +97,7 @@
                     </group>
 
                     <field name="state" invisible="1"/>
+                    <field name="pdf_available" invisible="1"/>
 
                 </sheet>
                 <footer>

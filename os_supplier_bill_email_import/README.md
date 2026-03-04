@@ -1,9 +1,15 @@
-# supplier_bill_email_import — Module Odoo 17
+# supplier_bill_email_import — Module Odoo 17 — v2
 
 ## Présentation
 
 Ce module comptabilise automatiquement les factures fournisseurs reçues par
 email, avec ventilation analytique par produit / logement.
+
+**Nouveautés v2 :**
+- Exploitation de la **pièce jointe PDF** de l'email (extraction de texte)
+- Extraction des **lignes de détail** du PDF (une ligne de facture par ligne)
+- **Validation automatique** de la facture après création
+- **Enregistrement et rapprochement automatique** d'un paiement fournisseur
 
 Il supporte deux modes d'import :
 
@@ -14,12 +20,12 @@ Il supporte deux modes d'import :
 
 ---
 
-## Architecture du flux automatique
+## Architecture du flux automatique (v2)
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Serveur mail fournisseur (EDT, OPT, Syndic…)               │
-│  → Email de facture envoyé à votre Gmail/Outlook            │
+│  → Email de facture + PDF joint                             │
 └──────────────────────┬───────────────────────────────────────┘
                        │  Règle de transfert automatique
                        ▼
@@ -37,10 +43,14 @@ Il supporte deux modes d'import :
 ┌──────────────────────────────────────────────────────────────┐
 │  supplier.email.rule.message_new()                          │
 │  ① Vérification expéditeur (sender_email_pattern)           │
-│  ② Extraction regex : n° facture, date, montant, contrat    │
-│  ③ product.attribute.value → product.template               │
-│  ④ account.analytic.account (par nom du produit)            │
-│  ⑤ Création account.move (facture brouillon)                │
+│  ② Extraction PDF joint (si use_pdf_attachment)             │
+│  ③ Sélection du texte source (corps / PDF / mixte)          │
+│  ④ Extraction regex : n° facture, date, montant, contrat    │
+│  ⑤ Extraction lignes de détail PDF (si pdf_extract_lines)   │
+│  ⑥ product.attribute.value → product.template               │
+│  ⑦ account.analytic.account (par nom du produit)            │
+│  ⑧ Création account.move (facture brouillon / postée)       │
+│  ⑨ Création account.payment + rapprochement (si configuré)  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -49,62 +59,103 @@ Il supporte deux modes d'import :
 ## Installation
 
 1. Copiez `supplier_bill_email_import/` dans votre dossier `addons`.
-2. **Paramètres > Activer le mode développeur > Mettre à jour la liste**.
-3. Installez **"Import Factures Fournisseurs par Email"**.
+2. **(Recommandé)** Installez le moteur PDF : `pip install pdfminer.six`
+3. **Paramètres > Activer le mode développeur > Mettre à jour la liste**.
+4. Installez **"Import Factures Fournisseurs par Email"**.
 
 ---
 
-## Configuration en 5 étapes
+## Moteurs PDF supportés
 
-### Étape 1 — Attributs produit (logements)
+| Moteur | Installation | Précision |
+|--------|-------------|-----------|
+| `pdfminer.six` ⭐ | `pip install pdfminer.six` | Maximale |
+| `pypdf` | `pip install pypdf` | Bonne |
+| `PyPDF2` | `pip install PyPDF2` | Correcte |
 
-Pour chaque logement (product.template), ajoutez l'attribut :
-- **Nom** : `N° de contrat EDT`
-- **Valeur** : le numéro exact du contrat (`01-2022-000194`, etc.)
+Le module détecte automatiquement le moteur disponible au démarrage (priorité dans l'ordre ci-dessus). Un avertissement est loggé si aucun n'est installé.
 
-### Étape 2 — Comptes analytiques
+---
 
-Dans `Comptabilité > Configuration > Comptes analytiques`, créez un compte
-par logement avec le **même nom** que le produit correspondant.
+## Configuration en 7 étapes
 
-### Étape 3 — Règle de parsing EDT
+### Étapes 1 à 3 — (inchangées)
 
-`Comptabilité > Configuration > Règles import email fournisseurs`
-→ Ouvrez la règle *"EDT – Électricité"* et complétez :
+Voir version précédente : attributs produit, comptes analytiques, règle de parsing EDT.
 
-| Champ | Valeur |
-|-------|--------|
-| Fournisseur | Fiche partenaire EDT |
-| Compte de charge | `606100 – Électricité` |
-| Journal achats | Journal Achats |
-| Plan analytique | Votre plan analytique |
+### Étape 4 — Pièce jointe PDF (onglet "Pièce jointe PDF")
 
-L'**alias email** est créé automatiquement à la sauvegarde.
+| Champ | Description |
+|-------|-------------|
+| **Exploiter la pièce jointe PDF** | Active l'extraction du texte PDF |
+| **Préférer le PDF au corps de l'email** | Utilise le PDF comme source principale (recommandé) |
+| **Extraire les lignes de détail** | Crée une ligne de facture par ligne détectée dans le PDF |
+| **Regex ligne de détail** | Pattern avec 2 groupes : `groupe1` = libellé, `groupe2` = montant |
+| **Compte pour les lignes PDF** | Compte de charge des lignes PDF (défaut : compte principal) |
+| **Taxes sur les lignes PDF** | Taxes à appliquer (laisser vide si montants TTC) |
 
-### Étape 4 — Serveur de messagerie entrant
+**Exemple de regex lignes EDT :**
+```
+^(.+?)\s{2,}([\d\s\u202f,\.]+)\s*(?:FCFP|XPF)\s*$
+```
 
-`Comptabilité > Configuration > Serveurs de messagerie entrants`
-→ Créez un serveur IMAP pointant vers une boîte dédiée
-  (ex : `factures-auto@votredomaine.com`) :
+### Étape 5 — Paiement automatique (onglet "Paiement automatique")
 
-| Paramètre | Valeur |
-|-----------|--------|
-| Serveur | `imap.gmail.com` |
-| Port | `993` |
-| SSL | Oui |
-| Login / Mot de passe | Identifiants de la boîte dédiée |
-| Intervalle | `5` minutes |
-| Action | *Créer un nouvel enregistrement* sur le modèle `supplier.email.rule` |
+| Champ | Description |
+|-------|-------------|
+| **Valider automatiquement la facture** | Passe la facture de Brouillon à Validé |
+| **Enregistrer le paiement automatiquement** | Crée et rapproche un paiement sortant |
+| **Journal de paiement** | Journal bancaire ou caisse |
+| **Date du paiement** | Date de la facture ou date du jour |
+| **Mémo paiement** | Texte avec variables `{invoice_number}`, `{contract_number}`, `{partner}` |
 
-### Étape 5 — Transfert automatique dans votre messagerie principale
+> ⚠ **À utiliser avec précaution** — réservez le paiement automatique aux fournisseurs
+> de confiance à montants fixes (abonnements, contrats cadre).
 
-Dans Gmail / Outlook, créez un filtre :
-- **De** : `efacture@hoani.edt.engie.pf`
-- **Action** : Transférer automatiquement vers l'alias Odoo
-  (`edt-factures@votredomaine.odoo.com` ou la boîte IMAP dédiée)
+### Étapes 6 & 7 — (inchangées)
 
-**C'est tout.** À la prochaine facture EDT, Odoo créera automatiquement
-la facture fournisseur avec ventilation analytique.
+Serveur de messagerie entrant et transfert automatique Gmail/Outlook.
+
+---
+
+## Comportement des lignes PDF
+
+### Avec `pdf_extract_lines` activé
+
+Si la regex de ligne trouve des correspondances dans le PDF :
+- Une ligne de facture est créée par correspondance
+- Le compte utilisé est `pdf_line_account_id` (ou `account_id` en fallback)
+- Les taxes `pdf_line_tax_ids` sont appliquées si configurées
+
+Si la regex ne trouve **aucune** correspondance :
+- Fallback automatique vers une ligne unique avec le montant total parsé
+
+### Sans `pdf_extract_lines`
+
+Comportement identique à la v1 : une seule ligne avec le montant total.
+
+---
+
+## Flux du paiement automatique
+
+```
+Facture créée (brouillon)
+    │
+    ▼ [si auto_post_bill]
+Facture postée (état Validé)
+    │
+    ▼ [si auto_register_payment]
+account.payment créé
+    │  payment_type = 'outbound'
+    │  partner_type = 'supplier'
+    │  amount = move.amount_residual
+    │
+    ▼ payment.action_post()
+Paiement validé
+    │
+    ▼ reconcile()
+Facture rapprochée (état Payé)
+```
 
 ---
 
@@ -112,21 +163,21 @@ la facture fournisseur avec ventilation analytique.
 
 La vue liste des règles affiche en temps réel :
 - Date du dernier import
-- Résultat (✔ créé / ⚠ doublon / ❌ erreur)
+- Résultat (✔ créé / ⚠ doublon / ❌ erreur + [validée] + [payée & rapprochée])
 - Nombre de factures créées
+- Indicateurs PDF et paiement automatique (colonnes optionnelles)
 
-Le chatter de chaque règle conserve l'historique des emails reçus.
+Le wizard EML affiche par fichier traité :
+- Source de parsing (corps / PDF / mixte)
+- Nombre de lignes PDF extraites
+- Indicateur de paiement enregistré
 
 ---
 
-## Ajouter un nouveau fournisseur
+## Déduplication
 
-1. Créer une nouvelle règle (OPT Téléphonie, Syndic…)
-2. Adapter les regex au format de leurs emails
-3. Créer l'attribut produit correspondant
-4. Configurer le transfert email vers le nouvel alias
-
-**Aucune modification de code.**
+Le module vérifie l'existence d'une facture avec le même numéro (`ref`) avant
+de créer un doublon. Un email déjà traité est ignoré silencieusement.
 
 ---
 
@@ -144,13 +195,6 @@ pour le contrat 01-2022-000194 est disponible…
 | Date | `du\s+(\d{2}/\d{2}/\d{4})` |
 | Montant | `montant de ([\d\s\u00a0\u202f,\.]+?)\s*(?:FCFP\|XPF)` |
 | N° contrat | `contrat\s+([\w\-]+)` |
-
----
-
-## Déduplication
-
-Le module vérifie l'existence d'une facture avec le même numéro (`ref`)
-avant de créer un doublon. Un email déjà traité sera ignoré silencieusement.
 
 ---
 
