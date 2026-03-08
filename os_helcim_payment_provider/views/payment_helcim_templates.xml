@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Template principal du formulaire de paiement Helcim.
+        Ce template est rendu dans la page de paiement Odoo et intègre
+        le modal HelcimPay.js via un iframe.
+    -->
+    <template id="helcim_redirect_form" name="Helcim: Formulaire de paiement">
+        <form action="/payment/helcim/return" method="post" id="helcim_payment_form">
+            <input type="hidden" name="reference" t-att-value="reference"/>
+            <input type="hidden" name="checkout_token" t-att-value="checkout_token"/>
+
+            <!-- Conteneur du modal HelcimPay.js -->
+            <div id="helcim-pay-container">
+                <!-- Le modal sera injecté ici par HelcimPay.js -->
+                <div id="helcimPayIframe"></div>
+            </div>
+
+            <!-- Chargement du script HelcimPay.js -->
+            <script src="https://secure.helcim.app/helcim-pay/services/start.js"></script>
+
+            <script type="text/javascript">
+                (function() {
+                    var checkoutToken = "<t t-esc='checkout_token'/>";
+                    var reference = "<t t-esc='reference'/>";
+
+                    // Écoute les événements du modal HelcimPay.js
+                    window.addEventListener('message', function(event) {
+                        var helcimPayJsIdentifierKey = 'helcim-pay-js-' + checkoutToken;
+
+                        if (event.data.eventName === helcimPayJsIdentifierKey) {
+
+                            if (event.data.eventStatus === 'ABORTED') {
+                                // Paiement annulé par le client
+                                console.log('Helcim: Paiement annulé.');
+                                window.location.href = '/payment/status';
+                            }
+
+                            if (event.data.eventStatus === 'SUCCESS') {
+                                // Paiement réussi : validation côté serveur
+                                var transactionData = event.data.eventMessage.data || event.data.eventMessage;
+
+                                // Appel AJAX vers le contrôleur Odoo pour valider la transaction
+                                fetch('/payment/helcim/validate', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        jsonrpc: '2.0',
+                                        method: 'call',
+                                        params: {
+                                            reference: reference,
+                                            transaction_data: transactionData,
+                                        }
+                                    })
+                                })
+                                .then(function(response) { return response.json(); })
+                                .then(function(result) {
+                                    console.log('Helcim: Résultat de validation:', result);
+                                    window.location.href = '/payment/status';
+                                })
+                                .catch(function(error) {
+                                    console.error('Helcim: Erreur de validation:', error);
+                                    window.location.href = '/payment/status';
+                                });
+                            }
+
+                            if (event.data.eventStatus === 'HIDE') {
+                                // Modal fermé
+                                console.log('Helcim: Modal fermé.');
+                            }
+                        }
+                    });
+
+                    // Affichage du modal HelcimPay.js avec le checkoutToken
+                    if (typeof appendHelcimIframe === 'function') {
+                        appendHelcimIframe(checkoutToken);
+                    } else {
+                        document.addEventListener('DOMContentLoaded', function() {
+                            if (typeof appendHelcimIframe === 'function') {
+                                appendHelcimIframe(checkoutToken);
+                            }
+                        });
+                    }
+                })();
+            </script>
+        </form>
+    </template>
+
+</odoo>

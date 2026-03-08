@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        IMPORTANT : Les vues référençant les champs helcim_* (helcim_api_token, etc.)
+        sont créées dynamiquement via post_init_hook dans __init__.py.
+
+        Raison : Odoo 17 valide les vues héritées IMMÉDIATEMENT lors du chargement XML,
+        avant que les colonnes SQL des champs helcim_* soient créées en base.
+        La création via ORM dans post_init_hook contourne cette limitation.
+
+        Ce fichier ne contient que la vue transaction (dont les champs helcim_*
+        sur payment.transaction sont également créés via post_init_hook).
+    -->
+</odoo>
