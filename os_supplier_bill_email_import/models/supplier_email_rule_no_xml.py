@@ -86,31 +86,25 @@ class SupplierEmailRule(models.Model):
     )
 
     # ── Regex d'extraction (corps email ou texte PDF) ─────────────────────────
-    # Ces champs sont obligatoires uniquement si aucun XML Factur-X n'est
-    # configuré (facturx_contract_field vide). La contrainte est vérifiée
-    # par _check_regex_or_facturx() ci-dessous.
     regex_invoice_number = fields.Char(
         string='Regex n° facture',
-        help="Obligatoire si Factur-X non activé.\n"
-             "Ex : facture\\s+(\\S+)\\s+du"
+        required=True,
+        help="Ex : facture\\s+(\\S+)\\s+du"
     )
     regex_invoice_date = fields.Char(
         string='Regex date (JJ/MM/AAAA)',
-        help="Obligatoire si Factur-X non activé.\n"
-             "Ex : du\\s+(\\d{2}/\\d{2}/\\d{4})"
+        required=True,
+        help="Ex : du\\s+(\\d{2}/\\d{2}/\\d{4})"
     )
     regex_amount = fields.Char(
         string='Regex montant total',
-        help="Obligatoire si Factur-X non activé.\n"
-             "Ex : montant de ([\\d\\s\\u00a0\\u202f,\\.]+?)\\s*(?:FCFP|EUR|XPF)"
+        required=True,
+        help="Ex : montant de ([\\d\\s\\u00a0\\u202f,\\.]+?)\\s*(?:FCFP|EUR|XPF)"
     )
     regex_contract = fields.Char(
         string='Regex n° contrat',
-        help="Obligatoire si Factur-X non activé.\n"
-             "Recommandé même en mode Factur-X : utilisé en fallback si le "
-             "champ contrat est absent du XML (ex : fournisseur qui ne le "
-             "renseigne pas systématiquement).\n"
-             "Ex : contrat\\s+([\\w\\-]+)"
+        required=True,
+        help="Ex : contrat\\s+([\\w\\-]+)"
     )
     currency_code = fields.Char(
         string='Code devise',
@@ -139,27 +133,6 @@ class SupplierEmailRule(models.Model):
              "Si l'attribut est absent sur le produit → facteur = 1,0 "
              "(montant intégral, non bloquant).\n"
              "Si ce champ est vide → comportement normal (facteur = 1,0)."
-    )
-
-    # ── Factur-X (XML embarqué dans les PDFs Odoo) ────────────────────────────
-    facturx_contract_field = fields.Selection([
-        ('contract_ref',  'ContractReferencedDocument — référence du contrat'),
-        ('buyer_ref',     'BuyerReference — référence acheteur'),
-        ('seller_order',  'SellerOrderReferencedDocument — commande vendeur'),
-        ('buyer_order',   'BuyerOrderReferencedDocument — commande acheteur'),
-    ],
-        string='Champ n° contrat dans le XML Factur-X',
-        default='contract_ref',
-        help="Lorsque le PDF joint contient un XML Factur-X (factures émises "
-             "depuis Odoo ou tout logiciel compatible EN 16931), ce champ "
-             "indique quel élément XML utiliser comme n° de contrat.\n\n"
-             "• ContractReferencedDocument → champ 'Référence du contrat' "
-             "  (BT-12 EN16931) — à renseigner côté fournisseur Odoo.\n"
-             "• BuyerReference → référence acheteur libre (BT-10).\n"
-             "• Les données Factur-X (n° facture, date, montant, lignes) "
-             "  sont utilisées en priorité sur les regex email/PDF.\n\n"
-             "Laisser vide (non sélectionné) pour désactiver le parsing "
-             "Factur-X sur cette règle."
     )
 
     # ── Comptabilité ──────────────────────────────────────────────────────────
@@ -271,39 +244,6 @@ class SupplierEmailRule(models.Model):
 
     # ── Contraintes ──────────────────────────────────────────────────────────
 
-    @api.constrains(
-        'facturx_contract_field',
-        'regex_invoice_number', 'regex_invoice_date',
-        'regex_amount', 'regex_contract',
-    )
-    def _check_regex_or_facturx(self):
-        for rule in self:
-            if rule.facturx_contract_field:
-                # Mode Factur-X : regex non obligatoires.
-                # Avertissement si regex_contract est absent (pas de fallback).
-                if not rule.regex_contract:
-                    _logger.warning(
-                        "Règle '%s' (Factur-X) : regex_contract vide — "
-                        "si le champ contrat est absent du XML, la facture "
-                        "sera rejetée faute de n° de contrat.",
-                        rule.name,
-                    )
-            else:
-                # Mode regex : les 4 expressions sont obligatoires.
-                missing = [
-                    label for field, label in [
-                        ('regex_invoice_number', 'Regex n° facture'),
-                        ('regex_invoice_date',   'Regex date'),
-                        ('regex_amount',         'Regex montant total'),
-                        ('regex_contract',       'Regex n° contrat'),
-                    ] if not getattr(rule, field)
-                ]
-                if missing:
-                    raise UserError(_(
-                        "La règle '%s' : les champs suivants sont obligatoires "
-                        "lorsque Factur-X n'est pas activé :\n• %s"
-                    ) % (rule.name, '\n• '.join(missing)))
-
     @api.constrains('auto_register_payment', 'auto_post_bill')
     def _check_payment_requires_post(self):
         for rule in self:
@@ -378,85 +318,31 @@ class SupplierEmailRule(models.Model):
         # Extraction des pièces jointes PDF
         pdf_bytes_list = rule._extract_pdf_attachments_from_msg_dict(msg_dict)
 
-        # ── Tentative Factur-X (priorité maximale) ───────────────────────────
-        # Si le PDF contient un XML Factur-X, on l'utilise directement :
-        # les données structurées sont plus fiables que les regex email/PDF.
-        # Le n° de contrat est extrait du XML si facturx_contract_field est
-        # configuré ; sinon il est récupéré par regex sur le corps de l'email.
-        facturx_parsed = None
-        facturx_lines = []
-        if rule.facturx_contract_field and pdf_bytes_list:
-            for pdf_bytes in pdf_bytes_list:
-                xml_bytes = rule._extract_facturx_xml(pdf_bytes)
-                if xml_bytes:
-                    facturx_parsed, facturx_lines = rule._parse_facturx_data(xml_bytes)
-                    if facturx_parsed:
-                        _logger.info(
-                            "message_new [%s] : données Factur-X utilisées "
-                            "(facture %s).",
-                            rule.name, facturx_parsed.get('invoice_number', '?'),
-                        )
-                    break  # Premier PDF lisible suffit
-
-        # ── Texte de parsing (corps email et/ou PDF) ─────────────────────────
-        # Toujours extrait — nécessaire si le n° de contrat est absent du XML
-        # ou si Factur-X n'est pas disponible.
+        # Texte de parsing (corps email et/ou PDF)
         parsing_text, pdf_text = rule._get_parsing_text(msg_dict, pdf_bytes_list)
 
-        if not parsing_text and not facturx_parsed:
+        if not parsing_text:
             _logger.error("message_new: texte de parsing vide (sujet: '%s').",
                           msg_dict.get('subject', '?'))
             rule._set_last_import_result(False, "❌ Corps de l'email vide ou illisible.")
             return super().message_new(msg_dict, custom_values)
 
-        # ── Parsing principal ────────────────────────────────────────────────
+        # Parsing principal
         try:
-            if facturx_parsed:
-                parsed = facturx_parsed
-                # Si le n° de contrat n'est pas dans le XML, le récupérer
-                # par regex sur le corps de l'email / texte PDF.
-                if not parsed.get('contract_number') and parsing_text:
-                    try:
-                        regex_data = rule._parse_email_body(parsing_text)
-                        parsed['contract_number'] = regex_data['contract_number']
-                        _logger.info(
-                            "message_new [%s] : n° contrat '%s' récupéré "
-                            "par regex (Factur-X ne le contenait pas).",
-                            rule.name, parsed['contract_number'],
-                        )
-                    except UserError as e:
-                        _logger.warning(
-                            "message_new [%s] : n° contrat introuvable par "
-                            "regex — %s", rule.name, e,
-                        )
-                        rule._set_last_import_result(
-                            False,
-                            "❌ N° de contrat introuvable (Factur-X + regex) : %s" % e
-                        )
-                        return super().message_new(msg_dict, custom_values)
-            else:
-                parsed = rule._parse_email_body(parsing_text)
+            parsed = rule._parse_email_body(parsing_text)
         except UserError as e:
             _logger.error("message_new: erreur parsing — %s", e)
             rule._set_last_import_result(False, "❌ " + str(e))
             return super().message_new(msg_dict, custom_values)
 
-        # ── Lignes de détail ─────────────────────────────────────────────────
-        # Priorité : lignes Factur-X > regex PDF > aucune ligne
-        if facturx_lines:
-            pdf_lines = facturx_lines
-            _logger.info(
-                "message_new [%s] : %d ligne(s) issues du XML Factur-X.",
-                rule.name, len(pdf_lines),
-            )
-        else:
-            pdf_lines = []
-            if rule.use_pdf_attachment and rule.pdf_extract_lines and pdf_text:
-                try:
-                    pdf_lines = rule._parse_pdf_lines(pdf_text)
-                except UserError as e:
-                    _logger.warning("message_new: lignes PDF — %s", e)
-                    # Non bloquant
+        # Extraction des lignes de détail PDF
+        pdf_lines = []
+        if rule.use_pdf_attachment and rule.pdf_extract_lines and pdf_text:
+            try:
+                pdf_lines = rule._parse_pdf_lines(pdf_text)
+            except UserError as e:
+                _logger.warning("message_new: lignes PDF — %s", e)
+                # Non bloquant : on crée quand même la facture sans lignes détail
 
         # Création de la (des) facture(s)
         try:
@@ -800,245 +686,6 @@ class SupplierEmailRule(models.Model):
             self.tantieme_attribute_name, raw_value, factor
         )
         return factor
-
-    # ── Factur-X (XML embarqué dans les PDFs Odoo / EN 16931) ─────────────────
-
-    # Espaces de noms Factur-X / ZUGFeRD (EN 16931)
-    _FACTURX_NS = {
-        'rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
-        'ram': ('urn:un:unece:uncefact:data:standard'
-                ':ReusableAggregateBusinessInformationEntity:100'),
-        'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
-    }
-
-    # Noms des fichiers XML Factur-X / ZUGFeRD courants
-    _FACTURX_FILENAMES = (
-        'factur-x.xml', 'zugferd-invoice.xml', 'zugferd.xml',
-        'facturx.xml', 'xrechnung.xml',
-    )
-
-    @staticmethod
-    def _extract_facturx_xml(pdf_bytes):
-        """
-        Extrait le XML Factur-X embarqué dans un PDF.
-
-        Les PDFs générés par Odoo (et tout logiciel compatible EN 16931)
-        embarquent un fichier XML dans leurs pièces jointes internes.
-        Ce XML contient toutes les données comptables structurées.
-
-        Nécessite : pypdf >= 3.x  (installé avec Odoo 16+)
-
-        Returns:
-            bytes  — contenu du fichier XML, ou None si absent/illisible.
-        """
-        try:
-            import io
-            import pypdf  # disponible dans l'environnement Odoo 16+
-
-            reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-            attachments = reader.attachments  # dict {name: [bytes]}
-
-            for name, content_list in (attachments or {}).items():
-                if name.lower() in SupplierEmailRule._FACTURX_FILENAMES:
-                    data = content_list[0] if isinstance(content_list, list) else content_list
-                    if isinstance(data, bytes) and data.strip():
-                        _logger.debug(
-                            "_extract_facturx_xml : XML '%s' trouvé (%d octets).",
-                            name, len(data)
-                        )
-                        return data
-
-            # Fallback : parcourir toutes les pièces jointes (noms non standards)
-            for name, content_list in (attachments or {}).items():
-                if name.lower().endswith('.xml'):
-                    data = content_list[0] if isinstance(content_list, list) else content_list
-                    if isinstance(data, bytes) and b'CrossIndustryInvoice' in data:
-                        _logger.debug(
-                            "_extract_facturx_xml : XML '%s' détecté par contenu.",
-                            name
-                        )
-                        return data
-
-        except ImportError:
-            _logger.debug(
-                "_extract_facturx_xml : pypdf non disponible, parsing XML ignoré."
-            )
-        except Exception as exc:
-            _logger.debug("_extract_facturx_xml : erreur lecture PDF — %s", exc)
-
-        return None
-
-    def _parse_facturx_data(self, xml_bytes):
-        """
-        Parse le XML Factur-X et retourne les données comptables structurées.
-
-        Extrait :
-          • n° de facture   (BT-1)
-          • date de facture (BT-2)
-          • montant TTC     (BT-112 GrandTotalAmount)
-          • n° de contrat   selon facturx_contract_field :
-              - contract_ref  → BT-12  ContractReferencedDocument
-              - buyer_ref     → BT-10  BuyerReference
-              - seller_order  → BT-14  SellerOrderReferencedDocument
-              - buyer_order   → BT-13  BuyerOrderReferencedDocument
-          • lignes de détail (BG-25) → liste [{name, amount}]
-
-        Args:
-            xml_bytes (bytes) : contenu brut du fichier Factur-X XML
-
-        Returns:
-            (parsed_dict, pdf_lines) — même format que _parse_email_body() /
-            _parse_pdf_lines(), ou (None, []) si parsing impossible.
-        """
-        self.ensure_one()
-        try:
-            import xml.etree.ElementTree as ET
-        except ImportError:
-            return None, []
-
-        # Correspondance champ sélection → XPath (relatif à la racine)
-        CONTRACT_XPATHS = {
-            'contract_ref': (
-                './/ram:ApplicableHeaderTradeAgreement'
-                '/ram:ContractReferencedDocument/ram:IssuerAssignedID'
-            ),
-            'buyer_ref': (
-                './/ram:ApplicableHeaderTradeAgreement/ram:BuyerReference'
-            ),
-            'seller_order': (
-                './/ram:ApplicableHeaderTradeAgreement'
-                '/ram:SellerOrderReferencedDocument/ram:IssuerAssignedID'
-            ),
-            'buyer_order': (
-                './/ram:ApplicableHeaderTradeAgreement'
-                '/ram:BuyerOrderReferencedDocument/ram:IssuerAssignedID'
-            ),
-        }
-
-        ns = self._FACTURX_NS
-
-        def _find(root, xpath):
-            """Retourne le texte du premier nœud trouvé, ou '' si absent."""
-            el = root.find(xpath, ns)
-            return (el.text or '').strip() if el is not None else ''
-
-        try:
-            root = ET.fromstring(xml_bytes)
-        except ET.ParseError as exc:
-            _logger.warning("_parse_facturx_data : XML invalide — %s", exc)
-            return None, []
-
-        # ── N° de facture ────────────────────────────────────────────────────
-        invoice_number = _find(root, './/rsm:ExchangedDocument/ram:ID')
-        if not invoice_number:
-            _logger.warning("_parse_facturx_data : ram:ID introuvable.")
-            return None, []
-
-        # ── Date de facture ──────────────────────────────────────────────────
-        date_el = root.find(
-            './/rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString', ns
-        )
-        if date_el is None or not date_el.text:
-            _logger.warning("_parse_facturx_data : date introuvable.")
-            return None, []
-
-        date_raw = date_el.text.strip()
-        date_fmt = date_el.get('format', '102')  # '102' = YYYYMMDD
-        try:
-            if date_fmt == '102' and len(date_raw) == 8:
-                invoice_date = datetime.strptime(date_raw, '%Y%m%d').date()
-            elif len(date_raw) == 10 and '-' in date_raw:
-                invoice_date = datetime.strptime(date_raw, '%Y-%m-%d').date()
-            else:
-                _logger.warning(
-                    "_parse_facturx_data : format date inconnu '%s' (format=%s).",
-                    date_raw, date_fmt
-                )
-                return None, []
-        except ValueError as exc:
-            _logger.warning("_parse_facturx_data : date '%s' illisible — %s", date_raw, exc)
-            return None, []
-
-        # ── Montant TTC ──────────────────────────────────────────────────────
-        amount_str = _find(
-            root,
-            './/ram:SpecifiedTradeSettlementHeaderMonetarySummation'
-            '/ram:GrandTotalAmount'
-        )
-        if not amount_str:
-            # Fallback : montant base taxe + taxes
-            amount_str = _find(
-                root,
-                './/ram:SpecifiedTradeSettlementHeaderMonetarySummation'
-                '/ram:TaxInclusiveTotalAmount'
-            )
-        if not amount_str:
-            _logger.warning("_parse_facturx_data : montant TTC introuvable.")
-            return None, []
-
-        try:
-            amount = float(amount_str.replace(',', '.'))
-        except ValueError:
-            _logger.warning(
-                "_parse_facturx_data : montant illisible '%s'.", amount_str
-            )
-            return None, []
-
-        # ── N° de contrat ─────────────────────────────────────────────────────
-        contract_number = ''
-        if self.facturx_contract_field:
-            xpath = CONTRACT_XPATHS.get(self.facturx_contract_field, '')
-            if xpath:
-                contract_number = _find(root, xpath)
-
-        if not contract_number:
-            _logger.warning(
-                "_parse_facturx_data [%s] : n° de contrat introuvable "
-                "(champ '%s'). Le n° de contrat devra être extrait "
-                "par regex sur le corps de l'email.",
-                self.name, self.facturx_contract_field or '(non configuré)',
-            )
-            # Non bloquant : on retourne les données sans contract_number
-            # → message_new le récupèrera via regex
-
-        # ── Lignes de détail ─────────────────────────────────────────────────
-        pdf_lines = []
-        line_items = root.findall(
-            './/ram:IncludedSupplyChainTradeLineItem', ns
-        )
-        for item in line_items:
-            label = _find(item, './/ram:SpecifiedTradeProduct/ram:Name')
-            amount_line_str = _find(
-                item,
-                './/ram:SpecifiedLineTradeSettlement'
-                '/ram:SpecifiedTradeSettlementLineMonetarySummation'
-                '/ram:LineTotalAmount'
-            )
-            if label and amount_line_str:
-                try:
-                    line_amount = float(amount_line_str.replace(',', '.'))
-                    if line_amount != 0.0:
-                        pdf_lines.append({'name': label, 'amount': line_amount})
-                except ValueError:
-                    _logger.debug(
-                        "_parse_facturx_data : montant ligne illisible '%s'.",
-                        amount_line_str
-                    )
-
-        _logger.info(
-            "_parse_facturx_data [%s] : facture %s — %s — %.2f — %d ligne(s) — "
-            "contrat '%s'.",
-            self.name, invoice_number, invoice_date, amount,
-            len(pdf_lines), contract_number or '?',
-        )
-
-        parsed = {
-            'invoice_number': invoice_number,
-            'invoice_date':   invoice_date,
-            'amount':         amount,
-            'contract_number': contract_number,
-        }
-        return parsed, pdf_lines
 
     # ── Produit / analytique ─────────────────────────────────────────────────
 

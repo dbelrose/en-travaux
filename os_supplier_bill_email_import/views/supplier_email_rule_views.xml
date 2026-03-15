@@ -93,6 +93,41 @@
                             <group string="Lien produit / logement">
                                 <field name="product_attribute_name"
                                        placeholder="N° de contrat EDT"/>
+
+                                <field name="tantieme_attribute_name"
+                                       placeholder="Tantièmes (laisser vide si non applicable)"/>
+
+                                <div class="alert alert-info" role="alert"
+                                     invisible="not tantieme_attribute_name">
+                                    <strong>Mode tantièmes activé.</strong>
+                                    La valeur de l'attribut
+                                    <em>"<field name="tantieme_attribute_name" readonly="1"/>"</em>
+                                    sur chaque produit sera lue comme une fraction
+                                    et appliquée au montant total de la facture.<br/>
+                                    Formes acceptées : <code>450/10000</code> (fraction)
+                                    ou <code>0,045</code> / <code>0.045</code> (décimal).<br/>
+                                    Si l'attribut est absent sur un produit →
+                                    montant intégral facturé (facteur = 1).
+                                </div>
+
+                                <field name="facturx_contract_field"/>
+
+                                <div class="alert alert-success" role="alert"
+                                     invisible="not facturx_contract_field">
+                                    <strong>✔ Mode Factur-X activé.</strong>
+                                    Les données de la facture (n° facture, date, montant,
+                                    lignes de détail) seront extraites depuis le
+                                    <strong>XML embarqué dans le PDF</strong> en priorité,
+                                    sans passer par les regex.<br/><br/>
+                                    Le champ contrat sera lu depuis
+                                    <em>"<field name="facturx_contract_field"
+                                              readonly="1" widget="badge"/>"</em>
+                                    dans le XML. Si absent → fallback sur la regex
+                                    n° de contrat (si renseignée).<br/><br/>
+                                    <strong>Côté fournisseur Odoo :</strong>
+                                    demandez-lui de renseigner le champ
+                                    <em>Référence du contrat</em> sur ses factures.
+                                </div>
                             </group>
 
                         </page>
@@ -102,28 +137,58 @@
                         ═══════════════════════════════════════════════════ -->
                         <page string="Expressions régulières" name="regex">
 
+                            <!-- Alerte mode Factur-X actif -->
+                            <div class="alert alert-success" role="alert"
+                                 invisible="not facturx_contract_field">
+                                <strong>✔ Mode Factur-X actif</strong> — les regex
+                                n° facture, date et montant ne sont
+                                <strong>pas obligatoires</strong> : ces données
+                                seront extraites depuis le XML embarqué dans le PDF.<br/>
+                                La regex <strong>n° de contrat</strong> reste recommandée
+                                comme fallback si le champ contrat est absent du XML.
+                            </div>
+
+                            <!-- Alerte mode regex pur -->
+                            <div class="alert alert-secondary" role="alert"
+                                 invisible="facturx_contract_field">
+                                Chaque champ contient une regex Python avec
+                                <strong>un groupe capturant ( … )</strong>
+                                qui extrait la valeur souhaitée du texte source
+                                (corps de l'email ou texte du PDF selon la configuration).
+                                <br/>
+                                Exemple EDT :
+                                <em>« facture F202602042089 du 10/02/2026
+                                d'un montant de 3 354 FCFP pour le
+                                contrat 01-2022-000194 »</em>
+                            </div>
+
                             <group string="Extraction des données — Corps de l'email ou PDF">
-                                <div class="alert alert-secondary" role="alert">
-                                    Chaque champ contient une regex Python avec
-                                    <strong>un groupe capturant ( … )</strong>
-                                    qui extrait la valeur souhaitée du texte source
-                                    (corps de l'email ou texte du PDF selon la configuration).
-                                    <br/>
-                                    Exemple EDT :
-                                    <em>« facture F202602042089 du 10/02/2026
-                                    d'un montant de 3 354 FCFP pour le
-                                    contrat 01-2022-000194 »</em>
-                                </div>
                                 <group>
+                                    <!-- required conditionnel : obligatoire seulement
+                                         si Factur-X n'est pas activé -->
                                     <field name="regex_invoice_number"
-                                           placeholder="facture\s+(\S+)\s+du"/>
+                                           placeholder="facture\s+(\S+)\s+du"
+                                           required="not facturx_contract_field"/>
                                     <field name="regex_invoice_date"
-                                           placeholder="du\s+(\d{2}/\d{2}/\d{4})"/>
+                                           placeholder="du\s+(\d{2}/\d{2}/\d{4})"
+                                           required="not facturx_contract_field"/>
                                     <field name="regex_amount"
-                                           placeholder="montant de ([\d\s\u00a0\u202f,\.]+?)\s*(?:FCFP|XPF)"/>
+                                           placeholder="montant de ([\d\s\u00a0\u202f,\.]+?)\s*(?:FCFP|XPF)"
+                                           required="not facturx_contract_field"/>
                                     <field name="regex_contract"
-                                           placeholder="contrat\s+([\w\-]+)"/>
+                                           placeholder="contrat\s+([\w\-]+)"
+                                           required="not facturx_contract_field"/>
                                 </group>
+
+                                <!-- Avertissement regex_contract vide en mode Factur-X -->
+                                <div class="alert alert-warning" role="alert"
+                                     invisible="not facturx_contract_field or regex_contract">
+                                    <strong>⚠ Regex n° de contrat non renseignée.</strong>
+                                    Si le champ contrat est absent du XML Factur-X,
+                                    la facture sera <strong>rejetée</strong> faute de
+                                    n° de contrat. Il est fortement conseillé de renseigner
+                                    cette regex comme filet de sécurité.
+                                </div>
                             </group>
 
                         </page>
@@ -171,6 +236,10 @@
                                     <br/>
                                     Si aucune ligne n'est trouvée, une ligne unique
                                     avec le montant total est créée en fallback.
+                                    <br/><br/>
+                                    <em>Note : si le mode tantièmes est activé,
+                                    chaque montant de ligne PDF sera également
+                                    pondéré par le facteur tantième du produit.</em>
                                 </div>
                                 <group>
                                     <field name="pdf_extract_lines"/>
@@ -254,6 +323,8 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="alias_id"/>
+                <field name="tantieme_attribute_name" optional="show"/>
+                <field name="facturx_contract_field" optional="show"/>
                 <field name="use_pdf_attachment" optional="show"/>
                 <field name="auto_post_bill" optional="show"/>
                 <field name="auto_register_payment" optional="show"/>
