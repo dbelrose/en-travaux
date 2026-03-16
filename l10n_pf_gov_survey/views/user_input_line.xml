@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="survey_user_input_line_view_calendar" model="ir.ui.view">
+            <field name="name">l10n_pf_gov_survey.user_input.line.view.calendar</field>
+            <field name="model">survey.user_input.line</field>
+            <field name="arch" type="xml">
+                <calendar string="Analyse des réponses"
+                          date_start="input_date"
+                          color="survey_id"
+                          mode="year"
+                          scales="month,year"
+                          form_view_id="survey.survey_user_input_line_view_form"
+                >
+                    <field name="question_id" filters="1"/>
+                    <field name="suggested_answer_id" filters="1"/>
+                    <field name="answer_score" type="measure"/>
+                </calendar>
+            </field>
+        </record>
+
+        <record id="survey_user_input_line_view_pivot" model="ir.ui.view">
+            <field name="name">l10n_pf_gov_survey.user_input.line.view.pivot</field>
+            <field name="model">survey.user_input.line</field>
+            <field name="arch" type="xml">
+                <pivot string="Analyse des réponses" sample="1">
+                    <field name="survey_id" type="row"/>
+                    <field name="question_id"/>
+                    <field name="suggested_answer_id"/>
+                    <field name="answer_score"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="survey_user_input_line_view_search_inherit" model="ir.ui.view">
+            <field name="name">l10n_pf_gov_survey.user_input.line.view.search</field>
+            <field name="model">survey.user_input.line</field>
+            <field name="inherit_id" ref="survey.survey_user_input_line_view_search"/>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <xpath expr="//search" position="inside">
+                    <filter name="write_uid"
+                            string="Mes enregistrements"
+                            domain="[('write_uid', '=', uid)]"/>
+                    <separator/>
+                    <filter name="annee_en_cours"
+                            string="Année calendaire en cours"
+                            domain="[('user_input_id.input_year', '=', context_today().strftime('%Y'))]"/>
+                    <filter name="annee_precedente"
+                            string="Année calendaire précédente"
+                            domain="[('user_input_id.input_year', '=', (context_today() + relativedelta(years=-1)).strftime('%Y'))]"/>
+                    <filter name="annee_glissante"
+                            string="Année glissante"
+                            domain="[('user_input_id.input_date', '&gt;=', (context_today() - datetime.timedelta(days=365)).strftime('%%Y-%%m-%%d'))]"/>
+                </xpath>
+                <xpath expr="//group" position="inside">
+                    <filter string="Année" name="input_year" domain="[]"
+                            context="{'group_by':'input_date:year'}"/>
+                    <filter string="Question" name="question_id" domain="[]"
+                            context="{'group_by':'question_id'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!--
+            Mise à jour de l'action standard pour ajouter les vues pivot et calendar.
+            v18 : 'tree' remplacé par 'list'
+        -->
+        <record id="survey.survey_user_input_line_action" model="ir.actions.act_window">
+            <field name="view_mode">list,form,pivot,calendar</field>
+        </record>
+
+        <record id="survey_answer_line_view_tree" model="ir.ui.view">
+            <field name="name">survey.user_input.line.view.tree</field>
+            <field name="model">survey.user_input.line</field>
+            <field name="inherit_id" ref="survey.survey_response_line_view_tree"/>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <xpath expr="//list" position="attributes">
+                    <attribute name="create">true</attribute>
+                </xpath>
+                <field name="survey_id" position="after">
+                    <field name="write_uid"/>
+                </field>
+            </field>
+        </record>
+
+    </data>
+</odoo>
