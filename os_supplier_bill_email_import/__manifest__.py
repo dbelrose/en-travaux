@@ -28,7 +28,8 @@ Alertes bancaires (nouveauté v3) :
 Dépendance optionnelle :
   pip install pdfminer.six
     """,
-    'author': 'Custom',
+    'author': 'OpalSea',
+    'maintainer': ['OpalSea'],
     'category': 'Accounting/Accounting',
     'depends': [
         'account',

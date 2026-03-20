@@ -214,14 +214,25 @@ class ImportEmlWizard(models.TransientModel):
     # ── Traitement d'un .eml (fournisseur) ───────────────────────────────────
 
     def _process_eml_supplier(self, msg, rule, filename):
-        """Traite un email comme une facture fournisseur."""
+        """
+        Traite un email comme une facture fournisseur.
+
+        CORRECTIFS v3.1 :
+          1. Ajout du chemin Factur-X (miroir de message_new) :
+             le wizard appelait directement _parse_email_body() sans jamais
+             tenter l'extraction XML — la logique Factur-X était silencieusement
+             ignorée lors des imports manuels .eml.
+          2. create_vendor_bill() → create_vendor_bills() (pluriel, méthode réelle).
+        """
         body_text = self._get_text_body(msg)
         pdf_attachments = self._get_pdf_attachments(msg)
+        pdf_bytes_list = [pdf_bytes for _, pdf_bytes in pdf_attachments]
         pdf_text = ''
         parsing_source = 'body'
 
-        if rule.use_pdf_attachment and pdf_attachments:
-            for pdf_filename, pdf_bytes in pdf_attachments:
+        # ── Extraction du texte PDF si configuré ─────────────────────────────
+        if rule.use_pdf_attachment and pdf_bytes_list:
+            for pdf_bytes in pdf_bytes_list:
                 try:
                     extracted = extract_pdf_text(pdf_bytes)
                     if extracted.strip():
@@ -229,22 +240,36 @@ class ImportEmlWizard(models.TransientModel):
                         break
                 except Exception as exc:
                     _logger.warning(
-                        "_process_eml_supplier: erreur PDF '%s' — %s",
-                        pdf_filename, exc
+                        "_process_eml_supplier: erreur PDF '%s' — %s", filename, exc
                     )
             if pdf_text:
-                if rule.pdf_prefer_over_body:
-                    parsing_text = pdf_text
-                    parsing_source = 'pdf'
-                else:
-                    parsing_text = (body_text + '\n\n' + pdf_text).strip()
-                    parsing_source = 'mixed'
-            else:
-                parsing_text = body_text
+                parsing_source = 'pdf' if rule.pdf_prefer_over_body else 'mixed'
+
+        if rule.pdf_prefer_over_body and pdf_text:
+            parsing_text = pdf_text
+        elif pdf_text and not rule.pdf_prefer_over_body:
+            parsing_text = (body_text + '\n\n' + pdf_text).strip()
         else:
             parsing_text = body_text
 
-        if not parsing_text:
+        # ── Tentative Factur-X (CORRECTIF 1 : chemin manquant dans le wizard) ─
+        # Miroir exact de la logique dans message_new().
+        facturx_parsed = None
+        facturx_lines = []
+        if rule.facturx_contract_field and pdf_bytes_list:
+            for pdf_bytes in pdf_bytes_list:
+                xml_bytes = rule._extract_facturx_xml(pdf_bytes)
+                if xml_bytes:
+                    facturx_parsed, facturx_lines = rule._parse_facturx_data(xml_bytes)
+                    if facturx_parsed:
+                        _logger.info(
+                            "_process_eml_supplier [%s] : Factur-X utilisé "
+                            "(facture %s).",
+                            rule.name, facturx_parsed.get('invoice_number', '?'),
+                        )
+                    break
+
+        if not parsing_text and not facturx_parsed:
             return {
                 'filename': filename, 'rule_type': 'supplier',
                 'status': 'error',
@@ -252,9 +277,35 @@ class ImportEmlWizard(models.TransientModel):
                 'supplier_rule_id': rule.id,
             }
 
+        # ── Parsing principal ─────────────────────────────────────────────────
         try:
-            parsed = rule._parse_email_body(parsing_text)
-        except UserError as e:
+            if facturx_parsed:
+                parsed = facturx_parsed
+                # Si le n° de contrat est absent du XML → fallback regex
+                if not parsed.get('contract_number') and parsing_text:
+                    try:
+                        regex_data = rule._parse_email_body(parsing_text)
+                        parsed['contract_number'] = regex_data['contract_number']
+                        parsing_source = 'mixed'
+                        _logger.info(
+                            "_process_eml_supplier [%s] : contrat '%s' "
+                            "récupéré par regex (absent du XML Factur-X).",
+                            rule.name, parsed['contract_number'],
+                        )
+                    except Exception as e:
+                        return {
+                            'filename': filename, 'rule_type': 'supplier',
+                            'status': 'error',
+                            'message': _(
+                                "N° de contrat introuvable (Factur-X + regex) : %s"
+                            ) % str(e),
+                            'supplier_rule_id': rule.id,
+                            'parsing_source': 'pdf',
+                        }
+            else:
+                parsed = rule._parse_email_body(parsing_text)
+
+        except Exception as e:
             return {
                 'filename': filename, 'rule_type': 'supplier',
                 'status': 'error', 'message': str(e),
@@ -262,16 +313,25 @@ class ImportEmlWizard(models.TransientModel):
                 'parsing_source': parsing_source,
             }
 
-        pdf_lines = []
-        if rule.use_pdf_attachment and rule.pdf_extract_lines and pdf_text:
-            try:
-                pdf_lines = rule._parse_pdf_lines(pdf_text)
-            except UserError as exc:
-                _logger.warning("_process_eml_supplier: lignes PDF — %s", exc)
+        # ── Lignes de détail PDF ──────────────────────────────────────────────
+        # Priorité : lignes Factur-X > regex PDF
+        if facturx_lines:
+            pdf_lines = facturx_lines
+        else:
+            pdf_lines = []
+            if rule.use_pdf_attachment and rule.pdf_extract_lines and pdf_text:
+                try:
+                    pdf_lines = rule._parse_pdf_lines(pdf_text)
+                except Exception as exc:
+                    _logger.warning(
+                        "_process_eml_supplier: lignes PDF — %s", exc
+                    )
 
+        # ── Création de la (des) facture(s) ──────────────────────────────────
+        # CORRECTIF 2 : create_vendor_bill() → create_vendor_bills() (pluriel)
         try:
-            move, created = rule.create_vendor_bill(parsed, pdf_lines=pdf_lines)
-        except UserError as e:
+            results = rule.create_vendor_bills(parsed, pdf_lines=pdf_lines)
+        except Exception as e:
             return {
                 'filename': filename, 'rule_type': 'supplier',
                 'status': 'error', 'message': str(e),
@@ -282,21 +342,39 @@ class ImportEmlWizard(models.TransientModel):
                 'parsing_source': parsing_source,
             }
 
+        # Agrégation des résultats multi-produits (mode tantième)
+        created_results = [(m, c) for m, c in results if c]
+        dup_results = [(m, c) for m, c in results if not c]
+
+        if not created_results:
+            first_move = dup_results[0][0] if dup_results else None
+            return {
+                'filename': filename, 'rule_type': 'supplier',
+                'status': 'duplicate',
+                'message': _("Déjà importé : %s") % (first_move.name if first_move else '?'),
+                'move_id': first_move.id if first_move else False,
+                'supplier_rule_id': rule.id,
+                'invoice_number': parsed['invoice_number'],
+                'contract_number': parsed['contract_number'],
+                'amount': parsed['amount'],
+            }
+
+        first_created_move = created_results[0][0]
         payment_registered = (
-            created and rule.auto_post_bill and rule.auto_register_payment
-            and move.payment_state in ('paid', 'in_payment', 'partial')
+                rule.auto_post_bill and rule.auto_register_payment
+                and first_created_move.payment_state in ('paid', 'in_payment', 'partial')
         )
 
         return {
             'filename': filename, 'rule_type': 'supplier',
-            'status': 'ok' if created else 'duplicate',
-            'message': move.name if created else _("Déjà importé : %s") % move.name,
-            'move_id': move.id,
+            'status': 'ok',
+            'message': ', '.join(m.name for m, _ in created_results),
+            'move_id': first_created_move.id,
             'supplier_rule_id': rule.id,
             'invoice_number': parsed['invoice_number'],
             'contract_number': parsed['contract_number'],
             'amount': parsed['amount'],
-            'parsing_source': parsing_source if created else False,
+            'parsing_source': parsing_source,
             'pdf_lines_count': len(pdf_lines),
             'payment_registered': payment_registered,
         }

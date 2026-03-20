@@ -35,7 +35,7 @@ supplier.email.rule             bank.alert.email.rule
 (facture fournisseur)           (alerte bancaire)
         │                               │
   _parse_email_body()         _parse_transactions()
-  create_vendor_bill()         [regex multi-occurrence]
+  create_vendor_bills()         [regex multi-occurrence]
         │                               │
   account.move (brouillon)    account.bank.statement.line
   [+ validation + paiement]   [+ rapprochement auto optionnel]

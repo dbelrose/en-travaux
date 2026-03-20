@@ -91,17 +91,18 @@
 
                             <!-- Lien produit / logement -->
                             <group string="Lien produit / logement">
-                                <field name="product_attribute_name"
-                                       placeholder="N° de contrat EDT"/>
 
-                                <field name="tantieme_attribute_name"
-                                       placeholder="Tantièmes (laisser vide si non applicable)"/>
+                                <field name="product_attribute_id"
+                                       placeholder="Sélectionnez un attribut produit…"/>
+
+                                <field name="tantieme_attribute_id"
+                                       placeholder="Sélectionnez un attribut tantième… (optionnel)"/>
 
                                 <div class="alert alert-info" role="alert"
-                                     invisible="not tantieme_attribute_name">
+                                     invisible="not tantieme_attribute_id">
                                     <strong>Mode tantièmes activé.</strong>
                                     La valeur de l'attribut
-                                    <em>"<field name="tantieme_attribute_name" readonly="1"/>"</em>
+                                    <em>"<field name="tantieme_attribute_id" readonly="1" widget="badge"/>"</em>
                                     sur chaque produit sera lue comme une fraction
                                     et appliquée au montant total de la facture.<br/>
                                     Formes acceptées : <code>450/10000</code> (fraction)
@@ -128,6 +129,7 @@
                                     demandez-lui de renseigner le champ
                                     <em>Référence du contrat</em> sur ses factures.
                                 </div>
+
                             </group>
 
                         </page>
@@ -164,8 +166,6 @@
 
                             <group string="Extraction des données — Corps de l'email ou PDF">
                                 <group>
-                                    <!-- required conditionnel : obligatoire seulement
-                                         si Factur-X n'est pas activé -->
                                     <field name="regex_invoice_number"
                                            placeholder="facture\s+(\S+)\s+du"
                                            required="not facturx_contract_field"/>
@@ -180,7 +180,6 @@
                                            required="not facturx_contract_field"/>
                                 </group>
 
-                                <!-- Avertissement regex_contract vide en mode Factur-X -->
                                 <div class="alert alert-warning" role="alert"
                                      invisible="not facturx_contract_field or regex_contract">
                                     <strong>⚠ Regex n° de contrat non renseignée.</strong>
@@ -323,7 +322,7 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="alias_id"/>
-                <field name="tantieme_attribute_name" optional="show"/>
+                <field name="tantieme_attribute_id" optional="show"/>
                 <field name="facturx_contract_field" optional="show"/>
                 <field name="use_pdf_attachment" optional="show"/>
                 <field name="auto_post_bill" optional="show"/>

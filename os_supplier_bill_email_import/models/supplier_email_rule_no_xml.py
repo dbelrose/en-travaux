@@ -48,7 +48,7 @@ class SupplierEmailRule(models.Model):
                 → message_new() sur cette règle
                     → _get_parsing_text()       (corps email ou PDF)
                         → _parse_email_body()
-                            → create_vendor_bill()
+                            → create_vendor_bills()
                                 → account.move (facture brouillon / postée)
                                     → account.payment + rapprochement (optionnel)
 

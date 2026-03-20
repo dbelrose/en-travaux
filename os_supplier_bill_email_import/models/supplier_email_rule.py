@@ -9,16 +9,22 @@ Extensions v2 :
   • Enregistrement et rapprochement automatique d'un paiement
 
 Extensions v3 :
-  • Support des Tantièmes via le champ optionnel tantieme_attribute_name.
+  • Support des Tantièmes via le champ optionnel tantieme_attribute_id.
     Séparation des rôles :
-      - product_attribute_name → identifie le(s) produit(s) (ex: 'N° de lot')
-      - tantieme_attribute_name → lit la quote-part sur chaque produit
+      - product_attribute_id → identifie le(s) produit(s) (ex: 'N° de lot')
+      - tantieme_attribute_id → lit la quote-part sur chaque produit
                                    (ex: 'Tantièmes' → '450/10000')
     En mode tantième, plusieurs lots peuvent correspondre au même n° de contrat :
     une facture est alors créée par produit/lot pour la comptabilité analytique.
     Le montant de chaque facture = tantième_lot × montant_total_email.
     Déduplication : (invoice_number + '#' + product_name, partner) en mode tantième.
-    Si tantieme_attribute_name est vide → comportement mono-produit inchangé.
+    Si tantieme_attribute_id est vide → comportement mono-produit inchangé.
+
+Extensions v3.1 :
+  • product_attribute_id et tantieme_attribute_id passent de Char à Many2one
+    vers product.attribute — sélection depuis une liste plutôt que saisie libre.
+    Des propriétés de compatibilité exposent encore .product_attribute_name
+    et .tantieme_attribute_name pour le code interne.
 """
 
 import re
@@ -34,33 +40,6 @@ _logger = logging.getLogger(__name__)
 
 
 class SupplierEmailRule(models.Model):
-    """
-    Règle de parsing d'email fournisseur.
-
-    Chaque règle est également un **alias email** : lorsque le serveur de
-    messagerie entrant (fetchmail) reçoit un email à l'adresse de l'alias,
-    Odoo appelle automatiquement `message_new()` qui déclenche le parsing
-    et la création de la facture fournisseur.
-
-    Flux automatique :
-        Serveur IMAP/POP3 (fetchmail.server)
-            → routing Odoo (mail.alias)
-                → message_new() sur cette règle
-                    → _get_parsing_text()       (corps email ou PDF)
-                        → _parse_email_body()
-                            → create_vendor_bill()
-                                → account.move (facture brouillon / postée)
-                                    → account.payment + rapprochement (optionnel)
-
-    Tantièmes (optionnel) :
-        Renseignez tantieme_attribute_name (ex. 'Tantièmes') pour activer
-        la pondération. Le module cherche alors cet attribut sur le produit
-        trouvé via product_attribute_name et interprète sa valeur comme une
-        fraction (ex. '450/10000' ou '0,045').
-            montant_ligne = tantième × montant_total_email
-        Si l'attribut est absent sur le produit → facteur = 1.0 (non bloquant).
-        Si tantieme_attribute_name est vide → facteur = 1.0 (comportement normal).
-    """
     _name = 'supplier.email.rule'
     _description = 'Règle de parsing email fournisseur'
     _order = 'sequence, name'
@@ -86,9 +65,6 @@ class SupplierEmailRule(models.Model):
     )
 
     # ── Regex d'extraction (corps email ou texte PDF) ─────────────────────────
-    # Ces champs sont obligatoires uniquement si aucun XML Factur-X n'est
-    # configuré (facturx_contract_field vide). La contrainte est vérifiée
-    # par _check_regex_or_facturx() ci-dessous.
     regex_invoice_number = fields.Char(
         string='Regex n° facture',
         help="Obligatoire si Factur-X non activé.\n"
@@ -108,8 +84,7 @@ class SupplierEmailRule(models.Model):
         string='Regex n° contrat',
         help="Obligatoire si Factur-X non activé.\n"
              "Recommandé même en mode Factur-X : utilisé en fallback si le "
-             "champ contrat est absent du XML (ex : fournisseur qui ne le "
-             "renseigne pas systématiquement).\n"
+             "champ contrat est absent du XML.\n"
              "Ex : contrat\\s+([\\w\\-]+)"
     )
     currency_code = fields.Char(
@@ -118,18 +93,19 @@ class SupplierEmailRule(models.Model):
     )
 
     # ── Lien produit / analytique ─────────────────────────────────────────────
-    product_attribute_name = fields.Char(
-        string='Nom attribut produit',
+    product_attribute_id = fields.Many2one(
+        'product.attribute',
+        string='Attribut produit',
         required=True,
-        default='N° de contrat EDT',
-        help="Nom de l'attribut produit utilisé pour retrouver le produit "
+        help="Attribut produit utilisé pour retrouver le produit "
              "à partir du n° de contrat extrait de l'email.\n"
              "Ex : 'N° de contrat EDT', 'N° de lot', 'Référence client'"
     )
-    tantieme_attribute_name = fields.Char(
-        string='Attribut tantième (optionnel)',
+    tantieme_attribute_id = fields.Many2one(
+        'product.attribute',
+        string='Attribut tantième',
         help="Si renseigné, le module cherche cet attribut sur le produit "
-             "identifié par product_attribute_name et interprète sa valeur "
+             "identifié par 'Attribut produit' et interprète sa valeur "
              "comme une fraction représentant la quote-part à facturer.\n\n"
              "Ex : 'Tantièmes'\n\n"
              "Formes acceptées pour la valeur de l'attribut :\n"
@@ -140,6 +116,16 @@ class SupplierEmailRule(models.Model):
              "(montant intégral, non bloquant).\n"
              "Si ce champ est vide → comportement normal (facteur = 1,0)."
     )
+
+    # Propriétés de compatibilité : le code interne utilise ces noms comme
+    # chaînes dans les messages d'erreur et les logs.
+    @property
+    def product_attribute_name(self):
+        return self.product_attribute_id.name if self.product_attribute_id else ''
+
+    @property
+    def tantieme_attribute_name(self):
+        return self.tantieme_attribute_id.name if self.tantieme_attribute_id else ''
 
     # ── Factur-X (XML embarqué dans les PDFs Odoo) ────────────────────────────
     facturx_contract_field = fields.Selection([
@@ -279,8 +265,6 @@ class SupplierEmailRule(models.Model):
     def _check_regex_or_facturx(self):
         for rule in self:
             if rule.facturx_contract_field:
-                # Mode Factur-X : regex non obligatoires.
-                # Avertissement si regex_contract est absent (pas de fallback).
                 if not rule.regex_contract:
                     _logger.warning(
                         "Règle '%s' (Factur-X) : regex_contract vide — "
@@ -289,7 +273,6 @@ class SupplierEmailRule(models.Model):
                         rule.name,
                     )
             else:
-                # Mode regex : les 4 expressions sont obligatoires.
                 missing = [
                     label for field, label in [
                         ('regex_invoice_number', 'Regex n° facture'),
@@ -344,10 +327,6 @@ class SupplierEmailRule(models.Model):
 
     @api.model
     def message_new(self, msg_dict, custom_values=None):
-        """
-        Appelé automatiquement par Odoo (mail.thread) lorsqu'un email
-        arrive sur l'alias de cette règle via fetchmail.
-        """
         custom_values = custom_values or {}
         rule_id = custom_values.get('rule_id')
 
@@ -363,7 +342,6 @@ class SupplierEmailRule(models.Model):
             )
             return super().message_new(msg_dict, custom_values)
 
-        # Vérification expéditeur
         if rule.sender_email_pattern:
             sender = msg_dict.get('email_from', '')
             if not re.search(rule.sender_email_pattern, sender, re.IGNORECASE):
@@ -375,14 +353,8 @@ class SupplierEmailRule(models.Model):
                 )
                 return super().message_new(msg_dict, custom_values)
 
-        # Extraction des pièces jointes PDF
         pdf_bytes_list = rule._extract_pdf_attachments_from_msg_dict(msg_dict)
 
-        # ── Tentative Factur-X (priorité maximale) ───────────────────────────
-        # Si le PDF contient un XML Factur-X, on l'utilise directement :
-        # les données structurées sont plus fiables que les regex email/PDF.
-        # Le n° de contrat est extrait du XML si facturx_contract_field est
-        # configuré ; sinon il est récupéré par regex sur le corps de l'email.
         facturx_parsed = None
         facturx_lines = []
         if rule.facturx_contract_field and pdf_bytes_list:
@@ -396,11 +368,8 @@ class SupplierEmailRule(models.Model):
                             "(facture %s).",
                             rule.name, facturx_parsed.get('invoice_number', '?'),
                         )
-                    break  # Premier PDF lisible suffit
+                    break
 
-        # ── Texte de parsing (corps email et/ou PDF) ─────────────────────────
-        # Toujours extrait — nécessaire si le n° de contrat est absent du XML
-        # ou si Factur-X n'est pas disponible.
         parsing_text, pdf_text = rule._get_parsing_text(msg_dict, pdf_bytes_list)
 
         if not parsing_text and not facturx_parsed:
@@ -409,12 +378,9 @@ class SupplierEmailRule(models.Model):
             rule._set_last_import_result(False, "❌ Corps de l'email vide ou illisible.")
             return super().message_new(msg_dict, custom_values)
 
-        # ── Parsing principal ────────────────────────────────────────────────
         try:
             if facturx_parsed:
                 parsed = facturx_parsed
-                # Si le n° de contrat n'est pas dans le XML, le récupérer
-                # par regex sur le corps de l'email / texte PDF.
                 if not parsed.get('contract_number') and parsing_text:
                     try:
                         regex_data = rule._parse_email_body(parsing_text)
@@ -441,8 +407,6 @@ class SupplierEmailRule(models.Model):
             rule._set_last_import_result(False, "❌ " + str(e))
             return super().message_new(msg_dict, custom_values)
 
-        # ── Lignes de détail ─────────────────────────────────────────────────
-        # Priorité : lignes Factur-X > regex PDF > aucune ligne
         if facturx_lines:
             pdf_lines = facturx_lines
             _logger.info(
@@ -456,16 +420,13 @@ class SupplierEmailRule(models.Model):
                     pdf_lines = rule._parse_pdf_lines(pdf_text)
                 except UserError as e:
                     _logger.warning("message_new: lignes PDF — %s", e)
-                    # Non bloquant
 
-        # Création de la (des) facture(s)
         try:
             results = rule.create_vendor_bills(parsed, pdf_lines=pdf_lines)
             nb_created = sum(1 for _, created in results if created)
             nb_skipped = len(results) - nb_created
 
             if nb_created == 0:
-                # Tous les produits étaient déjà facturés
                 status = "⚠ Doublon ignoré : facture %s déjà présente." % parsed['invoice_number']
             else:
                 status = (
@@ -490,13 +451,6 @@ class SupplierEmailRule(models.Model):
     # ── Gestion du texte de parsing ──────────────────────────────────────────
 
     def _get_parsing_text(self, msg_dict, pdf_bytes_list):
-        """
-        Détermine le texte à utiliser pour le parsing selon la configuration.
-
-        Returns:
-            (parsing_text: str, pdf_text: str)
-            pdf_text est retourné séparément pour l'extraction de lignes.
-        """
         self.ensure_one()
         body_text = self._extract_text_from_msg_dict(msg_dict)
         pdf_text = ''
@@ -507,7 +461,7 @@ class SupplierEmailRule(models.Model):
                     extracted = extract_pdf_text(pdf_bytes)
                     if extracted.strip():
                         pdf_text = extracted
-                        break  # On utilise le premier PDF lisible
+                        break
                 except Exception as exc:
                     _logger.warning("_get_parsing_text: erreur PDF — %s", exc)
 
@@ -523,18 +477,9 @@ class SupplierEmailRule(models.Model):
 
     @staticmethod
     def _extract_pdf_attachments_from_msg_dict(msg_dict):
-        """
-        Extrait les bytes des pièces jointes PDF depuis msg_dict.
-
-        msg_dict['attachments'] peut être :
-          - une liste de (filename, content, mimetype, ...)  tuples
-          - une liste d'objets avec attributs
-        Retourne une liste de bytes (PDF bruts).
-        """
         pdf_list = []
         attachments = msg_dict.get('attachments') or []
         for att in attachments:
-            # Tuple (name, content, ...)
             if isinstance(att, (list, tuple)) and len(att) >= 2:
                 name = att[0] or ''
                 content = att[1]
@@ -573,7 +518,6 @@ class SupplierEmailRule(models.Model):
 
     @staticmethod
     def _extract_text_from_msg_dict(msg_dict):
-        """Extrait le meilleur corps texte depuis le dict message Odoo."""
         import quopri
 
         body_text = msg_dict.get('body_text') or ''
@@ -604,7 +548,6 @@ class SupplierEmailRule(models.Model):
     # ── Parsing ──────────────────────────────────────────────────────────────
 
     def _clean_amount(self, raw):
-        """Convertit une chaîne de montant en float."""
         cleaned = re.sub(r'[\s\u00a0\u202f]', '', raw)
         cleaned = cleaned.replace(',', '.')
         try:
@@ -615,7 +558,6 @@ class SupplierEmailRule(models.Model):
             )
 
     def _parse_email_body(self, body_text):
-        """Extrait les données structurées du texte (corps email ou PDF)."""
         self.ensure_one()
 
         def _extract(pattern, label):
@@ -646,16 +588,6 @@ class SupplierEmailRule(models.Model):
         }
 
     def _parse_pdf_lines(self, pdf_text):
-        """
-        Extrait les lignes de détail depuis le texte PDF selon regex_pdf_line.
-
-        La regex doit avoir exactement 2 groupes capturants :
-          groupe 1 → libellé de la ligne
-          groupe 2 → montant
-
-        Returns:
-            list of dict : [{'name': str, 'amount': float}, ...]
-        """
         self.ensure_one()
         if not self.regex_pdf_line:
             return []
@@ -697,26 +629,10 @@ class SupplierEmailRule(models.Model):
 
     @staticmethod
     def _parse_tantieme_factor(raw_value):
-        """
-        Convertit une valeur d'attribut Tantièmes en facteur décimal.
-
-        Formes acceptées :
-          • Fraction entière  : '450/10000'  → 0.045
-          • Décimal virgule   : '0,045'      → 0.045
-          • Décimal point     : '0.045'      → 0.045
-          • Espaces ignorés   : ' 450 / 10000 ' → 0.045
-
-        Returns:
-            float — facteur entre 0 (exclu) et 1 (inclus)
-
-        Raises:
-            UserError — si la valeur est illisible, nulle ou négative
-        """
         raw = (raw_value or '').strip()
         if not raw:
             raise UserError(_("Valeur de tantième vide."))
 
-        # Forme fraction : numérateur/dénominateur
         fraction_match = re.match(
             r'^\s*(\d[\d\s]*)\s*/\s*(\d[\d\s]*)\s*$', raw
         )
@@ -736,7 +652,6 @@ class SupplierEmailRule(models.Model):
                 )
             factor = numerator / denominator
         else:
-            # Forme décimale (virgule ou point)
             decimal_str = raw.replace(',', '.').replace(' ', '')
             try:
                 factor = float(decimal_str)
@@ -758,37 +673,21 @@ class SupplierEmailRule(models.Model):
         return factor
 
     def _get_tantieme_factor(self, product_tmpl):
-        """
-        Lit le facteur tantième depuis l'attribut du produit.
-
-        Cherche l'attribut dont le nom correspond à tantieme_attribute_name
-        sur le product_tmpl déjà identifié, puis appelle
-        _parse_tantieme_factor() sur sa valeur.
-
-        Comportements selon la configuration :
-          • tantieme_attribute_name vide   → retourne 1.0 (sans log)
-          • Attribut absent sur ce produit → retourne 1.0 + warning dans logs
-          • Attribut présent               → retourne le facteur parsé
-
-        Returns:
-            float — facteur tantième (1.0 si non applicable)
-        """
         self.ensure_one()
 
-        if not self.tantieme_attribute_name:
+        if not self.tantieme_attribute_id:
             return 1.0
 
-        # Chercher la valeur de l'attribut tantième sur ce produit
         ptav = self.env['product.template.attribute.value'].search([
             ('product_tmpl_id', '=', product_tmpl.id),
-            ('attribute_id.name', 'ilike', self.tantieme_attribute_name),
+            ('attribute_id', '=', self.tantieme_attribute_id.id),
         ], limit=1)
 
         if not ptav:
             _logger.warning(
                 "_get_tantieme_factor [%s] : attribut '%s' introuvable sur "
                 "le produit '%s' — facteur = 1.0 (montant intégral).",
-                self.name, self.tantieme_attribute_name, product_tmpl.name
+                self.name, self.tantieme_attribute_id.name, product_tmpl.name
             )
             return 1.0
 
@@ -797,13 +696,12 @@ class SupplierEmailRule(models.Model):
         _logger.info(
             "_get_tantieme_factor [%s] : produit '%s' — %s = '%s' → %.6f",
             self.name, product_tmpl.name,
-            self.tantieme_attribute_name, raw_value, factor
+            self.tantieme_attribute_id.name, raw_value, factor
         )
         return factor
 
     # ── Factur-X (XML embarqué dans les PDFs Odoo / EN 16931) ─────────────────
 
-    # Espaces de noms Factur-X / ZUGFeRD (EN 16931)
     _FACTURX_NS = {
         'rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
         'ram': ('urn:un:unece:uncefact:data:standard'
@@ -811,7 +709,6 @@ class SupplierEmailRule(models.Model):
         'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
     }
 
-    # Noms des fichiers XML Factur-X / ZUGFeRD courants
     _FACTURX_FILENAMES = (
         'factur-x.xml', 'zugferd-invoice.xml', 'zugferd.xml',
         'facturx.xml', 'xrechnung.xml',
@@ -819,24 +716,12 @@ class SupplierEmailRule(models.Model):
 
     @staticmethod
     def _extract_facturx_xml(pdf_bytes):
-        """
-        Extrait le XML Factur-X embarqué dans un PDF.
-
-        Les PDFs générés par Odoo (et tout logiciel compatible EN 16931)
-        embarquent un fichier XML dans leurs pièces jointes internes.
-        Ce XML contient toutes les données comptables structurées.
-
-        Nécessite : pypdf >= 3.x  (installé avec Odoo 16+)
-
-        Returns:
-            bytes  — contenu du fichier XML, ou None si absent/illisible.
-        """
         try:
             import io
-            import pypdf  # disponible dans l'environnement Odoo 16+
+            import pypdf
 
             reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-            attachments = reader.attachments  # dict {name: [bytes]}
+            attachments = reader.attachments
 
             for name, content_list in (attachments or {}).items():
                 if name.lower() in SupplierEmailRule._FACTURX_FILENAMES:
@@ -848,7 +733,6 @@ class SupplierEmailRule(models.Model):
                         )
                         return data
 
-            # Fallback : parcourir toutes les pièces jointes (noms non standards)
             for name, content_list in (attachments or {}).items():
                 if name.lower().endswith('.xml'):
                     data = content_list[0] if isinstance(content_list, list) else content_list
@@ -869,34 +753,12 @@ class SupplierEmailRule(models.Model):
         return None
 
     def _parse_facturx_data(self, xml_bytes):
-        """
-        Parse le XML Factur-X et retourne les données comptables structurées.
-
-        Extrait :
-          • n° de facture   (BT-1)
-          • date de facture (BT-2)
-          • montant TTC     (BT-112 GrandTotalAmount)
-          • n° de contrat   selon facturx_contract_field :
-              - contract_ref  → BT-12  ContractReferencedDocument
-              - buyer_ref     → BT-10  BuyerReference
-              - seller_order  → BT-14  SellerOrderReferencedDocument
-              - buyer_order   → BT-13  BuyerOrderReferencedDocument
-          • lignes de détail (BG-25) → liste [{name, amount}]
-
-        Args:
-            xml_bytes (bytes) : contenu brut du fichier Factur-X XML
-
-        Returns:
-            (parsed_dict, pdf_lines) — même format que _parse_email_body() /
-            _parse_pdf_lines(), ou (None, []) si parsing impossible.
-        """
         self.ensure_one()
         try:
             import xml.etree.ElementTree as ET
         except ImportError:
             return None, []
 
-        # Correspondance champ sélection → XPath (relatif à la racine)
         CONTRACT_XPATHS = {
             'contract_ref': (
                 './/ram:ApplicableHeaderTradeAgreement'
@@ -918,7 +780,6 @@ class SupplierEmailRule(models.Model):
         ns = self._FACTURX_NS
 
         def _find(root, xpath):
-            """Retourne le texte du premier nœud trouvé, ou '' si absent."""
             el = root.find(xpath, ns)
             return (el.text or '').strip() if el is not None else ''
 
@@ -928,13 +789,11 @@ class SupplierEmailRule(models.Model):
             _logger.warning("_parse_facturx_data : XML invalide — %s", exc)
             return None, []
 
-        # ── N° de facture ────────────────────────────────────────────────────
         invoice_number = _find(root, './/rsm:ExchangedDocument/ram:ID')
         if not invoice_number:
             _logger.warning("_parse_facturx_data : ram:ID introuvable.")
             return None, []
 
-        # ── Date de facture ──────────────────────────────────────────────────
         date_el = root.find(
             './/rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString', ns
         )
@@ -943,7 +802,7 @@ class SupplierEmailRule(models.Model):
             return None, []
 
         date_raw = date_el.text.strip()
-        date_fmt = date_el.get('format', '102')  # '102' = YYYYMMDD
+        date_fmt = date_el.get('format', '102')
         try:
             if date_fmt == '102' and len(date_raw) == 8:
                 invoice_date = datetime.strptime(date_raw, '%Y%m%d').date()
@@ -959,14 +818,12 @@ class SupplierEmailRule(models.Model):
             _logger.warning("_parse_facturx_data : date '%s' illisible — %s", date_raw, exc)
             return None, []
 
-        # ── Montant TTC ──────────────────────────────────────────────────────
         amount_str = _find(
             root,
             './/ram:SpecifiedTradeSettlementHeaderMonetarySummation'
             '/ram:GrandTotalAmount'
         )
         if not amount_str:
-            # Fallback : montant base taxe + taxes
             amount_str = _find(
                 root,
                 './/ram:SpecifiedTradeSettlementHeaderMonetarySummation'
@@ -984,7 +841,6 @@ class SupplierEmailRule(models.Model):
             )
             return None, []
 
-        # ── N° de contrat ─────────────────────────────────────────────────────
         contract_number = ''
         if self.facturx_contract_field:
             xpath = CONTRACT_XPATHS.get(self.facturx_contract_field, '')
@@ -994,18 +850,12 @@ class SupplierEmailRule(models.Model):
         if not contract_number:
             _logger.warning(
                 "_parse_facturx_data [%s] : n° de contrat introuvable "
-                "(champ '%s'). Le n° de contrat devra être extrait "
-                "par regex sur le corps de l'email.",
+                "(champ '%s'). Fallback regex.",
                 self.name, self.facturx_contract_field or '(non configuré)',
             )
-            # Non bloquant : on retourne les données sans contract_number
-            # → message_new le récupèrera via regex
 
-        # ── Lignes de détail ─────────────────────────────────────────────────
         pdf_lines = []
-        line_items = root.findall(
-            './/ram:IncludedSupplyChainTradeLineItem', ns
-        )
+        line_items = root.findall('.//ram:IncludedSupplyChainTradeLineItem', ns)
         for item in line_items:
             label = _find(item, './/ram:SpecifiedTradeProduct/ram:Name')
             amount_line_str = _find(
@@ -1043,29 +893,20 @@ class SupplierEmailRule(models.Model):
     # ── Produit / analytique ─────────────────────────────────────────────────
 
     def _find_product_by_contract(self, contract_number):
-        """
-        Retourne la liste des product.template correspondant au n° de contrat.
-
-        Mode normal (tantieme_attribute_name vide) :
-            Un seul produit est attendu. Si plusieurs sont trouvés, un warning
-            est émis et seul le premier est retourné.
-
-        Mode tantième (tantieme_attribute_name renseigné) :
-            Tous les produits correspondants sont retournés — une facture sera
-            créée par produit/lot pour permettre la comptabilité analytique.
-
-        Returns:
-            recordset product.template (peut contenir plusieurs enregistrements)
-        """
         self.ensure_one()
+        if not self.product_attribute_id:
+            raise UserError(
+                _("Aucun attribut produit configuré sur la règle '%s'.") % self.name
+            )
+
         attr_values = self.env['product.attribute.value'].search([
-            ('attribute_id.name', '=', self.product_attribute_name),
+            ('attribute_id', '=', self.product_attribute_id.id),
             ('name', '=', contract_number),
         ])
         if not attr_values:
             raise UserError(
                 _("Aucun produit avec l'attribut '%s' = '%s'.")
-                % (self.product_attribute_name, contract_number)
+                % (self.product_attribute_id.name, contract_number)
             )
         ptavs = self.env['product.template.attribute.value'].search([
             ('product_attribute_value_id', 'in', attr_values.ids),
@@ -1073,17 +914,17 @@ class SupplierEmailRule(models.Model):
         if not ptavs:
             raise UserError(
                 _("Attribut '%s' = '%s' non lié à un modèle produit.")
-                % (self.product_attribute_name, contract_number)
+                % (self.product_attribute_id.name, contract_number)
             )
 
         product_tmpls = ptavs.mapped('product_tmpl_id')
 
-        if not self.tantieme_attribute_name and len(product_tmpls) > 1:
+        if not self.tantieme_attribute_id and len(product_tmpls) > 1:
             _logger.warning(
                 "_find_product_by_contract [%s] : %d produits trouvés pour "
                 "'%s' = '%s' sans mode tantième — premier produit utilisé : '%s'.",
                 self.name, len(product_tmpls),
-                self.product_attribute_name, contract_number,
+                self.product_attribute_id.name, contract_number,
                 product_tmpls[0].name,
             )
             return product_tmpls[:1]
@@ -1091,7 +932,7 @@ class SupplierEmailRule(models.Model):
         _logger.info(
             "_find_product_by_contract [%s] : %d produit(s) pour '%s' = '%s'.",
             self.name, len(product_tmpls),
-            self.product_attribute_name, contract_number,
+            self.product_attribute_id.name, contract_number,
         )
         return product_tmpls
 
@@ -1112,26 +953,6 @@ class SupplierEmailRule(models.Model):
     # ── Création des factures ────────────────────────────────────────────────
 
     def create_vendor_bills(self, parsed_data, pdf_lines=None):
-        """
-        Point d'entrée principal pour la création des factures fournisseurs.
-
-        Mode normal (tantieme_attribute_name vide) :
-            Un seul produit → une seule facture, comportement identique à l'existant.
-
-        Mode tantième (tantieme_attribute_name renseigné) :
-            Plusieurs lots peuvent correspondre au même n° de contrat.
-            Une facture est créée **par produit/lot** afin de permettre la
-            comptabilité analytique par appartement.
-            Chaque facture porte le tantième propre à son lot.
-
-        Args:
-            parsed_data (dict) : résultat de _parse_email_body()
-            pdf_lines   (list) : lignes de détail issues de _parse_pdf_lines()
-
-        Returns:
-            list of (account.move, bool created)
-            La liste contient autant d'entrées que de produits trouvés.
-        """
         self.ensure_one()
         pdf_lines = pdf_lines or []
 
@@ -1147,35 +968,11 @@ class SupplierEmailRule(models.Model):
         return results
 
     def _create_single_vendor_bill(self, parsed_data, product_tmpl, pdf_lines=None):
-        """
-        Crée une facture fournisseur pour un produit/lot donné.
-
-        Déduplication :
-            - Mode normal  : clé = (invoice_number, partner)
-            - Mode tantième: clé = (invoice_number + '#' + product_name, partner)
-              → permet d'avoir plusieurs factures par n° d'appel de charges.
-
-        Tantièmes (si tantieme_attribute_name est renseigné) :
-            Le montant facturé = tantième × montant_total_email.
-            Le montant total reste visible dans la narration de la facture.
-            Si l'attribut est absent sur le produit → montant intégral (1.0).
-
-        Args:
-            parsed_data  (dict)            : résultat de _parse_email_body()
-            product_tmpl (product.template): produit/lot à facturer
-            pdf_lines    (list)            : lignes de détail issues de _parse_pdf_lines()
-
-        Returns:
-            (account.move, bool created)
-        """
         self.ensure_one()
         pdf_lines = pdf_lines or []
         Move = self.env['account.move']
 
-        # ── Clé de déduplication ─────────────────────────────────────────────
-        # En mode tantième, plusieurs factures partagent le même invoice_number
-        # (un appel de charges → N lots). On distingue par le nom du produit.
-        if self.tantieme_attribute_name:
+        if self.tantieme_attribute_id:
             dedup_ref = '%s#%s' % (parsed_data['invoice_number'], product_tmpl.name)
         else:
             dedup_ref = parsed_data['invoice_number']
@@ -1192,12 +989,8 @@ class SupplierEmailRule(models.Model):
             )
             return existing, False
 
-        # ── Analytique ───────────────────────────────────────────────────────
         analytic_distribution = self._get_analytic_distribution(product_tmpl)
 
-        # ── Facteur tantième ─────────────────────────────────────────────────
-        # _get_tantieme_factor retourne 1.0 si tantieme_attribute_name est vide
-        # ou si l'attribut est absent sur ce produit (non bloquant).
         total_amount = parsed_data['amount']
         tantieme_factor = self._get_tantieme_factor(product_tmpl)
         effective_amount = round(total_amount * tantieme_factor, 2)
@@ -1210,14 +1003,12 @@ class SupplierEmailRule(models.Model):
                 effective_amount, self.currency_code,
             )
 
-        # ── Devise ───────────────────────────────────────────────────────────
         currency = self.env['res.currency'].search(
             [('name', '=', self.currency_code)], limit=1
         )
         if not currency:
             raise UserError(_("Devise '%s' introuvable.") % self.currency_code)
 
-        # ── Journal ──────────────────────────────────────────────────────────
         journal = self.journal_id or self.env['account.journal'].search([
             ('type', '=', 'purchase'),
             ('company_id', '=', self.env.company.id),
@@ -1225,14 +1016,12 @@ class SupplierEmailRule(models.Model):
         if not journal:
             raise UserError(_("Aucun journal d'achat trouvé."))
 
-        # ── Lignes de facture ─────────────────────────────────────────────────
         invoice_line_ids = self._build_invoice_lines(
             parsed_data, product_tmpl, analytic_distribution,
             pdf_lines, effective_amount=effective_amount,
             tantieme_factor=tantieme_factor,
         )
 
-        # ── Narration ────────────────────────────────────────────────────────
         narration_extra = ''
         if tantieme_factor != 1.0:
             narration_extra = _(
@@ -1259,7 +1048,6 @@ class SupplierEmailRule(models.Model):
             (" [tantième %.6f]" % tantieme_factor) if tantieme_factor != 1.0 else '',
         )
 
-        # ── Validation automatique ────────────────────────────────────────────
         if self.auto_post_bill:
             move.action_post()
             _logger.info("Facture %s validée automatiquement.", move.name)
@@ -1272,30 +1060,6 @@ class SupplierEmailRule(models.Model):
     def _build_invoice_lines(self, parsed_data, product_tmpl,
                              analytic_distribution, pdf_lines,
                              effective_amount=None, tantieme_factor=None):
-        """
-        Construit les commandes ORM pour invoice_line_ids.
-
-        Args:
-            parsed_data          (dict)  : données parsées
-            product_tmpl         (record): modèle produit
-            analytic_distribution(dict)  : distribution analytique
-            pdf_lines            (list)  : lignes extraites du PDF
-            effective_amount     (float) : montant à facturer (après tantième
-                                           éventuel). Si None, utilise
-                                           parsed_data['amount'].
-            tantieme_factor      (float|None) : facteur tantième si applicable,
-                                           None sinon. Utilisé pour pondérer
-                                           chaque ligne PDF individuellement.
-
-        Règles de priorité :
-          1. Si pdf_lines non vide → une ligne par entrée PDF.
-             • Avec tantième : chaque montant PDF est multiplié par le facteur.
-             • Sans tantième : montants PDF utilisés tels quels.
-          2. Sinon → une ligne unique avec effective_amount.
-
-        Returns:
-            list of (0, 0, dict)
-        """
         self.ensure_one()
         invoice_number = parsed_data['invoice_number']
 
@@ -1307,7 +1071,6 @@ class SupplierEmailRule(models.Model):
             tax_ids = [(6, 0, self.pdf_line_tax_ids.ids)] if self.pdf_line_tax_ids else []
             lines = []
             for pdf_line in pdf_lines:
-                # Appliquer le tantième à chaque ligne PDF si applicable
                 if tantieme_factor is not None:
                     line_amount = round(pdf_line['amount'] * tantieme_factor, 2)
                 else:
@@ -1325,7 +1088,6 @@ class SupplierEmailRule(models.Model):
                 lines.append((0, 0, vals))
             return lines
 
-        # Ligne unique
         return [(0, 0, {
             'name': '%s — %s' % (product_tmpl.name, invoice_number),
             'account_id': self.account_id.id,
@@ -1337,17 +1099,6 @@ class SupplierEmailRule(models.Model):
     # ── Paiement et rapprochement ─────────────────────────────────────────────
 
     def _register_and_reconcile_payment(self, move, parsed_data):
-        """
-        Crée un paiement fournisseur sortant et le rapproche de la facture.
-
-        Le paiement est créé en brouillon puis validé (action_post).
-        Le rapprochement est ensuite effectué sur les lignes de compte
-        de type 'liability_payable'.
-
-        Args:
-            move        (account.move) : facture validée
-            parsed_data (dict)         : données parsées (invoice_date, amount…)
-        """
         self.ensure_one()
         if not self.payment_journal_id:
             raise UserError(
@@ -1359,14 +1110,12 @@ class SupplierEmailRule(models.Model):
                   "(elle n'est pas validée).") % (self.name, move.name)
             )
 
-        # Date du paiement
         payment_date = (
             parsed_data['invoice_date']
             if self.payment_date_source == 'invoice_date'
             else date.today()
         )
 
-        # Mémo
         memo_template = self.payment_memo or 'Règlement {invoice_number}'
         memo = memo_template.format(
             invoice_number=parsed_data.get('invoice_number', ''),
@@ -1374,9 +1123,6 @@ class SupplierEmailRule(models.Model):
             partner=self.partner_id.name or '',
         )
 
-        # Montant réel de la facture (peut différer du montant parsé
-        # si des taxes ont été appliquées sur les lignes PDF, ou si
-        # un tantième a réduit le montant par rapport au total de l'appel)
         amount_to_pay = move.amount_residual
 
         Payment = self.env['account.payment']
@@ -1397,13 +1143,9 @@ class SupplierEmailRule(models.Model):
             payment.name, amount_to_pay, self.currency_code, payment_date
         )
 
-        # Rapprochement : lignes payables de la facture ↔ lignes du paiement
         self._reconcile_move_and_payment(move, payment)
 
     def _reconcile_move_and_payment(self, move, payment):
-        """
-        Rapproche les lignes 'liability_payable' de la facture et du paiement.
-        """
         payable_types = ('liability_payable',)
 
         invoice_lines = move.line_ids.filtered(
