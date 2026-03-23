@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Import Factures & Alertes Bancaires par Email',
-    'version': '17.0.3.0.0',
+    'version': '17.0.3.2.0',
     'summary': 'Importe automatiquement les factures fournisseurs et les alertes '
                'bancaires depuis des emails (.eml), avec rapprochement automatique.',
     'description': """
-Supplier Bill & Bank Alert Email Import — v3
-============================================
+Supplier Bill & Bank Alert Email Import — v3.2
+==============================================
 Ce module permet de :
 
 * Définir des règles de parsing fournisseurs (EDT, Téléphonie, Syndic…)
@@ -19,14 +19,27 @@ Factures fournisseurs :
   * Extraction des lignes de détail du PDF
   * Validation automatique + paiement sortant + rapprochement
 
-Alertes bancaires (nouveauté v3) :
+Alertes bancaires :
   * Extraction de chaque opération (date, sens, montant, libellé)
   * Création de account.bank.statement.line dans le journal bancaire
   * Rapprochement automatique contre les pièces ouvertes (montant exact)
   * Déduplication : un email traité deux fois ne crée pas de doublon
 
-Dépendance optionnelle :
-  pip install pdfminer.six
+Nouveautés v3.1 :
+  * Attributs produit et tantième sélectionnés via un champ Many2one
+    (product.attribute) plutôt que saisis librement — plus robuste et
+    insensible aux fautes de frappe ou renommages.
+
+Nouveautés v3.2 :
+  * Extraction du XML Factur-X via le module Python factur-x
+    (pip install factur-x) — prioritaire sur le fallback pypdf.
+    Gère nativement tous les profils EN 16931, ZUGFeRD 2.x,
+    Factur-X et XRechnung sans liste de noms de fichiers figée.
+    Fallback transparent vers pypdf si factur-x n'est pas installé.
+
+Dépendances optionnelles (pip) :
+  pip install pdfminer.six   # extraction texte PDF (recommandé)
+  pip install factur-x       # extraction XML Factur-X (recommandé)
     """,
     'author': 'OpalSea',
     'maintainer': ['OpalSea'],

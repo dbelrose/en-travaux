@@ -25,6 +25,15 @@ Extensions v3.1 :
     vers product.attribute — sélection depuis une liste plutôt que saisie libre.
     Des propriétés de compatibilité exposent encore .product_attribute_name
     et .tantieme_attribute_name pour le code interne.
+
+Extensions v3.2 :
+  • _extract_facturx_xml utilise désormais le module Python factur-x
+    (pip install factur-x) en priorité.
+    Avantages :
+      - Gère tous les profils EN 16931 / ZUGFeRD / Factur-X automatiquement
+      - Détecte le flavor (MINIMUM, EN 16931, EXTENDED…) et le logue
+      - Ne dépend plus d'une liste figée de noms de fichiers XML
+    Fallback transparent vers pypdf si factur-x n'est pas installé.
 """
 
 import re
@@ -37,6 +46,20 @@ from odoo.exceptions import UserError
 from .pdf_parser import extract_pdf_text, PDF_AVAILABLE
 
 _logger = logging.getLogger(__name__)
+
+# ── Détection du module factur-x au chargement ────────────────────────────────
+_FACTURX_OK = False
+try:
+    from facturx import get_facturx_xml_from_pdf  # noqa: F401
+    _FACTURX_OK = True
+    _logger.info(
+        "supplier_email_rule: module factur-x disponible — extraction XML optimisée."
+    )
+except ImportError:
+    _logger.info(
+        "supplier_email_rule: module factur-x absent — fallback pypdf pour "
+        "l'extraction XML.\nPour une meilleure compatibilité : pip install factur-x"
+    )
 
 
 class SupplierEmailRule(models.Model):
@@ -117,8 +140,7 @@ class SupplierEmailRule(models.Model):
              "Si ce champ est vide → comportement normal (facteur = 1,0)."
     )
 
-    # Propriétés de compatibilité : le code interne utilise ces noms comme
-    # chaînes dans les messages d'erreur et les logs.
+    # Propriétés de compatibilité — utilisées dans les logs et messages d'erreur
     @property
     def product_attribute_name(self):
         return self.product_attribute_id.name if self.product_attribute_id else ''
@@ -171,7 +193,7 @@ class SupplierEmailRule(models.Model):
              "du corps de l'email)."
     )
     pdf_prefer_over_body = fields.Boolean(
-        string='Préférer le PDF au corps de l\'email',
+        string="Préférer le PDF au corps de l'email",
         default=True,
         help="Si coché, le texte du PDF est utilisé à la place du corps de l'email. "
              "Sinon, les deux sont concaténés (corps + PDF) pour le parsing."
@@ -189,9 +211,7 @@ class SupplierEmailRule(models.Model):
         help="Regex Python avec deux groupes capturants :\n"
              "  groupe 1 → libellé de la ligne\n"
              "  groupe 2 → montant de la ligne\n"
-             "Exemple EDT :\n"
-             "  ^(.+?)\s{2,}([\d\s\u202f,\.]+)\s*(?:FCFP|XPF)\s*$\n"
-             "Chaque correspondance génère une ligne de facture."
+             r"Exemple EDT : ^(.+?)\s{2,}([\d\s\u202f,\.]+)\s*(?:FCFP|XPF)\s*$"
     )
     pdf_line_account_id = fields.Many2one(
         'account.account',
@@ -592,10 +612,10 @@ class SupplierEmailRule(models.Model):
         if not self.regex_pdf_line:
             return []
 
-        pattern = self.regex_pdf_line
         lines = []
         try:
-            for match in re.finditer(pattern, pdf_text, re.IGNORECASE | re.MULTILINE):
+            for match in re.finditer(self.regex_pdf_line, pdf_text,
+                                     re.IGNORECASE | re.MULTILINE):
                 if len(match.groups()) < 2:
                     _logger.warning(
                         "_parse_pdf_lines: la regex doit avoir 2 groupes (règle '%s').",
@@ -633,9 +653,7 @@ class SupplierEmailRule(models.Model):
         if not raw:
             raise UserError(_("Valeur de tantième vide."))
 
-        fraction_match = re.match(
-            r'^\s*(\d[\d\s]*)\s*/\s*(\d[\d\s]*)\s*$', raw
-        )
+        fraction_match = re.match(r'^\s*(\d[\d\s]*)\s*/\s*(\d[\d\s]*)\s*$', raw)
         if fraction_match:
             numerator_str = re.sub(r'\s', '', fraction_match.group(1))
             denominator_str = re.sub(r'\s', '', fraction_match.group(2))
@@ -700,7 +718,7 @@ class SupplierEmailRule(models.Model):
         )
         return factor
 
-    # ── Factur-X (XML embarqué dans les PDFs Odoo / EN 16931) ─────────────────
+    # ── Factur-X — extraction XML ─────────────────────────────────────────────
 
     _FACTURX_NS = {
         'rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
@@ -709,55 +727,108 @@ class SupplierEmailRule(models.Model):
         'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
     }
 
-    _FACTURX_FILENAMES = (
-        'factur-x.xml', 'zugferd-invoice.xml', 'zugferd.xml',
-        'facturx.xml', 'xrechnung.xml',
-    )
-
     @staticmethod
     def _extract_facturx_xml(pdf_bytes):
+        """
+        Extrait le XML Factur-X / ZUGFeRD embarqué dans un PDF.
+
+        Stratégie en deux temps :
+
+        1. Module factur-x (pip install factur-x) — prioritaire.
+           `get_facturx_xml_from_pdf` gère nativement tous les profils
+           EN 16931 / ZUGFeRD 1.x-2.x / Factur-X / XRechnung sans qu'il
+           soit nécessaire de connaître le nom du fichier XML embarqué.
+           Lève une exception si le PDF ne contient pas de XML valide —
+           ce qui est traité comme un résultat None (pas d'erreur bloquante).
+
+        2. Fallback pypdf — utilisé si factur-x n'est pas installé.
+           Cherche dans reader.attachments par nom de fichier connu,
+           puis par contenu (balise CrossIndustryInvoice).
+
+        Returns:
+            bytes — contenu XML brut, ou None si absent/illisible.
+        """
+        import io
+
+        # ── Chemin 1 : module factur-x ────────────────────────────────────────
+        if _FACTURX_OK:
+            try:
+                from facturx import get_facturx_xml_from_pdf
+                xml_bytes, flavor = get_facturx_xml_from_pdf(
+                    io.BytesIO(pdf_bytes),
+                    check_xsd=False,
+                )
+                if xml_bytes:
+                    if isinstance(xml_bytes, str):
+                        xml_bytes = xml_bytes.encode('utf-8')
+                    _logger.debug(
+                        "_extract_facturx_xml : XML extrait via factur-x "
+                        "(flavor=%s, %d octets).",
+                        flavor, len(xml_bytes),
+                    )
+                    return xml_bytes
+            except Exception as exc:
+                # PDF sans XML Factur-X valide : cas normal, pas une erreur
+                _logger.debug(
+                    "_extract_facturx_xml (factur-x) : pas de XML ou erreur "
+                    "(%s) — fallback pypdf.", exc,
+                )
+
+        # ── Chemin 2 : fallback pypdf ─────────────────────────────────────────
+        _KNOWN_NAMES = frozenset((
+            'factur-x.xml', 'zugferd-invoice.xml', 'zugferd.xml',
+            'facturx.xml', 'xrechnung.xml',
+        ))
         try:
-            import io
             import pypdf
-
             reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-            attachments = reader.attachments
+            attachments = reader.attachments or {}
 
-            for name, content_list in (attachments or {}).items():
-                if name.lower() in SupplierEmailRule._FACTURX_FILENAMES:
-                    data = content_list[0] if isinstance(content_list, list) else content_list
+            # Recherche par nom de fichier connu
+            for name, content_list in attachments.items():
+                if name.lower() in _KNOWN_NAMES:
+                    data = (content_list[0]
+                            if isinstance(content_list, list)
+                            else content_list)
                     if isinstance(data, bytes) and data.strip():
                         _logger.debug(
-                            "_extract_facturx_xml : XML '%s' trouvé (%d octets).",
-                            name, len(data)
+                            "_extract_facturx_xml (pypdf) : '%s' trouvé "
+                            "(%d octets).", name, len(data),
                         )
                         return data
 
-            for name, content_list in (attachments or {}).items():
+            # Recherche par contenu (noms non standards)
+            for name, content_list in attachments.items():
                 if name.lower().endswith('.xml'):
-                    data = content_list[0] if isinstance(content_list, list) else content_list
+                    data = (content_list[0]
+                            if isinstance(content_list, list)
+                            else content_list)
                     if isinstance(data, bytes) and b'CrossIndustryInvoice' in data:
                         _logger.debug(
-                            "_extract_facturx_xml : XML '%s' détecté par contenu.",
-                            name
+                            "_extract_facturx_xml (pypdf) : '%s' détecté "
+                            "par contenu.", name,
                         )
                         return data
 
         except ImportError:
-            _logger.debug(
-                "_extract_facturx_xml : pypdf non disponible, parsing XML ignoré."
-            )
+            _logger.debug("_extract_facturx_xml : pypdf non disponible.")
         except Exception as exc:
-            _logger.debug("_extract_facturx_xml : erreur lecture PDF — %s", exc)
+            _logger.debug("_extract_facturx_xml (pypdf) : erreur — %s", exc)
 
         return None
 
+    # ── Factur-X — parsing des données ───────────────────────────────────────
+
     def _parse_facturx_data(self, xml_bytes):
+        """
+        Parse le XML Factur-X et retourne (parsed_dict, pdf_lines).
+
+        Extrait via ElementTree :
+          n° facture, date, montant TTC, n° de contrat (selon
+          facturx_contract_field), et les lignes de détail.
+        """
         self.ensure_one()
-        try:
-            import xml.etree.ElementTree as ET
-        except ImportError:
-            return None, []
+        import xml.etree.ElementTree as ET
 
         CONTRACT_XPATHS = {
             'contract_ref': (
@@ -789,11 +860,13 @@ class SupplierEmailRule(models.Model):
             _logger.warning("_parse_facturx_data : XML invalide — %s", exc)
             return None, []
 
+        # N° de facture
         invoice_number = _find(root, './/rsm:ExchangedDocument/ram:ID')
         if not invoice_number:
             _logger.warning("_parse_facturx_data : ram:ID introuvable.")
             return None, []
 
+        # Date
         date_el = root.find(
             './/rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString', ns
         )
@@ -811,13 +884,16 @@ class SupplierEmailRule(models.Model):
             else:
                 _logger.warning(
                     "_parse_facturx_data : format date inconnu '%s' (format=%s).",
-                    date_raw, date_fmt
+                    date_raw, date_fmt,
                 )
                 return None, []
         except ValueError as exc:
-            _logger.warning("_parse_facturx_data : date '%s' illisible — %s", date_raw, exc)
+            _logger.warning(
+                "_parse_facturx_data : date illisible '%s' — %s", date_raw, exc
+            )
             return None, []
 
+        # Montant TTC
         amount_str = _find(
             root,
             './/ram:SpecifiedTradeSettlementHeaderMonetarySummation'
@@ -841,6 +917,7 @@ class SupplierEmailRule(models.Model):
             )
             return None, []
 
+        # N° de contrat
         contract_number = ''
         if self.facturx_contract_field:
             xpath = CONTRACT_XPATHS.get(self.facturx_contract_field, '')
@@ -854,9 +931,9 @@ class SupplierEmailRule(models.Model):
                 self.name, self.facturx_contract_field or '(non configuré)',
             )
 
+        # Lignes de détail
         pdf_lines = []
-        line_items = root.findall('.//ram:IncludedSupplyChainTradeLineItem', ns)
-        for item in line_items:
+        for item in root.findall('.//ram:IncludedSupplyChainTradeLineItem', ns):
             label = _find(item, './/ram:SpecifiedTradeProduct/ram:Name')
             amount_line_str = _find(
                 item,
@@ -872,23 +949,22 @@ class SupplierEmailRule(models.Model):
                 except ValueError:
                     _logger.debug(
                         "_parse_facturx_data : montant ligne illisible '%s'.",
-                        amount_line_str
+                        amount_line_str,
                     )
 
         _logger.info(
-            "_parse_facturx_data [%s] : facture %s — %s — %.2f — %d ligne(s) — "
-            "contrat '%s'.",
+            "_parse_facturx_data [%s] : facture %s — %s — %.2f — "
+            "%d ligne(s) — contrat '%s'.",
             self.name, invoice_number, invoice_date, amount,
             len(pdf_lines), contract_number or '?',
         )
 
-        parsed = {
-            'invoice_number': invoice_number,
-            'invoice_date':   invoice_date,
-            'amount':         amount,
+        return {
+            'invoice_number':  invoice_number,
+            'invoice_date':    invoice_date,
+            'amount':          amount,
             'contract_number': contract_number,
-        }
-        return parsed, pdf_lines
+        }, pdf_lines
 
     # ── Produit / analytique ─────────────────────────────────────────────────
 
@@ -955,16 +1031,13 @@ class SupplierEmailRule(models.Model):
     def create_vendor_bills(self, parsed_data, pdf_lines=None):
         self.ensure_one()
         pdf_lines = pdf_lines or []
-
         product_tmpls = self._find_product_by_contract(parsed_data['contract_number'])
-
         results = []
         for product_tmpl in product_tmpls:
             move, created = self._create_single_vendor_bill(
                 parsed_data, product_tmpl, pdf_lines=pdf_lines
             )
             results.append((move, created))
-
         return results
 
     def _create_single_vendor_bill(self, parsed_data, product_tmpl, pdf_lines=None):
@@ -972,10 +1045,11 @@ class SupplierEmailRule(models.Model):
         pdf_lines = pdf_lines or []
         Move = self.env['account.move']
 
-        if self.tantieme_attribute_id:
-            dedup_ref = '%s#%s' % (parsed_data['invoice_number'], product_tmpl.name)
-        else:
-            dedup_ref = parsed_data['invoice_number']
+        dedup_ref = (
+            '%s#%s' % (parsed_data['invoice_number'], product_tmpl.name)
+            if self.tantieme_attribute_id
+            else parsed_data['invoice_number']
+        )
 
         existing = Move.search([
             ('ref', '=', dedup_ref),
@@ -984,23 +1058,22 @@ class SupplierEmailRule(models.Model):
         ], limit=1)
         if existing:
             _logger.info(
-                "_create_single_vendor_bill [%s] — doublon ignoré : '%s' / '%s'.",
-                self.name, dedup_ref, product_tmpl.name,
+                "_create_single_vendor_bill [%s] — doublon ignoré : '%s'.",
+                self.name, dedup_ref,
             )
             return existing, False
 
         analytic_distribution = self._get_analytic_distribution(product_tmpl)
-
         total_amount = parsed_data['amount']
         tantieme_factor = self._get_tantieme_factor(product_tmpl)
         effective_amount = round(total_amount * tantieme_factor, 2)
 
         if tantieme_factor != 1.0:
             _logger.info(
-                "_create_single_vendor_bill [%s] '%s' — Tantième : %.0f × %.6f = %.2f %s",
+                "_create_single_vendor_bill [%s] '%s' — Tantième : "
+                "%.0f × %.6f = %.2f %s",
                 self.name, product_tmpl.name,
-                total_amount, tantieme_factor,
-                effective_amount, self.currency_code,
+                total_amount, tantieme_factor, effective_amount, self.currency_code,
             )
 
         currency = self.env['res.currency'].search(
@@ -1051,7 +1124,6 @@ class SupplierEmailRule(models.Model):
         if self.auto_post_bill:
             move.action_post()
             _logger.info("Facture %s validée automatiquement.", move.name)
-
             if self.auto_register_payment:
                 self._register_and_reconcile_payment(move, parsed_data)
 
@@ -1071,11 +1143,11 @@ class SupplierEmailRule(models.Model):
             tax_ids = [(6, 0, self.pdf_line_tax_ids.ids)] if self.pdf_line_tax_ids else []
             lines = []
             for pdf_line in pdf_lines:
-                if tantieme_factor is not None:
-                    line_amount = round(pdf_line['amount'] * tantieme_factor, 2)
-                else:
-                    line_amount = pdf_line['amount']
-
+                line_amount = (
+                    round(pdf_line['amount'] * tantieme_factor, 2)
+                    if tantieme_factor is not None
+                    else pdf_line['amount']
+                )
                 vals = {
                     'name': '%s — %s' % (pdf_line['name'], invoice_number),
                     'account_id': line_account.id,
@@ -1123,16 +1195,13 @@ class SupplierEmailRule(models.Model):
             partner=self.partner_id.name or '',
         )
 
-        amount_to_pay = move.amount_residual
-
-        Payment = self.env['account.payment']
-        payment = Payment.create({
+        payment = self.env['account.payment'].create({
             'payment_type': 'outbound',
             'partner_type': 'supplier',
             'partner_id': self.partner_id.id,
             'journal_id': self.payment_journal_id.id,
             'currency_id': move.currency_id.id,
-            'amount': amount_to_pay,
+            'amount': move.amount_residual,
             'date': payment_date,
             'ref': memo,
         })
@@ -1140,7 +1209,7 @@ class SupplierEmailRule(models.Model):
 
         _logger.info(
             "Paiement créé : %s — %.2f %s — %s",
-            payment.name, amount_to_pay, self.currency_code, payment_date
+            payment.name, move.amount_residual, self.currency_code, payment_date,
         )
 
         self._reconcile_move_and_payment(move, payment)
@@ -1161,7 +1230,7 @@ class SupplierEmailRule(models.Model):
         if len(to_reconcile) < 2:
             _logger.warning(
                 "_reconcile: pas assez de lignes réconciliables pour %s / %s",
-                move.name, payment.name
+                move.name, payment.name,
             )
             return
 
@@ -1169,12 +1238,12 @@ class SupplierEmailRule(models.Model):
             to_reconcile.reconcile()
             _logger.info(
                 "Rapprochement effectué : facture %s ↔ paiement %s",
-                move.name, payment.name
+                move.name, payment.name,
             )
         except Exception as exc:
             _logger.error(
-                "_reconcile: erreur rapprochement %s / %s — %s",
-                move.name, payment.name, exc
+                "_reconcile: erreur — %s / %s — %s",
+                move.name, payment.name, exc,
             )
             raise UserError(
                 _("Erreur lors du rapprochement de %s avec %s : %s")
