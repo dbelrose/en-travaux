@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rte_sync_run_user,RTE sync run user,model_rte_sync_run,group_rte_sync_user,1,0,0,0
+access_rte_sync_run_manager,rte.sync.run manager,model_rte_sync_run,group_rte_sync_manager,1,1,1,1
+access_rte_sync_run_system,rte.sync.run system,model_rte_sync_run,base.group_system,1,1,1,1
+access_rte_sync_wizard_user,rte.sync.wizard user,model_rte_sync_wizard,group_rte_sync_user,1,1,1,1
+access_rte_sync_wizard_manager,rte.sync.wizard manager,model_rte_sync_wizard,group_rte_sync_manager,1,1,1,1
+access_rte_sync_wizard_system,rte.sync.wizard system,model_rte_sync_wizard,base.group_system,1,1,1,1
+access_res_partner_image_cache_wizard_user,res.partner.image.cache.wizard user,model_res_partner_image_cache_wizard,group_rte_sync_user,1,0,0,0
+access_res_partner_image_cache_wizard_manager,res.partner.image.cache.wizard manager,model_res_partner_image_cache_wizard,group_rte_sync_manager,1,1,1,1
+access_res_partner_image_cache_wizard_system,res.partner.image.cache.wizard system,model_res_partner_image_cache_wizard,base.group_system,1,1,1,1

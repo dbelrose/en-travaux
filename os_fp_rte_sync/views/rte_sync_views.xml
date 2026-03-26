@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_rte_sync_run_tree" model="ir.ui.view">
+    <field name="name">rte.sync.run.tree</field>
+    <field name="model">rte.sync.run</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="start"/>
+        <field name="end"/>
+        <field name="status"/>
+        <field name="created_count"/>
+        <field name="updated_count"/>
+        <field name="skipped_count"/>
+        <field name="checksum"/>
+        <field name="message"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_rte_sync_runs" model="ir.actions.act_window">
+    <field name="name">Historique RTE</field>
+    <field name="res_model">rte.sync.run</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <menuitem id="menu_rte_root" name="RTE Sync" parent="contacts.res_partner_menu_config" sequence="90"/>
+  <menuitem id="menu_rte_runs" name="Historique" parent="menu_rte_root" action="action_rte_sync_runs" sequence="10"/>
+
+  <record id="action_rte_sync_schedule_now" model="ir.actions.server">
+    <field name="name">Synchroniser maintenant (BG)</field>
+    <field name="model_id" ref="model_rte_sync_runner"/>
+    <field name="state">code</field>
+    <field name="code">env['rte.sync.runner'].schedule_sync_once(force=False)</field>
+  </record>
+</odoo>

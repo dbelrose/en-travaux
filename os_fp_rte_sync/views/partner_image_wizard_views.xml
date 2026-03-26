@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard d'attribution des images -->
+    <record id="partner_image_assign_wizard_form" model="ir.ui.view">
+        <field name="name">partner.image.assign.wizard.form</field>
+        <field name="model">partner.image.assign.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Attribution automatique des images">
+                <group>
+                    <group>
+                        <field name="mode" widget="radio"/>
+                        <field name="only_with_ape"/>
+                    </group>
+                    <group>
+                        <div class="alert alert-info" role="alert" style="margin-bottom: 0px;">
+                            <p><strong>Aperçu :</strong></p>
+                            <p><field name="preview_count" readonly="1"/> partenaire(s) concerné(s)</p>
+                        </div>
+                    </group>
+                </group>
+
+                <div class="alert alert-warning" role="alert">
+                    <p><i class="fa fa-info-circle"/> <strong>Information</strong></p>
+                    <p>Cette action va analyser le nom des partenaires et leurs catégories APE pour leur assigner automatiquement une image représentative de leur activité.</p>
+                    <p>Seuls les partenaires sans image existante seront traités.</p>
+                </div>
+
+                <footer>
+                    <button name="action_assign_images" type="object" string="Assigner les images" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action du wizard -->
+    <record id="action_partner_image_assign_wizard" model="ir.actions.act_window">
+        <field name="name">Attribution automatique des images</field>
+        <field name="res_model">partner.image.assign.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+    <!-- Menu dans Contacts -->
+    <menuitem
+        id="menu_partner_image_assign"
+        name="Attribution images automatique"
+        parent="contacts.res_partner_menu_config"
+        action="action_partner_image_assign_wizard"
+        sequence="50"/>
+</odoo>
