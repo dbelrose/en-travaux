@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="homepage" name="Belrose Place - Accueil">
+    <t t-call="website.layout">
+        <t t-set="pageName">homepage</t>
+        <div id="wrap" class="belrose-page">
+
+            <!-- ── HERO ──────────────────────────────────────── -->
+            <section class="belrose-hero">
+                <div class="belrose-hero-bg" id="heroParallaxBg"/>
+                <div class="belrose-hero-overlay"/>
+                <div class="belrose-hero-content">
+                    <div class="belrose-hero-eyebrow">
+                        Punaauia · Tahiti · Polynésie française
+                    </div>
+                    <h1 class="belrose-hero-title">
+                        Belrose<br/><em>Place</em>
+                    </h1>
+                    <p class="belrose-hero-subtitle">
+                        Séjournez au dernier étage, entre ciel, océan et lagon,
+                        avec vue imprenable sur Moorea.
+                    </p>
+                    <div class="belrose-hero-actions">
+                        <a href="#apartments" class="bp-btn-primary">
+                            <span>Nos appartements</span>
+                        </a>
+                        <a href="#gallery" class="bp-btn-ghost">
+                            <span>Voir la galerie</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="belrose-scroll-indicator">
+                    <div class="belrose-scroll-mouse"/>
+                    <span>Découvrir</span>
+                </div>
+            </section>
+
+            <!-- ── GALERIE ────────────────────────────────────── -->
+            <section class="bp-section bp-gallery-section" id="gallery">
+                <div class="bp-container">
+                    <div class="bp-gallery-header">
+                        <div class="bp-reveal">
+                            <div class="bp-eyebrow">Galerie</div>
+                            <h2 class="bp-section-title">L'appartement<br/><em>en images</em></h2>
+                        </div>
+                        <div class="bp-gallery-controls">
+                            <button class="bp-gallery-arrow" id="bpGalleryPrev" aria-label="Précédent">&#8592;</button>
+                            <button class="bp-gallery-arrow" id="bpGalleryNext" aria-label="Suivant">&#8594;</button>
+                        </div>
+                    </div>
+
+                    <div id="bpGallery">
+                        <div class="bp-gallery-track-wrap">
+                            <div class="bp-gallery-track" id="bpGalleryTrack">
+                                <div class="bp-gallery-slide">
+                                    <img src="https://i.imgur.com/VHkQcpW.jpeg" alt="Vue extérieure" loading="lazy"/>
+                                    <div class="bp-gallery-slide-overlay"/>
+                                </div>
+                                <div class="bp-gallery-slide">
+                                    <img src="https://i.imgur.com/JysXRjS.jpeg" alt="Séjour" loading="lazy"/>
+                                    <div class="bp-gallery-slide-overlay"/>
+                                </div>
+                                <div class="bp-gallery-slide">
+                                    <img src="https://i.imgur.com/NYaeeON.jpeg" alt="Cuisine" loading="lazy"/>
+                                    <div class="bp-gallery-slide-overlay"/>
+                                </div>
+                                <div class="bp-gallery-slide">
+                                    <img src="https://i.imgur.com/RG4WcEf.jpeg" alt="Chambre" loading="lazy"/>
+                                    <div class="bp-gallery-slide-overlay"/>
+                                </div>
+                                <div class="bp-gallery-slide">
+                                    <img src="https://i.imgur.com/Lvr0CT1.jpeg" alt="Intérieur" loading="lazy"/>
+                                    <div class="bp-gallery-slide-overlay"/>
+                                </div>
+                                <div class="bp-gallery-slide">
+                                    <img src="https://i.imgur.com/nfpYgAY.jpeg" alt="Extérieur" loading="lazy"/>
+                                    <div class="bp-gallery-slide-overlay"/>
+                                </div>
+                                <div class="bp-gallery-slide">
+                                    <img src="https://i.imgur.com/pYxkvh2.jpeg" alt="Détail" loading="lazy"/>
+                                    <div class="bp-gallery-slide-overlay"/>
+                                </div>
+                                <div class="bp-gallery-slide">
+                                    <img src="https://i.imgur.com/bD48Ky0.jpeg" alt="Terrasse" loading="lazy"/>
+                                    <div class="bp-gallery-slide-overlay"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bp-gallery-dots">
+                            <button class="bp-gallery-dot active"/>
+                            <button class="bp-gallery-dot"/>
+                            <button class="bp-gallery-dot"/>
+                            <button class="bp-gallery-dot"/>
+                            <button class="bp-gallery-dot"/>
+                            <button class="bp-gallery-dot"/>
+                            <button class="bp-gallery-dot"/>
+                            <button class="bp-gallery-dot"/>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── EXPÉRIENCE ─────────────────────────────────── -->
+            <section class="bp-section bp-features-section" id="experience">
+                <div class="bp-container">
+                    <div class="bp-reveal">
+                        <div class="bp-eyebrow">Ce qui nous définit</div>
+                        <h2 class="bp-section-title">Une expérience<br/><em>hors du commun</em></h2>
+                    </div>
+                    <div class="bp-features-grid">
+                        <div class="bp-feature-item">
+                            <span class="bp-feature-number">01</span>
+                            <span class="bp-feature-icon">🏔️</span>
+                            <h3 class="bp-feature-title">Havre de Sérénité</h3>
+                            <p class="bp-feature-text">
+                                Niché au dernier étage, profitez d'un cadre paisible avec vue imprenable
+                                sur l'océan, les lagons et Moorea. Un panorama à couper le souffle.
+                            </p>
+                        </div>
+                        <div class="bp-feature-item">
+                            <span class="bp-feature-number">02</span>
+                            <span class="bp-feature-icon">🏊‍♀️</span>
+                            <h3 class="bp-feature-title">Moments en Famille</h3>
+                            <p class="bp-feature-text">
+                                Plongez dans la piscine de la résidence et créez des souvenirs
+                                inoubliables avec vos proches dans un cadre tropical idyllique.
+                            </p>
+                        </div>
+                        <div class="bp-feature-item">
+                            <span class="bp-feature-number">03</span>
+                            <span class="bp-feature-icon">💆‍♀️</span>
+                            <h3 class="bp-feature-title">Relaxation Totale</h3>
+                            <p class="bp-feature-text">
+                                Massages possibles sur réservation avec notre partenaire Maruia Tahiti.
+                                Le luxe du bien-être livré à votre porte.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── APPARTEMENTS ───────────────────────────────── -->
+            <section class="bp-section bp-apartments-section" id="apartments">
+                <div class="bp-container">
+                    <div class="bp-apartments-intro">
+                        <div class="bp-reveal">
+                            <div class="bp-eyebrow">Nos hébergements</div>
+                            <h2 class="bp-section-title">Des espaces<br/><em>conçus pour vous</em></h2>
+                        </div>
+                        <div class="bp-reveal bp-delay-2">
+                            <p>
+                                Que vous soyez en famille, entre amis ou pour un grand événement,
+                                nos appartements s'adaptent à vos besoins. De 4 à 9 chambres,
+                                chaque configuration offre confort, espace et la même vue exceptionnelle.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bp-apartments-grid">
+
+                        <div class="bp-apt-card">
+                            <div class="bp-apt-img">
+                                <img src="https://i.imgur.com/RG4WcEf.jpeg"
+                                     alt="Appartement 4 chambres" loading="lazy"/>
+                                <div class="bp-apt-img-overlay"/>
+                                <div class="bp-apt-tag">4 chambres</div>
+                            </div>
+                            <div class="bp-apt-body">
+                                <h3 class="bp-apt-title">Appartement 4 Chambres</h3>
+                                <p class="bp-apt-text">
+                                    Spacieux et lumineux, parfait pour les familles ou groupes d'amis.
+                                    Tout le confort nécessaire pour un séjour mémorable.
+                                </p>
+                                <a href="https://www.billetweb.fr/shop.php?event=location-appartement-4-chambres-punaauia-tahiti"
+                                   target="_blank" rel="noopener noreferrer"
+                                   class="bp-apt-link">
+                                    Réserver
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="bp-apt-card">
+                            <div class="bp-apt-img">
+                                <img src="https://i.imgur.com/Lvr0CT1.jpeg"
+                                     alt="Appartement 5 chambres" loading="lazy"/>
+                                <div class="bp-apt-img-overlay"/>
+                                <div class="bp-apt-tag">5 chambres</div>
+                            </div>
+                            <div class="bp-apt-body">
+                                <h3 class="bp-apt-title">Appartement 5 Chambres</h3>
+                                <p class="bp-apt-text">
+                                    Notre plus grand appartement individuel. Espaces généreux et
+                                    vue exceptionnelle sur l'océan et Moorea.
+                                </p>
+                                <a href="https://www.billetweb.fr/shop.php?event=location-appartement-5-chambres-punaauia-tahiti"
+                                   target="_blank" rel="noopener noreferrer"
+                                   class="bp-apt-link">
+                                    Réserver
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="bp-apt-card">
+                            <div class="bp-apt-img">
+                                <img src="https://i.imgur.com/VHkQcpW.jpeg"
+                                     alt="Appartements 6 à 9 chambres" loading="lazy"/>
+                                <div class="bp-apt-img-overlay"/>
+                                <div class="bp-apt-tag">6 — 9 chambres</div>
+                            </div>
+                            <div class="bp-apt-body">
+                                <h3 class="bp-apt-title">Appartements 6 à 9 Chambres</h3>
+                                <p class="bp-apt-text">
+                                    Configurations flexibles pour grands groupes et événements spéciaux.
+                                    Un séjour sur mesure, sans compromis.
+                                </p>
+                                <a href="https://www.billetweb.fr/shop.php?event=location-appartements-6-7-8-9-chambres-punaauia-tahiti"
+                                   target="_blank" rel="noopener noreferrer"
+                                   class="bp-apt-link">
+                                    Réserver
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── PARTENAIRES ────────────────────────────────── -->
+            <section class="bp-section bp-partners-section" id="partners">
+                <div class="bp-container text-center">
+                    <div class="bp-reveal">
+                        <div class="bp-eyebrow">Nos partenaires</div>
+                        <h2 class="bp-section-title">Un réseau<br/><em>de confiance</em></h2>
+                    </div>
+                    <div class="bp-partners-grid">
+                        <a href="https://www.maruiatahiti.site"
+                           target="_blank" rel="noopener noreferrer"
+                           class="bp-partner-card">
+                            <div class="bp-partner-img">
+                                <img src="https://i.imgur.com/XGZ3nVR.jpeg" alt="Maruia Tahiti" loading="lazy"/>
+                            </div>
+                            <div class="bp-partner-info">
+                                <h4>Maruia Tahiti</h4>
+                                <p>Massages et Yoga à Tahiti</p>
+                            </div>
+                        </a>
+                        <a href="https://www.opalsea.site"
+                           target="_blank" rel="noopener noreferrer"
+                           class="bp-partner-card">
+                            <div class="bp-partner-img">
+                                <img src="https://i.imgur.com/UZl9On6.jpeg" alt="Opalsea" loading="lazy"/>
+                            </div>
+                            <div class="bp-partner-info">
+                                <h4>Opalsea</h4>
+                                <p>Partenaire digital de confiance au Fenua</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </t>
+</template>
+</odoo>

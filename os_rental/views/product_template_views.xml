@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_product_template_accommodation" model="ir.ui.view">
+        <field name="name">product.template.accommodation</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="before">
+                <group string="Logement saisonnier" invisible="not is_accommodation">
+                    <field name="is_accommodation" widget="boolean_toggle"/>
+                    <field name="max_occupancy"/>
+                    <field name="rate_per_person"
+                           help="Tarif par personne et par nuit. Le plancher de facturation est 50% de la capacité max."/>
+                    <field name="nightly_rate"
+                           string="Tarif nuit (entier, ancien)"
+                           invisible="not nightly_rate"
+                           readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
