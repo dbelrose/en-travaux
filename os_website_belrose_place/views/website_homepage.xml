@@ -21,8 +21,10 @@
                         avec vue imprenable sur Moorea.
                     </p>
                     <div class="belrose-hero-actions">
-                        <a href="#apartments" class="bp-btn-primary">
-                            <span>Nos appartements</span>
+                        <!-- Bouton principal → page de réservation -->
+                        <a href="/reservation" class="bp-btn-primary">
+                            <i class="fa fa-calendar-check-o" style="position:relative;z-index:1"/>
+                            <span>Réserver maintenant</span>
                         </a>
                         <a href="#gallery" class="bp-btn-ghost">
                             <span>Voir la galerie</span>
@@ -171,11 +173,7 @@
                                     Spacieux et lumineux, parfait pour les familles ou groupes d'amis.
                                     Tout le confort nécessaire pour un séjour mémorable.
                                 </p>
-                                <a href="https://www.billetweb.fr/shop.php?event=location-appartement-4-chambres-punaauia-tahiti"
-                                   target="_blank" rel="noopener noreferrer"
-                                   class="bp-apt-link">
-                                    Réserver
-                                </a>
+                                <a href="/reservation" class="bp-apt-link">Réserver</a>
                             </div>
                         </div>
 
@@ -192,11 +190,7 @@
                                     Notre plus grand appartement individuel. Espaces généreux et
                                     vue exceptionnelle sur l'océan et Moorea.
                                 </p>
-                                <a href="https://www.billetweb.fr/shop.php?event=location-appartement-5-chambres-punaauia-tahiti"
-                                   target="_blank" rel="noopener noreferrer"
-                                   class="bp-apt-link">
-                                    Réserver
-                                </a>
+                                <a href="/reservation" class="bp-apt-link">Réserver</a>
                             </div>
                         </div>
 
@@ -213,15 +207,20 @@
                                     Configurations flexibles pour grands groupes et événements spéciaux.
                                     Un séjour sur mesure, sans compromis.
                                 </p>
-                                <a href="https://www.billetweb.fr/shop.php?event=location-appartements-6-7-8-9-chambres-punaauia-tahiti"
-                                   target="_blank" rel="noopener noreferrer"
-                                   class="bp-apt-link">
-                                    Réserver
-                                </a>
+                                <a href="/reservation" class="bp-apt-link">Réserver</a>
                             </div>
                         </div>
 
                     </div>
+
+                    <!-- ── CTA central ──────────────────────────── -->
+                    <div class="text-center" style="margin-top:3rem">
+                        <a href="/reservation" class="bp-btn-primary" style="font-size:1rem;padding:1.1rem 3rem">
+                            <i class="fa fa-calendar-check-o" style="position:relative;z-index:1"/>
+                            <span>Vérifier les disponibilités</span>
+                        </a>
+                    </div>
+
                 </div>
             </section>
 

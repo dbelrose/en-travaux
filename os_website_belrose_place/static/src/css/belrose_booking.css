@@ -659,3 +659,69 @@
 .bp-result-rate-row {
     font-size: 0.85rem; color: rgba(255,255,255,0.6); padding: 0.3rem 0;
 }
+
+/* ── Wrapper embed Billetweb — fond forcé à #0D0F14 ────────────
+   export.js injecte l'iframe directement dans .bp-bw-embed-wrap.
+   background + border-radius assurent un rendu cohérent même si
+   l'iframe de Billetweb a elle-même un fond blanc.
+─────────────────────────────────────────────────────────────── */
+.bp-bw-embed-wrap {
+    background: #0d0f14;
+    border-radius: var(--bp-r-lg);
+    overflow: hidden;
+    padding: 0;               /* pas de padding : l'iframe prend toute la largeur */
+    min-height: 640px;
+    border: 1px solid var(--bp-border);
+}
+
+/* L'iframe générée par export.js */
+.bp-bw-embed-wrap iframe {
+    display: block;
+    width: 100% !important;
+    border: none !important;
+    background: #0d0f14;
+}
+
+/* Le lien .shop_frame avant transformation (quelques ms) */
+.bp-bw-embed-wrap a.shop_frame {
+    display: none;            /* masqué : export.js le remplace par l'iframe */
+}
+
+/* Fallback : si le JS est bloqué, on affiche quand même le lien */
+.no-js .bp-bw-embed-wrap a.shop_frame,
+.bp-bw-embed-wrap a.shop_frame:only-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: linear-gradient(135deg, var(--bp-teal), var(--bp-teal-light));
+    color: var(--bp-white) !important;
+    font-family: var(--bp-sans);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 1rem 2rem;
+    border-radius: var(--bp-r-md);
+    text-decoration: none;
+    margin: 2rem auto;
+}
+
+/* ── Section paiement sur la page de confirmation ────────────── */
+.bp-payment-section {
+    margin-top: 1.5rem;
+}
+
+/* ── État "en cours de génération" (job async pas encore terminé) */
+.bp-pay-pending {
+    background: rgba(26,122,116,0.08);
+    border: 1px solid rgba(26,122,116,0.2);
+    border-radius: var(--bp-r-md);
+    padding: 1.4rem 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.bp-pay-pending-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}

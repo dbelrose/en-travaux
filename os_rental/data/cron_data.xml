@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="cron_sync_billetweb_payments" model="ir.cron">
+            <field name="name">Synchro paiements Billetweb</field>
+            <field name="model_id" ref="os_rental.model_booking_reservation"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_sync_billetweb_payments()</field>
+            <!-- Toutes les heures -->
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field name="active">True</field>
+            <field name="priority">10</field>
+        </record>
+
+    </data>
+</odoo>

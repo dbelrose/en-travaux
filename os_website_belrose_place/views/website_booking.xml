@@ -344,14 +344,15 @@
     </t>
 </template>
 
-
 <!-- ================================================================
-     CONFIRMATION + BOUTON PAYER
+     CONFIRMATION + EMBED BILLETWEB
+     Approche : iframe directe + init manuelle de export.js via JS
+     (plus fiable qu'une détection automatique au chargement du script)
 ================================================================ -->
 <template id="bp_booking_confirmation" name="Belrose Place - Confirmation">
     <t t-call="website.layout">
         <div id="wrap" class="belrose-page bp-booking-page">
-            <section class="bp-section bp-section-centered">
+            <section class="bp-section" style="padding-top:7rem">
                 <div class="bp-container bp-container-sm">
                     <div class="bp-confirmation-card">
                         <div class="bp-confirmation-icon"><i class="fa fa-check-circle"/></div>
@@ -360,9 +361,11 @@
                             Votre demande <strong t-out="booking.name"/> a bien été reçue.
                         </p>
 
+                        <!-- Récap réservation -->
                         <div class="bp-booking-summary">
                             <div class="bp-summary-row">
-                                <span>Logement</span><strong t-out="booking.product_id.name"/>
+                                <span>Logement</span>
+                                <strong t-out="booking.product_id.name"/>
                             </div>
                             <div class="bp-summary-row">
                                 <span>Arrivée</span><strong t-out="booking.start_date"/>
@@ -372,20 +375,25 @@
                             </div>
                             <div class="bp-summary-row">
                                 <span>Durée</span>
-                                <strong><t t-out="booking.nights"/> nuit<t t-if="booking.nights > 1">s</t></strong>
+                                <strong>
+                                    <t t-out="booking.nights"/> nuit<t t-if="booking.nights > 1">s</t>
+                                </strong>
                             </div>
                             <div class="bp-summary-row">
-                                <span>Voyageurs facturés</span>
-                                <strong><t t-out="booking.guests_billed"/> pers.
+                                <span>Voyageurs</span>
+                                <strong>
+                                    <t t-out="booking.guests_requested or booking.guests_billed or 1"/> pers.
                                     <t t-if="booking.floor_applied">
                                         <span class="bp-floor-badge">plancher appliqué</span>
                                     </t>
                                 </strong>
                             </div>
-                            <div class="bp-summary-row">
-                                <span>Tarif / pers / nuit</span>
-                                <strong><t t-out="'%.0f' % booking.rate_per_person"/> XPF</strong>
-                            </div>
+                            <t t-if="booking.rate_per_person">
+                                <div class="bp-summary-row">
+                                    <span>Tarif / pers / nuit</span>
+                                    <strong><t t-out="'%.0f' % booking.rate_per_person"/> XPF</strong>
+                                </div>
+                            </t>
                             <t t-if="booking.discount_percent">
                                 <div class="bp-summary-row bp-summary-discount">
                                     <span>Réduction (<t t-out="'%.0f' % booking.discount_percent"/>%)</span>
@@ -394,42 +402,137 @@
                             </t>
                             <div class="bp-summary-row bp-summary-total">
                                 <span>Total</span>
-                                <strong><t t-out="'%.0f' % booking.total_amount"/> XPF</strong>
+                                <t t-if="booking.total_amount">
+                                    <strong><t t-out="'%.0f' % booking.total_amount"/> XPF</strong>
+                                </t>
+                                <t t-else="">
+                                    <strong style="color:rgba(255,255,255,0.4);font-style:italic;font-size:0.85rem">
+                                        affiché à l'étape suivante
+                                    </strong>
+                                </t>
                             </div>
                         </div>
 
-                        <!-- BOUTON PAYER — direct si l'URL est disponible -->
+                        <!-- CAS 1 — URL disponible → iframe directe -->
                         <t t-if="booking.billetweb_payment_url">
-                            <a t-attf-href="/reservation/paiement/{{booking.id}}"
-                               class="bp-btn-pay-now">
-                                <i class="fa fa-credit-card"/> Procéder au paiement
-                            </a>
-                            <p class="bp-pay-hint">
-                                <i class="fa fa-lock"/> Paiement sécurisé via Billetweb
-                            </p>
-                        </t>
-                        <t t-else="">
-                            <div class="bp-pay-pending">
-                                <i class="fa fa-hourglass-half"/>
-                                Le lien de paiement est en cours de génération.
-                                Vous recevrez un email à <strong t-out="booking.partner_id.email"/>.
+                            <div class="bp-payment-section">
+                                <p class="bp-pay-hint" style="margin-bottom:1.25rem">
+                                    <i class="fa fa-lock" style="color:var(--bp-teal-light)"/>
+                                    Paiement sécurisé — votre réservation sera confirmée après règlement
+                                </p>
+
+                                <!-- Conteneur de l'iframe -->
+                                <div id="bpPaymentContainer" style="
+                                    min-height:640px;
+                                    border-radius:var(--bp-r-lg);
+                                    overflow:hidden;
+                                    border:1px solid var(--bp-border);
+                                ">
+                                    <!-- L'iframe est injectée par le JS ci-dessous -->
+                                </div>
+
+                                <!-- Lien de secours (masqué si l'iframe charge) -->
+                                <p class="bp-pay-hint" style="margin-top:0.75rem" id="bpPayFallback">
+                                    Si le formulaire ne s'affiche pas,
+                                    <a t-attf-href="{{booking.billetweb_payment_url}}"
+                                       target="_blank" rel="noopener noreferrer"
+                                       style="color:var(--bp-teal-light)">
+                                        ouvrez-le dans un nouvel onglet
+                                    </a>
+                                </p>
+
+                                <!--
+                                    On stocke l'URL dans un data-attribute sur un élément
+                                    neutre — QWeb résout correctement t-attf- sur div.
+                                    Le JS lit cette valeur et injecte l'iframe après
+                                    DOMContentLoaded, évitant tout problème de timing.
+                                -->
+                                <div id="bpPaymentData"
+                                     t-attf-data-url="{{booking.billetweb_payment_url}}"
+                                     style="display:none"/>
                             </div>
                         </t>
 
-                        <div class="bp-confirmation-actions">
-                            <a href="/reservation/mes-reservations" class="bp-btn-ghost-sm"><span>Mes réservations</span></a>
+                        <!-- CAS 2 — URL pas encore prête → spinner + auto-refresh -->
+                        <t t-else="">
+                            <div class="bp-pay-pending">
+                                <div class="bp-pay-pending-inner">
+                                    <i class="fa fa-circle-o-notch fa-spin fa-2x"
+                                       style="color:var(--bp-teal-light);flex-shrink:0"/>
+                                    <div>
+                                        <strong style="color:var(--bp-white)">
+                                            Préparation du paiement en cours…
+                                        </strong>
+                                        <p style="margin:0.35rem 0 0;font-size:0.85rem;color:rgba(255,255,255,0.5)">
+                                            La page se rafraîchit automatiquement dans quelques secondes.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button onclick="window.location.reload()"
+                                        class="bp-btn-primary"
+                                        style="margin-top:1rem;font-size:0.85rem;padding:0.7rem 1.5rem;width:100%">
+                                    <i class="fa fa-refresh" style="position:relative;z-index:1"/>
+                                    <span>Rafraîchir maintenant</span>
+                                </button>
+                            </div>
+                            <script type="text/javascript">
+                                setTimeout(function () { window.location.reload(); }, 5000);
+                            </script>
+                        </t>
+
+                        <div class="bp-confirmation-actions" style="margin-top:1.75rem">
+                            <a href="/reservation/mes-reservations" class="bp-btn-ghost-sm">
+                                <span>Mes réservations</span>
+                            </a>
                             <a href="/reservation" class="bp-btn-ghost-sm"><span>Retour</span></a>
                         </div>
                     </div>
                 </div>
             </section>
         </div>
+
+        <!-- Script d'injection iframe — après DOMContentLoaded -->
+        <script type="text/javascript">
+        (function () {
+            function injectPaymentIframe() {
+                var dataEl = document.getElementById('bpPaymentData');
+                var container = document.getElementById('bpPaymentContainer');
+                if (!dataEl || !container) return;
+
+                var url = dataEl.getAttribute('data-url');
+                if (!url) return;
+
+                var iframe = document.createElement('iframe');
+                iframe.src = url;
+                iframe.style.cssText = 'display:block;width:100%;min-height:640px;border:none;';
+                iframe.setAttribute('frameborder', '0');
+                iframe.setAttribute('scrolling', 'auto');
+                iframe.setAttribute('allow', 'payment');
+                iframe.setAttribute('title', 'Paiement Billetweb');
+
+                // Si l'iframe charge correctement, on masque le lien de secours
+                iframe.addEventListener('load', function () {
+                    var fallback = document.getElementById('bpPayFallback');
+                    if (fallback) fallback.style.display = 'none';
+                });
+
+                container.appendChild(iframe);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', injectPaymentIframe);
+            } else {
+                injectPaymentIframe();
+            }
+        }());
+        </script>
     </t>
 </template>
 
 
 <!-- ================================================================
-     PAGE PAIEMENT — IFRAME BILLETWEB
+     PAGE PAIEMENT  /reservation/paiement/<id>
+     Même approche : iframe injectée par JS après DOMContentLoaded.
 ================================================================ -->
 <template id="bp_payment_iframe" name="Belrose Place - Paiement">
     <t t-call="website.layout">
@@ -446,52 +549,89 @@
             <section class="bp-section">
                 <div class="bp-container bp-container-md">
 
-                    <!-- Résumé compact -->
+                    <!-- Barre récap -->
                     <div class="bp-pay-summary-bar">
-                        <span><i class="fa fa-home"/> <t t-out="booking.product_id.name"/></span>
-                        <span><i class="fa fa-calendar"/> <t t-out="booking.start_date"/> → <t t-out="booking.end_date"/></span>
-                        <span><i class="fa fa-users"/> <t t-out="booking.guests_billed"/> pers.</span>
-                        <span class="bp-pay-total"><i class="fa fa-money"/> <strong><t t-out="'%.0f' % booking.total_amount"/> XPF</strong></span>
+                        <span>
+                            <i class="fa fa-home"/> <t t-out="booking.product_id.name"/>
+                        </span>
+                        <span>
+                            <i class="fa fa-calendar"/>
+                            <t t-out="booking.start_date"/> → <t t-out="booking.end_date"/>
+                        </span>
+                        <span>
+                            <i class="fa fa-users"/>
+                            <t t-out="booking.guests_requested or booking.guests_billed or 1"/> pers.
+                        </span>
+                        <span class="bp-pay-total">
+                            <i class="fa fa-money"/>
+                            <t t-if="booking.total_amount">
+                                <strong><t t-out="'%.0f' % booking.total_amount"/> XPF</strong>
+                            </t>
+                            <t t-else="">
+                                <span style="color:rgba(255,255,255,0.4);font-size:0.82rem">
+                                    montant sur Billetweb
+                                </span>
+                            </t>
+                        </span>
                     </div>
 
-                    <!-- Iframe Billetweb -->
-                    <div class="bp-iframe-wrap" id="bpIframeWrap">
-                        <iframe id="bpBilletwebIframe"
-                                t-att-src="payment_url"
-                                frameborder="0"
-                                scrolling="auto"
-                                allow="payment"
-                                title="Paiement Billetweb"/>
-                        <!-- Fallback affiché si l'iframe est bloquée -->
-                        <div class="bp-iframe-fallback bp-hidden" id="bpIframeFallback">
-                            <div class="bp-fallback-card">
-                                <i class="fa fa-external-link fa-2x"/>
-                                <p>L'interface de paiement ne peut pas s'afficher ici.<br/>
-                                   Cliquez ci-dessous pour payer sur le site Billetweb.</p>
-                                <a t-att-href="payment_url" target="_blank" rel="noopener noreferrer"
-                                   class="bp-btn-primary">
-                                    <i class="fa fa-credit-card"/> Payer sur Billetweb
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Conteneur iframe -->
+                    <div id="bpPaymentContainer" style="
+                        min-height:640px;
+                        border-radius:var(--bp-r-lg);
+                        overflow:hidden;
+                        border:1px solid var(--bp-border);
+                    "/>
 
-                    <!-- Lien de secours toujours visible en bas -->
-                    <div class="bp-iframe-direct-link">
-                        <a t-att-href="payment_url" target="_blank" rel="noopener noreferrer">
-                            <i class="fa fa-external-link"/> Ouvrir la page de paiement dans un nouvel onglet
+                    <!-- Lien de secours -->
+                    <div id="bpPayFallback" class="bp-iframe-direct-link" style="margin-top:1rem">
+                        <a t-attf-href="{{payment_url}}" target="_blank" rel="noopener noreferrer">
+                            <i class="fa fa-external-link"/> Ouvrir dans un nouvel onglet
                         </a>
                     </div>
 
+                    <!-- URL dans un data-attribute sur div (t-attf- fonctionne) -->
+                    <div id="bpPaymentData"
+                         t-attf-data-url="{{payment_url}}"
+                         style="display:none"/>
+
                 </div>
             </section>
-
-            <!-- Détection blocage iframe -->
-            <script type="application/json" id="bpPaymentData">
-                {"payment_url": "<t t-out='payment_url'/>"}
-            </script>
-
         </div>
+
+        <script type="text/javascript">
+        (function () {
+            function injectPaymentIframe() {
+                var dataEl = document.getElementById('bpPaymentData');
+                var container = document.getElementById('bpPaymentContainer');
+                if (!dataEl || !container) return;
+
+                var url = dataEl.getAttribute('data-url');
+                if (!url) return;
+
+                var iframe = document.createElement('iframe');
+                iframe.src = url;
+                iframe.style.cssText = 'display:block;width:100%;min-height:640px;border:none;';
+                iframe.setAttribute('frameborder', '0');
+                iframe.setAttribute('scrolling', 'auto');
+                iframe.setAttribute('allow', 'payment');
+                iframe.setAttribute('title', 'Paiement Billetweb');
+
+                iframe.addEventListener('load', function () {
+                    var fallback = document.getElementById('bpPayFallback');
+                    if (fallback) fallback.style.display = 'none';
+                });
+
+                container.appendChild(iframe);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', injectPaymentIframe);
+            } else {
+                injectPaymentIframe();
+            }
+        }());
+        </script>
     </t>
 </template>
 

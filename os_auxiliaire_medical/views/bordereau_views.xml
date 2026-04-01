@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_bordereau_form" model="ir.ui.view">
+        <field name="name">cps.bordereau.form</field>
+        <field name="model">cps.bordereau</field>
+        <field name="arch" type="xml">
+            <form string="Bordereau de facturation">
+                <header>
+                    <button name="action_validate" string="Valider" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_submit_cps" string="Transmettre à la CPS" type="object"
+                            class="btn-primary" invisible="state != 'validated'"/>
+                    <button name="action_close" string="Clôturer" type="object"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="Remettre en brouillon" type="object"
+                            invisible="state == 'draft'"/>
+                    <button name="action_print_bordereau" string="Imprimer PDF" type="object"
+                            icon="fa-file-pdf-o"/>
+                    <button name="action_export_excel" string="Exporter Excel" type="object"
+                            icon="fa-file-excel-o"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,validated,submitted,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identification">
+                            <field name="praticien_id"/>
+                            <field name="mois"/>
+                            <field name="date_bordereau"/>
+                        </group>
+                        <group string="Totaux">
+                            <field name="nb_feuilles" readonly="1"/>
+                            <field name="total_cps"     readonly="1"/>
+                            <field name="total_patient" readonly="1"/>
+                            <field name="total_general" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Feuilles de soins">
+                            <field name="feuille_ids" readonly="1">
+                                <tree string="Feuilles de soins">
+                                    <field name="name"/>
+                                    <field name="patient_id"/>
+                                    <field name="patient_dn"/>
+                                    <field name="date_debut_soins"/>
+                                    <field name="date_fin_soins"/>
+                                    <field name="montant_tiers_payant" sum="Total CPS"/>
+                                    <field name="montant_patient"      sum="Total Patient"/>
+                                    <field name="montant_total"        sum="Total"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Notes internes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── TREE — sum sur les 3 colonnes montants ── -->
+    <record id="view_bordereau_list" model="ir.ui.view">
+        <field name="name">cps.bordereau.list</field>
+        <field name="model">cps.bordereau</field>
+        <field name="arch" type="xml">
+            <tree string="Bordereaux"
+                  decoration-success="state=='closed'"
+                  decoration-info="state=='submitted'"
+                  decoration-warning="state=='validated'">
+                <field name="name"/>
+                <field name="praticien_id"/>
+                <field name="mois"/>
+                <field name="date_bordereau"/>
+                <field name="nb_feuilles"/>
+                <field name="total_cps"     sum="Total CPS"/>
+                <field name="total_patient" sum="Total Patient"/>
+                <field name="total_general" sum="Total général"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='closed'"
+                       decoration-info="state=='submitted'"
+                       decoration-warning="state=='validated'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ── SEARCH — filtres période identiques, défaut = mois en cours ── -->
+    <record id="view_bordereau_search" model="ir.ui.view">
+        <field name="name">cps.bordereau.search</field>
+        <field name="model">cps.bordereau</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher un bordereau">
+                <field name="name"/>
+                <field name="praticien_id"/>
+                <field name="mois"/>
+
+                <!-- État -->
+                <filter name="draft"     string="Brouillon"     domain="[('state','=','draft')]"/>
+                <filter name="validated" string="Validés"       domain="[('state','=','validated')]"/>
+                <filter name="submitted" string="Transmis CPS"  domain="[('state','=','submitted')]"/>
+                <filter name="closed"    string="Clôturés"      domain="[('state','=','closed')]"/>
+                <separator/>
+
+                <!-- Période via champs stockés annee / mois_num -->
+                <filter name="mois_en_cours" string="Mois en cours"
+                        domain="[('annee','=', context_today().year),
+                                 ('mois_num','=', context_today().month)]"/>
+                <filter name="mois_precedent" string="Mois précédent"
+                        domain="[('annee','=', (context_today().year if context_today().month &gt; 1 else context_today().year - 1)),
+                                 ('mois_num','=', (context_today().month - 1 if context_today().month &gt; 1 else 12))]"/>
+                <filter name="annee_en_cours" string="Année en cours"
+                        domain="[('annee','=', context_today().year)]"/>
+                <filter name="annee_precedente" string="Année précédente"
+                        domain="[('annee','=', context_today().year - 1)]"/>
+
+                <group expand="0" string="Grouper par">
+                    <filter name="group_praticien" string="Praticien"
+                            context="{'group_by': 'praticien_id'}"/>
+                    <filter name="group_state"     string="État"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_annee"     string="Année"
+                            context="{'group_by': 'date_bordereau:year'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── ACTION — défaut : mois en cours ── -->
+    <record id="action_bordereau" model="ir.actions.act_window">
+        <field name="name">Bordereaux</field>
+        <field name="res_model">cps.bordereau</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_bordereau_search"/>
+        <field name="context">{'search_default_mois_en_cours': 1}</field>
+    </record>
+
+</odoo>

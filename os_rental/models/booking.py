@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
+# os_rental/models/booking.py  — version complète avec :
+#   - action_mark_paid()  : passage en "payé" + email de confirmation
+#   - _send_paid_email()  : envoi du template email_template_booking_paid
+#   - _cron_sync_billetweb_payments() : cron horaire de rattrapage
+#   - webhook /booking/webhook/billetweb : utilise order_paid de l'API attendees
+
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 import requests
-import json
 import logging
 import math
 
@@ -36,30 +41,20 @@ class BookingReservation(models.Model):
     nights     = fields.Integer(string='Nuits', compute='_compute_nights', store=True)
 
     # ── Voyageurs ─────────────────────────────────────────────────────────────
-    guests_requested = fields.Integer(
-        string='Voyageurs demandés', default=1,
-        help="Nombre de personnes saisi par le voyageur lors de la recherche.",
-    )
-    guests_billed = fields.Integer(
-        string='Voyageurs facturés',
-        compute='_compute_amounts', store=True,
-        help="Après application du plancher (50% de la capacité max).",
-    )
-    floor_applied = fields.Boolean(
-        string='Plancher appliqué',
-        compute='_compute_amounts', store=True,
-    )
+    guests_requested = fields.Integer(string='Voyageurs demandés', default=1)
+    guests_billed    = fields.Integer(
+        string='Voyageurs facturés', compute='_compute_amounts', store=True)
+    floor_applied    = fields.Boolean(
+        string='Plancher appliqué', compute='_compute_amounts', store=True)
 
     # ── Tarification ──────────────────────────────────────────────────────────
     rate_per_person  = fields.Float(string='Tarif / pers / nuit (XPF)', required=True)
-    # Conservé pour compatibilité rétrocompatible
-    nightly_rate     = fields.Float(string='Tarif / nuit (XPF, calculé)',
+    nightly_rate     = fields.Float(string='Tarif / nuit (calculé)',
                                     compute='_compute_nightly_rate', store=True)
-
-    subtotal         = fields.Float(string='Sous-total',        compute='_compute_amounts', store=True)
-    discount_percent = fields.Float(string='Réduction (%)',     compute='_compute_amounts', store=True)
-    discount_amount  = fields.Float(string='Montant réduction', compute='_compute_amounts', store=True)
-    total_amount     = fields.Float(string='Montant total',     compute='_compute_amounts', store=True)
+    subtotal         = fields.Float(compute='_compute_amounts', store=True)
+    discount_percent = fields.Float(compute='_compute_amounts', store=True)
+    discount_amount  = fields.Float(compute='_compute_amounts', store=True)
+    total_amount     = fields.Float(compute='_compute_amounts', store=True)
 
     # ── Workflow ──────────────────────────────────────────────────────────────
     state = fields.Selection([
@@ -75,6 +70,74 @@ class BookingReservation(models.Model):
     billetweb_payment_url = fields.Char(string='URL Paiement Billetweb')
 
     notes = fields.Text(string='Notes')
+
+    # ── Réservations externes (Airbnb, Booking.com…) ──────────────────────────
+    is_external = fields.Boolean(
+        string='Réservation externe', default=False,
+        help="Importée depuis un calendrier iCal externe (Airbnb, Booking.com…).",
+    )
+    external_uid = fields.Char(
+        string='UID iCal',
+        help="Identifiant unique de l'événement dans le calendrier source.",
+        index=True,
+    )
+    external_source_id = fields.Many2one(
+        'booking.ical.source', string='Source',
+        ondelete='set null',
+    )
+
+    # ── Méthode à ajouter dans la classe BookingReservation ──────────────────────
+
+    @api.model
+    def _generate_ical_for_product(self, product_id):
+        """
+        Génère un flux iCal pour un logement donné.
+        Inclut toutes les réservations confirmées / en attente / payées.
+        Utilisé par le contrôleur /booking/ical/<product_id>.ics
+        """
+        bookings = self.search([
+            ('product_id', '=', product_id),
+            ('state', 'in', ['confirmed', 'payment_sent', 'paid']),
+            ('end_date', '>=', fields.Date.today()),
+        ])
+
+        lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Belrose Place//Odoo Booking//FR',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'X-WR-CALNAME:Belrose Place — Réservations',
+            'X-WR-TIMEZONE:Pacific/Tahiti',
+        ]
+
+        for b in bookings:
+            # Formatage dates sans heure (format DATE) — compatible Airbnb/Booking
+            dtstart = b.start_date.strftime('%Y%m%d')
+            dtend = b.end_date.strftime('%Y%m%d')
+            # Timestamp de création pour DTSTAMP
+            dtstamp = (b.create_date or fields.Datetime.now()).strftime('%Y%m%dT%H%M%SZ')
+            uid = f'{b.name}@belroseplace.site'
+
+            if b.is_external:
+                summary = f'Réservé ({b.external_source_id.name if b.external_source_id else "Externe"})'
+            else:
+                summary = f'Réservé — {b.product_id.name}'
+
+            lines += [
+                'BEGIN:VEVENT',
+                f'UID:{uid}',
+                f'DTSTAMP:{dtstamp}',
+                f'DTSTART;VALUE=DATE:{dtstart}',
+                f'DTEND;VALUE=DATE:{dtend}',
+                f'SUMMARY:{summary}',
+                f'STATUS:CONFIRMED',
+                'TRANSP:OPAQUE',
+                'END:VEVENT',
+            ]
+
+        lines.append('END:VCALENDAR')
+        return '\r\n'.join(lines)
 
     # ════════════════════════════════════════════════════════════════════════
     # CRUD
@@ -109,23 +172,18 @@ class BookingReservation(models.Model):
                 b.floor_applied = False
                 b.subtotal = b.discount_percent = b.discount_amount = b.total_amount = 0.0
                 continue
-
-            # Plancher : max(guests_requested, ceil(capacité / 2))
-            cap = b.product_id.max_occupancy or 1
+            cap   = b.product_id.max_occupancy or 1
             floor = math.ceil(cap / 2)
             billed = max(b.guests_requested or 1, floor)
-
             b.guests_billed = billed
             b.floor_applied = billed > (b.guests_requested or 1)
-
-            sub  = billed * b.rate_per_person * b.nights
+            sub = billed * b.rate_per_person * b.nights
             if b.nights >= s['monthly_nights']:
                 pct = s['monthly_discount']
             elif b.nights >= s['weekly_nights']:
                 pct = s['weekly_discount']
             else:
                 pct = 0.0
-
             disc = sub * pct / 100
             b.subtotal         = round(sub)
             b.discount_percent = pct
@@ -134,7 +192,6 @@ class BookingReservation(models.Model):
 
     @api.depends('guests_billed', 'rate_per_person')
     def _compute_nightly_rate(self):
-        """Compatibilité : nightly_rate = tarif effectif pour le nombre de pers facturées."""
         for b in self:
             b.nightly_rate = (b.guests_billed or 1) * b.rate_per_person
 
@@ -215,7 +272,7 @@ class BookingReservation(models.Model):
         s = self._get_settings()
         key  = s['billetweb_api_key']
         user = s['billetweb_user_id']
-        if ':' in key:
+        if ':' in (key or ''):
             user, key = key.split(':', 1)
         return (user or None), key
 
@@ -236,10 +293,80 @@ class BookingReservation(models.Model):
         self.state = 'cancelled'
 
     def action_mark_paid(self):
-        self.state = 'paid'
+        """
+        Passe la réservation en état 'paid' et envoie l'email de confirmation
+        au client. Idempotent : ne fait rien si déjà payé.
+        """
+        for booking in self:
+            if booking.state == 'paid':
+                continue
+            booking.state = 'paid'
+            booking.message_post(
+                body=_("✅ Paiement confirmé — statut mis à jour."),
+                message_type='comment',
+                subtype_xmlid='mail.mt_note',
+            )
+            booking._send_paid_email()
 
     # ════════════════════════════════════════════════════════════════════════
-    # BILLETWEB
+    # EMAILS
+    # ════════════════════════════════════════════════════════════════════════
+
+    def _send_payment_email(self):
+        """Email avec lien de paiement (appelé après création commande Billetweb)."""
+        self.ensure_one()
+        template = self.env.ref(
+            'os_rental.email_template_payment_link', raise_if_not_found=False)
+        if not template or not self.partner_id.email:
+            return
+        email_values = {
+            'email_to':   self.partner_id.email,
+            'email_from': (
+                self.company_id.email
+                or self.env.user.email
+                or self.env['ir.config_parameter'].sudo().get_param('mail.catchall.email')
+                or ''
+            ),
+        }
+        try:
+            template.send_mail(self.id, force_send=True, email_values=email_values)
+        except Exception as e:
+            _logger.error('Erreur envoi email lien paiement %s : %s', self.name, e)
+
+    def _send_paid_email(self):
+        """Email de confirmation de paiement (appelé par action_mark_paid)."""
+        self.ensure_one()
+        template = self.env.ref(
+            'os_rental.email_template_booking_paid', raise_if_not_found=False)
+        if not template:
+            _logger.warning('Template email_template_booking_paid introuvable pour %s', self.name)
+            return
+        if not self.partner_id.email:
+            _logger.warning('Pas d\'email pour le client de %s', self.name)
+            return
+        email_values = {
+            'email_to':   self.partner_id.email,
+            'email_from': (
+                self.company_id.email
+                or self.env.user.email
+                or self.env['ir.config_parameter'].sudo().get_param('mail.catchall.email')
+                or ''
+            ),
+            'subject': f'✅ Paiement confirmé — Réservation {self.name}',
+        }
+        try:
+            template.send_mail(self.id, force_send=True, email_values=email_values)
+            _logger.info('Email confirmation paiement envoyé à %s pour %s',
+                         self.partner_id.email, self.name)
+        except Exception as e:
+            _logger.error('Erreur envoi email confirmation paiement %s : %s', self.name, e)
+            self.message_post(
+                body=f"⚠️ Erreur envoi email confirmation : {e}",
+                message_type='comment', subtype_xmlid='mail.mt_note',
+            )
+
+    # ════════════════════════════════════════════════════════════════════════
+    # BILLETWEB — CRÉATION COMMANDE
     # ════════════════════════════════════════════════════════════════════════
 
     def _create_billetweb_order(self):
@@ -257,11 +384,11 @@ class BookingReservation(models.Model):
             return
 
         event_id = settings['billetweb_event_id']
-        base     = f'https://www.billetweb.fr/api'
+        base     = 'https://www.billetweb.fr/api'
         qs       = f"user={user}&key={key}&version=1" if user else f"key={key}&version=1"
         api_url  = f'{base}/event/{event_id}/add_order?{qs}'
 
-        parts    = self.partner_id.name.split()
+        parts     = self.partner_id.name.split()
         firstname = parts[0] if parts else ''
         lastname  = ' '.join(parts[1:]) if len(parts) > 1 else self.partner_id.name
 
@@ -303,7 +430,8 @@ class BookingReservation(models.Model):
 
                 if order_id:
                     self.billetweb_order_id = order_id
-                    # Récupérer l'URL de paiement
+
+                    # Récupérer l'URL de paiement via /attendees
                     att_qs  = f"user={user}&key={key}&version=1&order_id={order_id}" if user \
                               else f"key={key}&version=1&order_id={order_id}"
                     att_url = f'{base}/attendees?{att_qs}'
@@ -317,14 +445,12 @@ class BookingReservation(models.Model):
 
                     msg = f"✅ Commande Billetweb créée : {order_id}"
                     if self.billetweb_payment_url:
-                        msg += f"<br/>URL : <a href='{self.billetweb_payment_url}' target='_blank'>{self.billetweb_payment_url}</a>"
-                    self.message_post(body=msg, message_type='comment', subtype_xmlid='mail.mt_note')
+                        msg += (f"<br/>URL : <a href='{self.billetweb_payment_url}'"
+                                f" target='_blank'>{self.billetweb_payment_url}</a>")
+                    self.message_post(body=msg, message_type='comment',
+                                      subtype_xmlid='mail.mt_note')
 
-                    if self.partner_id.email and self.billetweb_payment_url:
-                        self._send_payment_email()
-                        self.state = 'payment_sent'
-                    else:
-                        self.state = 'confirmed'
+                    self.state = 'payment_sent' if self.billetweb_payment_url else 'confirmed'
 
         except requests.exceptions.RequestException as e:
             _logger.error('Erreur API Billetweb : %s', e)
@@ -333,32 +459,76 @@ class BookingReservation(models.Model):
                 message_type='comment', subtype_xmlid='mail.mt_note',
             )
 
-    def _send_payment_email(self):
-        self.ensure_one()
-        template = self.env.ref(
-            'os_rental.email_template_payment_link', raise_if_not_found=False)
-        if not template:
-            _logger.warning('Template email introuvable pour %s', self.name)
-            return
-        if not self.partner_id.email:
-            _logger.warning('Pas d\'email pour %s', self.partner_id.name)
-            return
-        email_values = {
-            'email_to':   self.partner_id.email,
-            'email_from': (
-                self.company_id.email
-                or self.env.user.email
-                or self.env['ir.config_parameter'].sudo().get_param('mail.catchall.email')
-                or ''
-            ),
-            'subject': f'Lien de paiement — Réservation {self.name}',
-        }
+    # ════════════════════════════════════════════════════════════════════════
+    # BILLETWEB — INTERROGATION ATTENDEES (webhook + cron)
+    # ════════════════════════════════════════════════════════════════════════
+
+    def _fetch_billetweb_attendees(self, order_id=None):
+        """
+        Appelle GET /api/attendees et retourne la liste brute.
+        Si order_id est fourni, filtre sur cette commande.
+        Retourne [] en cas d'erreur.
+        """
+        user, key = self.get_api_credentials()
+        if not key:
+            return []
+
+        qs = f"user={user}&key={key}&version=1" if user else f"key={key}&version=1"
+        if order_id:
+            qs += f"&order_id={order_id}"
+
+        settings  = self._get_settings()
+        event_id  = settings['billetweb_event_id']
+        url = f"https://www.billetweb.fr/api/event/{event_id}/attendees?{qs}"
+
         try:
-            template.send_mail(self.id, force_send=True, email_values=email_values)
-            _logger.info('Email envoyé à %s pour %s', self.partner_id.email, self.name)
+            r = requests.get(url, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+            return data if isinstance(data, list) else []
         except Exception as e:
-            _logger.error('Erreur envoi email %s : %s', self.name, e)
-            self.message_post(
-                body=f"⚠️ Erreur envoi email : {e}",
-                message_type='comment', subtype_xmlid='mail.mt_note',
-            )
+            _logger.error('Erreur récupération attendees Billetweb : %s', e)
+            return []
+
+    @api.model
+    def _cron_sync_billetweb_payments(self):
+        """
+        Tâche planifiée (toutes les heures).
+        Interroge l'API Billetweb pour chaque réservation en état
+        'confirmed' ou 'payment_sent' ayant un billetweb_order_id,
+        et passe en 'paid' celles dont order_paid == '1'.
+
+        Sécurité : on ne traite que les réservations actives (non annulées,
+        non déjà payées) pour limiter les appels API.
+        """
+        pending = self.search([
+            ('state', 'in', ['confirmed', 'payment_sent']),
+            ('billetweb_order_id', '!=', False),
+            ('billetweb_order_id', '!=', ''),
+        ])
+
+        if not pending:
+            return
+
+        _logger.info('Cron Billetweb : %d réservation(s) à vérifier', len(pending))
+
+        for booking in pending:
+            try:
+                attendees = booking._fetch_billetweb_attendees(
+                    order_id=booking.billetweb_order_id)
+
+                # order_paid = "1" signifie paiement encaissé
+                paid = any(
+                    str(a.get('order_paid', '0')) == '1'
+                    for a in attendees
+                )
+
+                if paid:
+                    _logger.info('Cron : paiement détecté pour %s', booking.name)
+                    booking.action_mark_paid()
+
+            except Exception as e:
+                # On logue mais on ne bloque pas le cron pour les autres
+                _logger.error('Cron Billetweb — erreur sur %s : %s', booking.name, e)
+
+        _logger.info('Cron Billetweb terminé.')

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="email_template_booking_paid" model="mail.template">
+            <field name="name">Confirmation paiement - Réservation</field>
+            <field name="model_id" ref="os_rental.model_booking_reservation"/>
+            <field name="email_to">{{ object.partner_id.email or '' }}</field>
+            <field name="email_from">{{ (object.company_id.email or user.email or '') }}</field>
+            <field name="reply_to">contact@belroseplace.site</field>
+            <field name="subject">✅ Paiement confirmé - Réservation {{ object.name }}</field>
+            <field name="body_html"><![CDATA[
+<div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
+
+    <!-- En-tête -->
+    <div style="background:#0d0f14;padding:32px 40px;text-align:center;">
+        <h1 style="font-family:Georgia,serif;font-weight:300;font-size:28px;
+                   color:#ffffff;margin:0 0 4px;">
+            Belrose Place
+        </h1>
+        <p style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;
+                  color:#c9a84c;margin:0;">
+            Punaauia · Tahiti
+        </p>
+    </div>
+
+    <!-- Bandeau succès -->
+    <div style="background:#1a7a74;padding:20px 40px;text-align:center;">
+        <p style="font-size:22px;color:#ffffff;margin:0;">
+            ✅ Votre paiement a bien été reçu
+        </p>
+    </div>
+
+    <!-- Corps -->
+    <div style="padding:36px 40px;background:#f9f9f9;">
+
+        <p style="color:#333;font-size:16px;margin:0 0 24px;">
+            Bonjour <strong><t t-out="object.partner_id.name or ''"/></strong>,
+        </p>
+
+        <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 28px;">
+            Votre paiement a été enregistré et votre séjour est désormais
+            <strong style="color:#1a7a74;">confirmé</strong>.
+            Nous avons hâte de vous accueillir à Belrose Place !
+        </p>
+
+        <!-- Récap réservation -->
+        <div style="background:#ffffff;border:1px solid #e8e8e8;
+                    border-radius:8px;padding:24px;margin-bottom:28px;">
+            <h2 style="font-family:Georgia,serif;font-size:18px;font-weight:400;
+                       color:#0d0f14;margin:0 0 16px;padding-bottom:12px;
+                       border-bottom:1px solid #f0f0f0;">
+                Détails de votre réservation
+            </h2>
+
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <tr>
+                    <td style="padding:8px 0;color:#888;width:45%;">Référence</td>
+                    <td style="padding:8px 0;color:#0d0f14;font-weight:600;">
+                        <t t-out="object.name or ''"/>
+                    </td>
+                </tr>
+                <tr style="background:#fafafa;">
+                    <td style="padding:8px 4px;color:#888;">Logement</td>
+                    <td style="padding:8px 4px;color:#0d0f14;font-weight:600;">
+                        <t t-out="(object.product_id and object.product_id.name) or ''"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 0;color:#888;">Arrivée</td>
+                    <td style="padding:8px 0;color:#0d0f14;font-weight:600;">
+                        <t t-out="(object.start_date and format_date(object.start_date)) or ''"/>
+                    </td>
+                </tr>
+                <tr style="background:#fafafa;">
+                    <td style="padding:8px 4px;color:#888;">Départ</td>
+                    <td style="padding:8px 4px;color:#0d0f14;font-weight:600;">
+                        <t t-out="(object.end_date and format_date(object.end_date)) or ''"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:8px 0;color:#888;">Durée</td>
+                    <td style="padding:8px 0;color:#0d0f14;font-weight:600;">
+                        <t t-out="object.nights or 0"/> nuit<t t-if="object.nights and object.nights > 1">s</t>
+                    </td>
+                </tr>
+                <tr style="background:#fafafa;">
+                    <td style="padding:8px 4px;color:#888;">Voyageurs</td>
+                    <td style="padding:8px 4px;color:#0d0f14;font-weight:600;">
+                        <t t-out="object.guests_requested or object.guests_billed or 1"/> pers.
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 0 8px;color:#888;border-top:1px solid #f0f0f0;">
+                        <strong>Montant payé</strong>
+                    </td>
+                    <td style="padding:12px 0 8px;border-top:1px solid #f0f0f0;">
+                        <strong style="font-size:18px;color:#1a7a74;">
+                            <t t-out="object.total_amount or 0"/> XPF
+                        </strong>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 8px;">
+            Pour toute question concernant votre séjour, n'hésitez pas à nous contacter.
+        </p>
+
+    </div>
+
+    <!-- Pied de page -->
+    <div style="background:#0d0f14;padding:24px 40px;">
+        <p style="font-family:Georgia,serif;font-size:14px;color:#c9a84c;
+                  margin:0 0 8px;">
+            <t t-out="(object.company_id and object.company_id.name) or 'Belrose Place'"/>
+        </p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.45);margin:0;line-height:1.6;">
+            Résidence Flamboyant, Punavai Nui — Punaauia, Tahiti<br/>
+            <t t-out="(object.company_id and object.company_id.phone) or '87 00 24 07'"/> ·
+            <t t-out="(object.company_id and object.company_id.email) or 'belroseplacetahiti@gmail.com'"/>
+        </p>
+    </div>
+
+</div>
+            ]]></field>
+        </record>
+
+    </data>
+</odoo>

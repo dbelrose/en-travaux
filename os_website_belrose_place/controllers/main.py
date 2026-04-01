@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+# os_website_belrose_place/controllers/main.py
+#
+# Correctif POST-Redirect-GET :
+#   reservation_submit  → crée la réservation puis REDIRIGE vers /reservation/confirmation/<id>
+#   reservation_confirm → nouvelle route GET, sûre au rechargement (F5 / auto-refresh)
+
 from odoo import http
 from odoo.http import request
 from datetime import datetime, date, timedelta
@@ -36,10 +42,6 @@ class BelrosePlaceWebsite(http.Controller):
         }
 
     def _price_breakdown(self, product, guests, nights, config):
-        """
-        Calcule la tarification avec plancher (50% de la capacité).
-        Délègue à product.compute_price si disponible, sinon calcul local.
-        """
         if hasattr(product, 'compute_price'):
             result = product.compute_price(
                 guests=guests, nights=nights,
@@ -50,7 +52,6 @@ class BelrosePlaceWebsite(http.Controller):
             )
             result.setdefault('nights', nights)
             return result
-        # Fallback si méthode indisponible
         floor = math.ceil(product.max_occupancy / 2) if product.max_occupancy else 1
         billed = max(int(guests), floor)
         rate = getattr(product, 'rate_per_person', None) or (
@@ -132,7 +133,7 @@ class BelrosePlaceWebsite(http.Controller):
             'error':       error,
         })
 
-    # ── Étape 2 : Formulaire de réservation ───────────────────────────────────
+    # ── Étape 2 : Formulaire ──────────────────────────────────────────────────
 
     @http.route('/reservation/nouveau', type='http', auth='public', website=True)
     def reservation_form(self, product_id=None, start_date=None, end_date=None,
@@ -167,7 +168,11 @@ class BelrosePlaceWebsite(http.Controller):
             'price_preview': price_preview,
         })
 
-    # ── Soumission ────────────────────────────────────────────────────────────
+    # ── Soumission POST → redirect GET ────────────────────────────────────────
+    #
+    # CORRECTIF : on ne rend plus le template ici.
+    # On crée la réservation puis on redirige vers la route GET /reservation/confirmation/<id>.
+    # Ainsi, F5 ou l'auto-refresh ne re-soumet JAMAIS le formulaire.
 
     @http.route('/reservation/soumettre', type='http', auth='public', website=True,
                 methods=['POST'], csrf=True)
@@ -210,9 +215,9 @@ class BelrosePlaceWebsite(http.Controller):
             })
             booking.action_confirm()
 
-            return request.render('os_website_belrose_place.bp_booking_confirmation', {
-                'booking': booking,
-            })
+            # POST-Redirect-GET : on redirige vers la page de confirmation GET
+            # pour qu'un rechargement ne re-soumette pas le formulaire.
+            return request.redirect(f'/reservation/confirmation/{booking.id}')
 
         except Exception as e:
             return request.render('os_website_belrose_place.bp_booking_error', {
@@ -222,22 +227,37 @@ class BelrosePlaceWebsite(http.Controller):
                 'end_date':      post.get('end_date', ''),
             })
 
-    # ── Page de paiement iframe Billetweb ─────────────────────────────────────
+    # ── Confirmation GET (sûre au rechargement) ───────────────────────────────
+
+    @http.route('/reservation/confirmation/<int:booking_id>', type='http',
+                auth='public', website=True)
+    def reservation_confirm(self, booking_id, **kwargs):
+        """
+        Page de confirmation — route GET.
+        Rechargeable sans risque (pas de re-soumission de formulaire).
+        L'auto-refresh Javascript peut donc appeler window.location.reload()
+        en toute sécurité pour attendre que billetweb_payment_url soit prêt.
+        """
+        booking = request.env['booking.reservation'].sudo().browse(booking_id)
+        if not booking.exists():
+            return request.redirect('/reservation')
+
+        return request.render('os_website_belrose_place.bp_booking_confirmation', {
+            'booking': booking,
+        })
+
+    # ── Page de paiement iframe ───────────────────────────────────────────────
 
     @http.route('/reservation/paiement/<int:booking_id>', type='http',
                 auth='public', website=True)
     def payment_page(self, booking_id, **kwargs):
-        """
-        Page intermédiaire affichant Billetweb dans une iframe.
-        Accessible publiquement via l'URL signée stockée dans billetweb_payment_url.
-        """
         booking = request.env['booking.reservation'].sudo().browse(booking_id)
         if not booking.exists() or not booking.billetweb_payment_url:
             return request.redirect('/reservation')
 
         return request.render('os_website_belrose_place.bp_payment_iframe', {
-            'booking':      booking,
-            'payment_url':  booking.billetweb_payment_url,
+            'booking':     booking,
+            'payment_url': booking.billetweb_payment_url,
         })
 
     # ── Mes réservations ──────────────────────────────────────────────────────
