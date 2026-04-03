@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Import EML (fournisseurs + alertes bancaires) -->
+    <menuitem id="menu_import_eml_wizard"
+              name="Importer emails (.eml)"
+              parent="account.menu_finance_payables"
+              action="action_import_eml_wizard"
+              sequence="30"
+              groups="account.group_account_invoice"/>
+
+    <!-- Configuration : règles fournisseurs -->
+    <menuitem id="menu_supplier_email_rule"
+              name="Règles import — Fournisseurs"
+              parent="account.menu_finance_configuration"
+              action="action_supplier_email_rule"
+              sequence="80"
+              groups="account.group_account_manager"/>
+
+    <!-- Configuration : règles alertes bancaires -->
+    <menuitem id="menu_bank_alert_rule"
+              name="Règles import — Alertes bancaires"
+              parent="account.menu_finance_configuration"
+              action="action_bank_alert_rule"
+              sequence="81"
+              groups="account.group_account_manager"/>
+
+</odoo>
