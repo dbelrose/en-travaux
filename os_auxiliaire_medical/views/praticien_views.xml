@@ -21,15 +21,19 @@
                         <h1><field name="name"/></h1>
                     </div>
                     <group>
-                        <group>
+                        <group string="Identification CPS">
                             <field name="code_auxiliaire"/>
                             <field name="profession"/>
                         </group>
-                        <group>
+                        <group string="Coordonnées">
                             <field name="tel"/>
                             <field name="bp"/>
                             <field name="email"/>
                         </group>
+                    </group>
+                    <group string="Compte Odoo associé">
+                        <field name="user_id"
+                               help="Associez un utilisateur pour que ses feuilles de soins lui soient pré-attribuées automatiquement."/>
                     </group>
                 </sheet>
                 <chatter/>
@@ -46,6 +50,7 @@
                 <field name="code_auxiliaire"/>
                 <field name="profession"/>
                 <field name="tel"/>
+                <field name="user_id"/>
                 <field name="feuille_count"/>
             </tree>
         </field>

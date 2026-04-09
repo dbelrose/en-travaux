@@ -17,10 +17,11 @@ Fonctionnalités :
     'website': 'https://www.opalsea.site',
     'category': 'Healthcare',
     'license': 'LGPL-3',
-    'depends': ['base', 'mail', 'account'],
+    'depends': ['base', 'mail', 'account', 'stock'],
     'data': [
         'security/ir.model.access.csv',
-        'data/data.xml',
+        'data/ir_sequence_data.xml',
+        'data/product.template.csv',
         'views/praticien_views.xml',
         'views/patient_views.xml',
         'views/feuille_soins_views.xml',

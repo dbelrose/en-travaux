@@ -1,6 +1,13 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 import re
+
+
+def _default_praticien(env):
+    """Retourne le praticien lié à l'utilisateur connecté, ou False."""
+    return env['cps.praticien'].search(
+        [('user_id', '=', env.uid)], limit=1
+    )
 
 
 class CpsFeuillesSoins(models.Model):
@@ -29,8 +36,11 @@ class CpsFeuillesSoins(models.Model):
     patient_dn = fields.Char(related='patient_id.dn', string='DN', readonly=True)
 
     # ── Praticien ───────────────────────────────────────────────────────────
-    praticien_id = fields.Many2one('cps.praticien', string='Auxiliaire médical', required=True,
-                                    tracking=True, ondelete='restrict')
+    praticien_id = fields.Many2one(
+        'cps.praticien', string='Auxiliaire médical', required=True,
+        tracking=True, ondelete='restrict',
+        default=lambda self: _default_praticien(self.env),
+    )
     code_auxiliaire = fields.Char(related='praticien_id.code_auxiliaire', readonly=True)
     auxiliaire_remplacant = fields.Boolean(string='Auxiliaire remplaçant')
     accord_prealable = fields.Char(string='Accord préalable n°')
@@ -77,36 +87,30 @@ class CpsFeuillesSoins(models.Model):
 
     # ── Champs texte pour formulaire PDF ────────────────────────────────────
 
-    # Selection
     state_texte = fields.Char(string='État (texte)', compute='_compute_champs_texte', store=True)
 
-    # Informations facultatives
     num_rsr_texte = fields.Char(string='N° RSR texte', compute='_compute_champs_texte', store=True)
     num_panier_texte = fields.Char(string='N° panier de soins texte', compute='_compute_champs_texte', store=True)
 
-    # Booléens
     auxiliaire_remplacant_oui = fields.Char(string='Remplaçant Oui', compute='_compute_champs_texte', store=True)
     auxiliaire_remplacant_non = fields.Char(string='Remplaçant Non', compute='_compute_champs_texte', store=True)
     parcours_soins_oui = fields.Char(string='Parcours de soins Oui', compute='_compute_champs_texte', store=True)
     at_mp_oui = fields.Char(string='AT/MP Oui', compute='_compute_champs_texte', store=True)
-    autre_oui = fields.Char(string='AT/MP Oui', compute='_compute_champs_texte', store=True)
-    maladie_oui = fields.Char(string='AT/MP Oui', compute='_compute_champs_texte', store=True)
+    autre_oui = fields.Char(string='Autres dérogations Oui', compute='_compute_champs_texte', store=True)
+    maladie_oui = fields.Char(string='Maladie Oui', compute='_compute_champs_texte', store=True)
     longue_maladie_oui = fields.Char(string='Longue maladie Oui', compute='_compute_champs_texte', store=True)
     maternite_oui = fields.Char(string='Maternité Oui', compute='_compute_champs_texte', store=True)
     urgence_oui = fields.Char(string='Urgence Oui', compute='_compute_champs_texte', store=True)
 
-    # Dates
     date_prescription_texte = fields.Char(string='Date prescription (texte)', compute='_compute_champs_texte', store=True)
     date_debut_soins_texte = fields.Char(string='Date début soins (texte)', compute='_compute_champs_texte', store=True)
     date_fin_soins_texte = fields.Char(string='Date fin soins (texte)', compute='_compute_champs_texte', store=True)
 
-    # Montants
     montant_total_texte = fields.Char(string='Montant total (texte)', compute='_compute_champs_texte', store=True)
     montant_tiers_payant_texte = fields.Char(string='Montant tiers payant (texte)', compute='_compute_champs_texte', store=True)
     montant_patient_texte = fields.Char(string='Montant patient (texte)', compute='_compute_champs_texte', store=True)
     taux_remboursement_texte = fields.Char(string='Taux remboursement (texte)', compute='_compute_champs_texte', store=True)
 
-    # Patient
     patient_nom_texte = fields.Char(string='Patient nom', compute='_compute_champs_texte', store=True)
     patient_prenom_texte = fields.Char(string='Patient prénom', compute='_compute_champs_texte', store=True)
     patient_dn_texte = fields.Char(string='Patient DN', compute='_compute_champs_texte', store=True)
@@ -115,17 +119,14 @@ class CpsFeuillesSoins(models.Model):
     patient_assure_prenom_texte = fields.Char(string='Assuré prénom', compute='_compute_champs_texte', store=True)
     patient_assure_dn_texte = fields.Char(string='Assuré DN', compute='_compute_champs_texte', store=True)
 
-    # Praticien
     praticien_name_texte = fields.Char(string='Praticien nom', compute='_compute_champs_texte', store=True)
     praticien_code_texte = fields.Char(string='Praticien code auxiliaire', compute='_compute_champs_texte', store=True)
     praticien_profession_texte = fields.Char(string='Praticien profession', compute='_compute_champs_texte', store=True)
     praticien_bp_texte = fields.Char(string='Praticien BP/Adresse', compute='_compute_champs_texte', store=True)
     praticien_tel_texte = fields.Char(string='Praticien téléphone', compute='_compute_champs_texte', store=True)
 
-    # Bordereau
     bordereau_name_texte = fields.Char(string='N° Bordereau', compute='_compute_champs_texte', store=True)
 
-    # Acte 1
     acte_01_date_texte = fields.Char(string='Acte 1 date', compute='_compute_champs_texte', store=True)
     acte_01_lettre_cle_texte = fields.Char(string='Acte 1 lettre clé', compute='_compute_champs_texte', store=True)
     acte_01_coefficient_texte = fields.Char(string='Acte 1 coefficient', compute='_compute_champs_texte', store=True)
@@ -138,7 +139,6 @@ class CpsFeuillesSoins(models.Model):
     acte_01_nuit_oui = fields.Char(string='Acte 1 nuit Oui', compute='_compute_champs_texte', store=True)
     acte_01_nuit_non = fields.Char(string='Acte 1 nuit Non', compute='_compute_champs_texte', store=True)
 
-    # Acte 2
     acte_02_date_texte = fields.Char(string='Acte 2 date', compute='_compute_champs_texte', store=True)
     acte_02_lettre_cle_texte = fields.Char(string='Acte 2 lettre clé', compute='_compute_champs_texte', store=True)
     acte_02_coefficient_texte = fields.Char(string='Acte 2 coefficient', compute='_compute_champs_texte', store=True)
@@ -177,7 +177,6 @@ class CpsFeuillesSoins(models.Model):
             return '{:,.0f}'.format(v).replace(',', ' ') if v else '0'
 
         state_labels = dict(self._fields['state'].selection)
-        condition_labels = dict(self._fields['condition'].selection)
         profession_labels = dict(self.env['cps.praticien']._fields['profession'].selection)
 
         for rec in self:
@@ -287,7 +286,20 @@ class CpsFeuillesSoins(models.Model):
         self.write({'state': 'draft'})
 
     def action_print_feuille(self):
-        return self.env.ref('os_auxiliaire_medical.action_report_feuille_soins').report_action(self)
+        """
+        Utilise la première action d'impression disponible pour ce modèle.
+        Le module tiers est responsable de déclarer l'action ir.actions.report.
+        """
+        report = self.env['ir.actions.report'].search(
+            [('model', '=', 'cps.feuille.soins'), ('report_type', '=', 'qweb-pdf')],
+            limit=1,
+        )
+        if not report:
+            raise UserError(_(
+                "Aucune action d'impression PDF n'est disponible pour ce modèle.\n"
+                "Vérifiez que le module d'impression est bien installé."
+            ))
+        return report.report_action(self)
 
 
 class CpsActe(models.Model):
@@ -301,11 +313,9 @@ class CpsActe(models.Model):
     lettre_cle = fields.Char(string='Lettre clé', size=10, help='Ex: AMO, AMK, AMS...')
     coefficient = fields.Float(string='Coefficient', digits=(6, 2))
 
-    # Frais de déplacement
     ifd = fields.Float(string='IFD', default=0)
     ik = fields.Float(string='IK', default=0)
 
-    # Majoration
     dimanche_ferie = fields.Boolean(string='Dimanche / J. Férie')
     nuit = fields.Boolean(string='Nuit')
     taux_majoration = fields.Float(string='Taux majoration (%)', default=0)
@@ -314,7 +324,6 @@ class CpsActe(models.Model):
 
     @api.onchange('lettre_cle', 'coefficient')
     def _onchange_compute_hint(self):
-        # Valeur unitaire indicative AMO = ~433 F (ajustable via config)
         tarifs = {'AMO': 433, 'AMK': 433, 'AMS': 283, 'AMI': 366}
         if self.lettre_cle and self.coefficient:
             base = tarifs.get(self.lettre_cle.upper(), 433)

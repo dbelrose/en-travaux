@@ -27,11 +27,10 @@
                     <div class="oe_title">
                         <label for="name" string="N° Facture"/>
                         <h1><field name="name"/></h1>
-                        <label for="fsa_numero" string="N° FSA25 "/>
+                        <label for="fsa_numero" string="N° FSA25"/>
                         <h3><field name="fsa_numero" placeholder="ex: 038998"/></h3>
                     </div>
 
-                    <!-- Photo du document -->
                     <field name="photo_feuille" widget="image" class="oe_avatar"
                            options="{'preview_image': 'photo_feuille'}"/>
 
@@ -40,11 +39,21 @@
                             <field name="patient_id" options="{'quick_create': True}"/>
                             <field name="patient_dn" readonly="1"/>
                         </group>
+
                         <group string="Auxiliaire médical">
-                            <field name="praticien_id"/>
-                            <field name="code_auxiliaire" readonly="1"/>
+                            <!--
+                                Affiché en lecture seule : pré-rempli depuis l'utilisateur connecté.
+                                Devient sélectionnable uniquement si "Auxiliaire remplaçant" est coché,
+                                pour désigner le praticien titulaire au nom duquel on saisit.
+                            -->
                             <field name="auxiliaire_remplacant"/>
-                            <field name="accord_prealable"/>
+                            <field name="praticien_id"
+                                   readonly="not auxiliaire_remplacant"
+                                   required="1"
+                                   options="{'no_create': True}"/>
+                            <field name="code_auxiliaire" readonly="1"/>
+                            <field name="accord_prealable"
+                                   invisible="not auxiliaire_remplacant"/>
                         </group>
                     </group>
 
@@ -137,16 +146,22 @@
                 <field name="patient_id"/>
                 <field name="praticien_id"/>
                 <field name="bordereau_id"/>
-                <filter name="draft" string="Brouillon" domain="[('state','=','draft')]"/>
-                <filter name="confirmed" string="Confirmées" domain="[('state','=','confirmed')]"/>
+                <filter name="mes_feuilles" string="Mes feuilles"
+                        domain="[('praticien_id.user_id', '=', uid)]"/>
+                <filter name="draft"     string="Brouillon"    domain="[('state','=','draft')]"/>
+                <filter name="confirmed" string="Confirmées"   domain="[('state','=','confirmed')]"/>
                 <filter name="submitted" string="Soumises CPS" domain="[('state','=','submitted')]"/>
-                <filter name="paid" string="Remboursées" domain="[('state','=','paid')]"/>
+                <filter name="paid"      string="Remboursées"  domain="[('state','=','paid')]"/>
                 <separator/>
-                <filter name="no_bordereau" string="Sans bordereau" domain="[('bordereau_id','=',False)]"/>
+                <filter name="no_bordereau" string="Sans bordereau"
+                        domain="[('bordereau_id','=',False)]"/>
                 <group expand="0" string="Grouper par">
-                    <filter name="group_praticien" string="Praticien" context="{'group_by': 'praticien_id'}"/>
-                    <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
-                    <filter name="group_mois" string="Mois" context="{'group_by': 'date_prescription:month'}"/>
+                    <filter name="group_praticien" string="Praticien"
+                            context="{'group_by': 'praticien_id'}"/>
+                    <filter name="group_state" string="État"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_mois" string="Mois"
+                            context="{'group_by': 'date_prescription:month'}"/>
                 </group>
             </search>
         </field>
@@ -158,7 +173,10 @@
         <field name="res_model">cps.feuille.soins</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_feuille_soins_search"/>
-        <field name="context">{'search_default_no_bordereau': 1}</field>
+        <field name="context">{
+            'search_default_mes_feuilles': 1,
+            'search_default_no_bordereau': 1
+        }</field>
     </record>
 
 </odoo>
