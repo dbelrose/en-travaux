@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_bordereau_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <!-- En-tête CPS -->
+                        <div style="background:#1F6B3A; color:white; padding:10px 15px; margin-bottom:8px;">
+                            <h2 style="margin:0; text-align:center; font-size:16px;">
+                                BORDEREAU DE FACTURATION
+                            </h2>
+                        </div>
+
+                        <!-- Info bordereau -->
+                        <table width="100%" style="font-size:11px; margin-bottom:6px;">
+                            <tr>
+                                <td><strong>Numéro de bordereau :</strong> <t t-out="doc.name"/></td>
+                                <td><strong>Date de bordereau :</strong>
+                                    <t t-out="doc.date_bordereau.strftime('%d.%m.%Y') if doc.date_bordereau else ''"/>
+                                </td>
+                                <td><strong>Nombre de factures :</strong> <t t-out="doc.nb_feuilles"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- Praticien -->
+                        <div style="background:#E8F5E9; padding:6px 12px; margin-bottom:6px;
+                                    color:#1F6B3A; font-size:10px; text-align:center;">
+                            <t t-out="doc.praticien_id.code_auxiliaire"/>
+                            &#160;·&#160;
+                            <t t-out="doc.praticien_id.name"/>
+                            &#160;·&#160;
+                            <t t-out="dict(doc.praticien_id._fields['profession'].selection).get(doc.praticien_id.profession, '')"/>
+                            &#160;·&#160; Tél :
+                            <t t-out="doc.praticien_id.tel or ''"/>
+                            &#160;·&#160;
+                            <t t-out="doc.praticien_id.bp or ''"/>
+                        </div>
+
+                        <h4 style="text-align:center; color:#1F6B3A; margin:8px 0;">
+                            <t t-out="doc.mois.upper()"/>
+                        </h4>
+
+                        <!-- Tableau -->
+                        <table class="table table-sm" width="100%"
+                               style="font-size:10px; border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:#1F6B3A; color:white;">
+                                    <th style="padding:5px; text-align:center; width:4%;">N°</th>
+                                    <th style="padding:5px; text-align:left; width:24%;">Nom Prénom</th>
+                                    <th style="padding:5px; text-align:center; width:12%;">DN</th>
+                                    <th style="padding:5px; text-align:center; width:10%;">Soins DU</th>
+                                    <th style="padding:5px; text-align:center; width:10%;">Soins AU</th>
+                                    <th style="padding:5px; text-align:center; width:13%;">Pmt CPS</th>
+                                    <th style="padding:5px; text-align:center; width:14%;">Pmt Patient</th>
+                                    <th style="padding:5px; text-align:center; width:13%;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="lignes" t-value="doc.get_lignes_for_report()"/>
+                                <t t-foreach="lignes" t-as="ligne">
+                                    <tr t-att-style="'background:#F5F5F5;' if ligne_index % 2 == 0 else ''">
+                                        <td style="padding:4px; text-align:center;"><t t-out="ligne['n']"/></td>
+                                        <td style="padding:4px;"><t t-out="ligne['nom_prenom']"/></td>
+                                        <td style="padding:4px; text-align:center;"><t t-out="ligne['dn']"/></td>
+                                        <td style="padding:4px; text-align:center;"><t t-out="ligne['date_debut']"/></td>
+                                        <td style="padding:4px; text-align:center;"><t t-out="ligne['date_fin']"/></td>
+                                        <td style="padding:4px; text-align:right;">
+                                            <t t-out="'{:,.0f} F'.format(ligne['montant_cps']).replace(',', ' ')"/>
+                                        </td>
+                                        <td style="padding:4px; text-align:right;">
+                                            <t t-out="'{:,.0f} F'.format(ligne['montant_patient']).replace(',', ' ')"/>
+                                        </td>
+                                        <td style="padding:4px; text-align:right;">
+                                            <t t-out="'{:,.0f} F'.format(ligne['montant_total']).replace(',', ' ')"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <tfoot>
+                                <tr style="background:#1F6B3A; color:white; font-weight:bold;">
+                                    <td colspan="5" style="padding:5px; text-align:center;">TOTAL</td>
+                                    <td style="padding:5px; text-align:right;">
+                                        <t t-out="'{:,.0f} F'.format(doc.total_cps).replace(',', ' ')"/>
+                                    </td>
+                                    <td style="padding:5px; text-align:right;">
+                                        <t t-out="'{:,.0f} F'.format(doc.total_patient).replace(',', ' ')"/>
+                                    </td>
+                                    <td style="padding:5px; text-align:right;">
+                                        <t t-out="'{:,.0f} F'.format(doc.total_general).replace(',', ' ')"/>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <!-- Pied de page légal -->
+                        <div style="margin-top:20px; font-size:7px; color:#888; text-align:center; border-top:1px solid #ddd; padding-top:8px;">
+                            CPS – Caisse de Prévoyance Sociale · Service Assurance Maladie ·
+                            BP 1 – 98713 Papeete TAHITI · Tél : 40 41 68 68 ·
+                            www.cps.pf · N° TAHITI 183707<br/>
+                            IMPORTANT : Est passible des peines applicables en matière de faux et d'usage de faux prévues par le Code pénal, tout individu qui aurait commis ou tenté de commettre un faux en écriture privée.
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_bordereau" model="ir.actions.report">
+        <field name="name">Bordereau de facturation</field>
+        <field name="model">cps.bordereau</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">os_auxiliaire_medical.report_bordereau_document</field>
+        <field name="report_file">os_auxiliaire_medical.report_bordereau_document</field>
+        <field name="binding_model_id" ref="model_cps_bordereau"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+</odoo>

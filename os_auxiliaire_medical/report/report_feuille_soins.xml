@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Template QWeb de la feuille de soins.
+        L'action ir.actions.report est déclarée par le module tiers d'impression.
+        Ce template est simplement disponible pour que ce module tiers le référence.
+    -->
+    <template id="report_feuille_soins_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-size:11px;">
+                        <!-- Titre -->
+                        <div style="text-align:center; margin-bottom:10px;">
+                            <h2 style="margin:0;">FEUILLE DE SOINS</h2>
+                            <h3 style="margin:0; color:#1F6B3A;">Auxiliaires médicaux</h3>
+                            <small>Masseur-kinésithérapeute, Orthophoniste, Orthoptiste, Pédicure-Podologue</small>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <span><strong>FSA 25</strong></span>
+                            <span><strong>N° Facture :</strong> <t t-out="doc.name"/></span>
+                        </div>
+
+                        <!-- Bénéficiaire -->
+                        <table width="100%" style="border:1px solid #999; margin-bottom:8px;">
+                            <tr style="background:#ddd;">
+                                <td colspan="4" style="padding:3px 6px; font-weight:bold; font-size:10px;">
+                                    BÉNÉFICIAIRE DES SOINS ET ASSURÉ(E)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 6px; width:15%;"><strong>Nom</strong></td>
+                                <td style="padding:4px 6px; width:35%;"><t t-out="doc.patient_id.nom"/></td>
+                                <td style="padding:4px 6px; width:15%;"><strong>Prénom</strong></td>
+                                <td style="padding:4px 6px;"><t t-out="doc.patient_id.prenom"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 6px;"><strong>DN</strong></td>
+                                <td style="padding:4px 6px;"><t t-out="doc.patient_id.dn"/></td>
+                                <td style="padding:4px 6px;"><strong>Né(e) le</strong></td>
+                                <td style="padding:4px 6px;">
+                                    <t t-out="doc.patient_id.date_naissance.strftime('%d/%m/%Y') if doc.patient_id.date_naissance else ''"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Auxiliaire médical -->
+                        <table width="100%" style="border:1px solid #999; margin-bottom:8px;">
+                            <tr style="background:#ddd;">
+                                <td colspan="4" style="padding:3px 6px; font-weight:bold; font-size:10px;">
+                                    AUXILIAIRE MÉDICAL
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 6px; width:30%;"><strong>Code auxiliaire</strong></td>
+                                <td style="padding:4px 6px;"><t t-out="doc.praticien_id.code_auxiliaire"/></td>
+                                <td style="padding:4px 6px; width:25%;"><strong>Accord préalable n°</strong></td>
+                                <td style="padding:4px 6px;"><t t-out="doc.accord_prealable or ''"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 6px;"><strong>Code prescripteur</strong></td>
+                                <td style="padding:4px 6px;"><t t-out="doc.code_prescripteur or ''"/></td>
+                                <td style="padding:4px 6px;"><strong>Date prescription</strong></td>
+                                <td style="padding:4px 6px;">
+                                    <t t-out="doc.date_prescription.strftime('%d/%m/%Y') if doc.date_prescription else ''"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Actes -->
+                        <table width="100%" style="border-collapse:collapse; margin-bottom:8px; font-size:10px;">
+                            <tr style="background:#1F6B3A; color:white;">
+                                <th style="padding:4px; text-align:center; width:18%;">Date</th>
+                                <th style="padding:4px; text-align:center; width:12%;">Lettre clé</th>
+                                <th style="padding:4px; text-align:center; width:15%;">Coefficient</th>
+                                <th style="padding:4px; text-align:center; width:10%;">IFD</th>
+                                <th style="padding:4px; text-align:center; width:10%;">IK</th>
+                                <th style="padding:4px; text-align:center; width:10%;">Dim/Fér.</th>
+                                <th style="padding:4px; text-align:center; width:10%;">Nuit</th>
+                                <th style="padding:4px; text-align:right; width:15%;">Montant</th>
+                            </tr>
+                            <t t-foreach="doc.acte_ids" t-as="acte">
+                                <tr t-att-style="'background:#F5F5F5;' if acte_index % 2 == 0 else ''">
+                                    <td style="padding:3px; text-align:center;">
+                                        <t t-out="acte.date_acte.strftime('%d/%m/%y') if acte.date_acte else ''"/>
+                                    </td>
+                                    <td style="padding:3px; text-align:center;"><t t-out="acte.lettre_cle or ''"/></td>
+                                    <td style="padding:3px; text-align:center;"><t t-out="acte.coefficient"/></td>
+                                    <td style="padding:3px; text-align:center;"><t t-out="acte.ifd or ''"/></td>
+                                    <td style="padding:3px; text-align:center;"><t t-out="acte.ik or ''"/></td>
+                                    <td style="padding:3px; text-align:center;">
+                                        <t t-if="acte.dimanche_ferie">✓</t>
+                                    </td>
+                                    <td style="padding:3px; text-align:center;">
+                                        <t t-if="acte.nuit">✓</t>
+                                    </td>
+                                    <td style="padding:3px; text-align:right;">
+                                        <t t-out="'{:,.0f} F'.format(acte.montant).replace(',', ' ')"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </table>
+
+                        <!-- Total et tiers payant -->
+                        <table width="100%" style="border:1px solid #999; font-size:10px;">
+                            <tr>
+                                <td style="padding:4px 6px; width:50%; font-weight:bold;">MONTANT TOTAL</td>
+                                <td style="padding:4px 6px; text-align:right; font-weight:bold;">
+                                    <t t-out="'{:,.0f} F'.format(doc.montant_total).replace(',', ' ')"/>
+                                </td>
+                            </tr>
+                            <tr style="background:#E8F5E9;">
+                                <td colspan="2" style="padding:3px 6px; font-size:9px; font-weight:bold; color:#1F6B3A;">
+                                    FACTURATION EN TIERS PAYANT
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 6px;">Montant payé par l'assuré</td>
+                                <td style="padding:4px 6px; text-align:right;">
+                                    <t t-out="'{:,.0f} F'.format(doc.montant_patient).replace(',', ' ')"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 6px;">Montant tiers payant (CPS)</td>
+                                <td style="padding:4px 6px; text-align:right;">
+                                    <t t-out="'{:,.0f} F'.format(doc.montant_tiers_payant).replace(',', ' ')"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="margin-top:20px; font-size:7px; color:#888; text-align:center;">
+                            CPS – Service Assurance Maladie · BP 1 – 98713 Papeete TAHITI · Tél : 40 41 68 68 · www.cps.pf
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>
