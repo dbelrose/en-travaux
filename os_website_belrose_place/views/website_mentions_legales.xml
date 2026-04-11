@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="mentions_legales" name="Belrose Place - Mentions Légales">
+    <t t-call="website.layout">
+        <div id="wrap" class="belrose-page">
+
+            <section class="bp-page-hero">
+                <div class="bp-container">
+                    <div class="bp-eyebrow">Informations légales</div>
+                    <h1 class="bp-page-title">Mentions<br/><em>Légales</em></h1>
+                </div>
+            </section>
+
+            <section class="bp-section" style="background:var(--bp-obsidian)">
+                <div class="bp-container">
+                    <div class="bp-legal-wrap">
+                        <div class="bp-legal-card">
+
+                            <div class="bp-legal-block">
+                                <h2>Éditeur du site</h2>
+                                <p>
+                                    <strong style="color:var(--bp-white)">Belrose Place</strong><br/>
+                                    Adresse : Résidence Flamboyant, Punavai Nui, Punaauia, Tahiti<br/>
+                                    Email : <a href="mailto:belroseplacetahiti@gmail.com">belroseplacetahiti@gmail.com</a><br/>
+                                    Téléphone : <a href="tel:+68987002407">87 00 24 07</a>
+                                </p>
+                            </div>
+
+                            <div class="bp-legal-block">
+                                <h2>Hébergement</h2>
+                                <p>
+                                    <strong style="color:var(--bp-white)">Odoo S.A.</strong><br/>
+                                    Chaussée de Namur, 40 — 1367 Grand-Rosière, Belgique<br/>
+                                    <a href="https://www.odoo.com" target="_blank" rel="noopener noreferrer">www.odoo.com</a>
+                                </p>
+                            </div>
+
+                            <div class="bp-legal-block">
+                                <h2>Propriété intellectuelle</h2>
+                                <p>
+                                    Les contenus présents sur ce site (textes, images, vidéos, etc.)
+                                    sont la propriété exclusive de Belrose Place, sauf mention contraire.
+                                    Toute reproduction ou utilisation sans autorisation préalable est strictement interdite.
+                                </p>
+                            </div>
+
+                            <div class="bp-legal-block">
+                                <h2>Protection des données personnelles</h2>
+                                <p>
+                                    Aucune donnée personnelle n'est collectée à l'insu des utilisateurs.
+                                    Les informations transmises via le formulaire de réservation sont
+                                    traitées de manière confidentielle et ne sont jamais revendues.
+                                </p>
+                            </div>
+
+                            <div class="bp-legal-block">
+                                <h2>Responsabilité</h2>
+                                <p>
+                                    Belrose Place décline toute responsabilité en cas d'erreurs,
+                                    d'interruptions ou de dommages liés à l'utilisation du site.
+                                </p>
+                            </div>
+
+                            <div class="bp-legal-block">
+                                <h2>Crédits</h2>
+                                <p>
+                                    Site conçu par
+                                    <a href="https://opalsea.site" target="_blank" rel="noopener noreferrer">OpalSea</a>
+                                    — Partenaire digital de confiance au Fenua.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <a href="/" class="bp-btn-ghost">← Retour à l'accueil</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </t>
+</template>
+</odoo>

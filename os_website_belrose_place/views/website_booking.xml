@@ -1,0 +1,771 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!-- ================================================================
+     ÉTAPE 1 — RECHERCHE
+================================================================ -->
+<template id="bp_reservation_search" name="Belrose Place - Réservation">
+    <t t-call="website.layout">
+        <div id="wrap" class="belrose-page bp-booking-page">
+
+            <section class="bp-search-hero">
+                <div class="bp-search-hero-bg"/>
+                <div class="bp-search-hero-overlay"/>
+                <div class="bp-container bp-search-hero-content">
+                    <div class="bp-eyebrow">Réservation</div>
+                    <h1 class="bp-page-hero-title">Trouvez votre <em>séjour idéal</em></h1>
+                    <p class="bp-page-hero-sub">Indiquez vos dates et le nombre de voyageurs.</p>
+
+                    <form action="/reservation" method="get" class="bp-search-bar">
+                        <div class="bp-search-field">
+                            <label for="bpArrival"><i class="fa fa-calendar-o"/> Arrivée</label>
+                            <input type="date" id="bpArrival" name="start_date"
+                                   class="bp-search-input" t-att-value="start_date"
+                                   t-att-min="today" t-att-max="max_date" required="required"/>
+                        </div>
+                        <div class="bp-search-sep"/>
+                        <div class="bp-search-field">
+                            <label for="bpDepart"><i class="fa fa-calendar"/> Départ</label>
+                            <input type="date" id="bpDepart" name="end_date"
+                                   class="bp-search-input" t-att-value="end_date"
+                                   t-att-min="today" t-att-max="max_date" required="required"/>
+                        </div>
+                        <div class="bp-search-sep"/>
+                        <div class="bp-search-field">
+                            <label for="bpGuests"><i class="fa fa-users"/> Voyageurs</label>
+                            <select id="bpGuests" name="guests" class="bp-search-input">
+                                <t t-foreach="range(1, 13)" t-as="n">
+                                    <option t-att-value="n"
+                                            t-att-selected="'selected' if str(n) == guests else None">
+                                        <t t-out="n"/> personne<t t-if="n > 1">s</t>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <button type="submit" class="bp-search-btn">
+                            <i class="fa fa-search"/> <span>Rechercher</span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="bp-section">
+                <div class="bp-container">
+
+                    <t t-if="not search_done">
+                        <div class="bp-pre-search">
+                            <div class="bp-pre-search-cards">
+                                <div class="bp-pre-card"><i class="fa fa-calendar-check-o"/><span>Choisissez vos dates</span></div>
+                                <div class="bp-pre-card-arrow">→</div>
+                                <div class="bp-pre-card"><i class="fa fa-users"/><span>Nombre de voyageurs</span></div>
+                                <div class="bp-pre-card-arrow">→</div>
+                                <div class="bp-pre-card"><i class="fa fa-home"/><span>Logements disponibles</span></div>
+                            </div>
+                            <p class="bp-pre-search-hint">
+                                <i class="fa fa-tag"/>
+                                Tarif par personne · plancher à 50% de capacité ·
+                                −<t t-out="'%.0f' % config.get('weekly_discount',10)"/>% dès <t t-out="config.get('weekly_nights',7)"/> nuits ·
+                                −<t t-out="'%.0f' % config.get('monthly_discount',20)"/>% dès <t t-out="config.get('monthly_nights',30)"/> nuits
+                            </p>
+                        </div>
+                    </t>
+
+                    <t t-if="search_done and error">
+                        <div class="bp-search-error"><i class="fa fa-exclamation-circle"/> <span t-out="error"/></div>
+                    </t>
+
+                    <t t-if="search_done and not error and results is not None">
+                        <div class="bp-results-header">
+                            <div class="bp-results-summary">
+                                <strong><t t-out="nights"/> nuit<t t-if="nights > 1">s</t></strong>
+                                · du <strong t-out="start_date"/> au <strong t-out="end_date"/>
+                                · <strong t-out="guests"/> voyageur<t t-if="int(guests) > 1">s</t>
+                            </div>
+                            <t t-set="nb_dispo" t-value="len([r for r in results if r['available']])"/>
+                            <span class="bp-results-count">
+                                <t t-out="nb_dispo"/> logement<t t-if="nb_dispo != 1">s</t> disponible<t t-if="nb_dispo != 1">s</t>
+                            </span>
+                        </div>
+
+                        <t t-if="not results">
+                            <div class="bp-empty-state">
+                                <i class="fa fa-calendar-times-o fa-3x"/>
+                                <p>Aucun logement ne correspond.<br/>Essayez d'autres dates ou contactez-nous.</p>
+                                <a href="/contactus" class="bp-btn-primary"><span>Nous contacter</span></a>
+                            </div>
+                        </t>
+
+                        <div class="bp-results-list">
+                            <t t-foreach="results" t-as="r">
+                                <article t-att-class="'bp-result-card' + ('' if r['available'] else ' bp-result-unavailable')">
+
+                                    <div class="bp-result-img">
+                                        <img t-if="r['product'].image_1920"
+                                             t-att-src="'/web/image/product.template/%s/image_1920' % r['product'].id"
+                                             t-att-alt="r['product'].name" loading="lazy"/>
+                                        <div class="bp-result-img-overlay"/>
+                                        <t t-if="not r['available']">
+                                            <div class="bp-result-unavail-badge">
+                                                <i class="fa fa-lock"/> Indisponible ces dates
+                                            </div>
+                                        </t>
+                                    </div>
+
+                                    <div class="bp-result-body">
+                                        <div class="bp-result-top">
+                                            <h3 class="bp-result-title" t-field="r['product'].name"/>
+                                            <div class="bp-result-meta">
+                                                <span><i class="fa fa-users"/> <t t-out="r['product'].max_occupancy"/> pers. max</span>
+                                                <span><i class="fa fa-money"/> <t t-out="'%.0f' % r['rate_per_person']"/> XPF/pers/nuit</span>
+                                            </div>
+                                            <p class="bp-result-desc" t-field="r['product'].description_sale"/>
+                                        </div>
+
+                                        <t t-if="r['available']">
+                                            <div class="bp-result-price-block">
+                                                <!-- Ligne tarif unitaire -->
+                                                <div class="bp-result-price-row bp-result-rate-row">
+                                                    <span>
+                                                        <t t-out="'%.0f' % r['rate_per_person']"/> XPF × <t t-out="r['guests_billed']"/> pers. × <t t-out="r['nights']"/> nuits
+                                                    </span>
+                                                    <span><t t-out="'%.0f' % r['subtotal']"/> XPF</span>
+                                                </div>
+                                                <!-- Avertissement plancher -->
+                                                <t t-if="r['floor_applied']">
+                                                    <div class="bp-result-price-row bp-floor-row">
+                                                        <span>
+                                                            <i class="fa fa-info-circle"/>
+                                                            Plancher appliqué — min. <t t-out="r['floor']"/> pers. (<t t-out="r['guests_requested']"/> demandées)
+                                                        </span>
+                                                    </div>
+                                                </t>
+                                                <!-- Réduction durée -->
+                                                <t t-if="r['discount_percent'] > 0">
+                                                    <div class="bp-result-price-row bp-result-discount-row">
+                                                        <span>Réduction <t t-out="'%.0f' % r['discount_percent']"/>%</span>
+                                                        <span>− <t t-out="'%.0f' % r['discount_amount']"/> XPF</span>
+                                                    </div>
+                                                </t>
+                                                <div class="bp-result-price-row bp-result-total-row">
+                                                    <span>Total</span>
+                                                    <strong><t t-out="'%.0f' % r['total']"/> XPF</strong>
+                                                </div>
+                                            </div>
+                                            <a t-attf-href="/reservation/nouveau?product_id={{r['product'].id}}&amp;start_date={{start_date}}&amp;end_date={{end_date}}&amp;guests={{guests}}"
+                                               class="bp-btn-reserve-main">
+                                                <i class="fa fa-check"/> Réserver ce logement
+                                            </a>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="bp-result-unavail-msg">Ce logement est déjà réservé pour ces dates.</div>
+                                            <a t-attf-href="/reservation/disponibilites/{{r['product'].id}}"
+                                               class="bp-btn-ghost-sm"><span>Voir les disponibilités</span></a>
+                                        </t>
+                                    </div>
+                                </article>
+                            </t>
+                        </div>
+                    </t>
+                </div>
+            </section>
+        </div>
+    </t>
+</template>
+
+
+<!-- ================================================================
+     ÉTAPE 2 — FORMULAIRE
+================================================================ -->
+<template id="bp_booking_form" name="Belrose Place - Formulaire de Réservation">
+    <t t-call="website.layout">
+        <div id="wrap" class="belrose-page bp-booking-page">
+
+            <section class="bp-page-hero">
+                <div class="bp-page-hero-overlay"/>
+                <div class="bp-container">
+                    <div class="bp-eyebrow"><a href="/reservation" class="bp-back-link">← Retour</a></div>
+                    <h1 class="bp-page-hero-title">Finaliser la <em>réservation</em></h1>
+                </div>
+            </section>
+
+            <section class="bp-section">
+                <div class="bp-container">
+                    <div class="bp-booking-layout">
+
+                        <!-- Récap logement + prix -->
+                        <aside class="bp-booking-aside">
+                            <div class="bp-booking-aside-card">
+                                <div class="bp-aside-img-wrap">
+                                    <img t-if="product.image_1920"
+                                         t-att-src="'/web/image/product.template/%s/image_1920' % product.id"
+                                         t-att-alt="product.name"/>
+                                </div>
+                                <div class="bp-aside-body">
+                                    <h3 t-field="product.name"/>
+                                    <p t-field="product.description_sale"/>
+                                    <div class="bp-aside-meta">
+                                        <div class="bp-aside-meta-row">
+                                            <span><i class="fa fa-users"/> Capacité</span>
+                                            <strong><t t-out="product.max_occupancy"/> pers.</strong>
+                                        </div>
+                                        <div class="bp-aside-meta-row">
+                                            <span><i class="fa fa-money"/> Tarif/pers/nuit</span>
+                                            <strong><t t-out="'%.0f' % product.rate_per_person"/> XPF</strong>
+                                        </div>
+                                    </div>
+
+                                    <t t-if="price_preview">
+                                        <div class="bp-aside-price-summary">
+                                            <div class="bp-aside-price-row">
+                                                <span>
+                                                    <t t-out="'%.0f' % price_preview['rate_per_person']"/> XPF
+                                                    × <t t-out="price_preview['guests_billed']"/> pers.
+                                                    × <t t-out="price_preview['nights']"/> nuits
+                                                </span>
+                                                <span><t t-out="'%.0f' % price_preview['subtotal']"/> XPF</span>
+                                            </div>
+                                            <t t-if="price_preview['floor_applied']">
+                                                <div class="bp-aside-price-row bp-aside-floor">
+                                                    <span><i class="fa fa-info-circle"/> Plancher <t t-out="price_preview['floor']"/> pers. appliqué</span>
+                                                </div>
+                                            </t>
+                                            <t t-if="price_preview['discount_percent'] > 0">
+                                                <div class="bp-aside-price-row bp-aside-discount">
+                                                    <span><t t-out="price_preview.get('discount_label', 'Réduction')"/> (<t t-out="'%.0f' % price_preview['discount_percent']"/>%)</span>
+                                                    <span>− <t t-out="'%.0f' % price_preview['discount_amount']"/> XPF</span>
+                                                </div>
+                                            </t>
+                                            <div class="bp-aside-price-row bp-aside-total">
+                                                <span>Total</span>
+                                                <strong><t t-out="'%.0f' % price_preview['total']"/> XPF</strong>
+                                            </div>
+                                        </div>
+                                    </t>
+
+                                    <div class="bp-aside-discounts">
+                                        <div class="bp-discount-badge"><i class="fa fa-tag"/> −<t t-out="'%.0f' % config.get('weekly_discount',10)"/>% dès <t t-out="config.get('weekly_nights',7)"/> nuits</div>
+                                        <div class="bp-discount-badge"><i class="fa fa-tag"/> −<t t-out="'%.0f' % config.get('monthly_discount',20)"/>% dès <t t-out="config.get('monthly_nights',30)"/> nuits</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+
+                        <!-- Formulaire -->
+                        <div class="bp-booking-form-wrap">
+                            <form action="/reservation/soumettre" method="post" class="bp-form">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="product_id" t-att-value="product.id"/>
+                                <input type="hidden" name="guests" t-att-value="guests"/>
+
+                                <div class="bp-form-section">
+                                    <h4 class="bp-form-section-title"><span class="bp-step-num">1</span> Dates de séjour</h4>
+                                    <div class="bp-form-row bp-form-row-2">
+                                        <div class="bp-form-group">
+                                            <label for="bp_start_date">Arrivée <span class="bp-required">*</span></label>
+                                            <input type="date" id="bp_start_date" name="start_date"
+                                                   class="bp-input" t-att-value="start_date"
+                                                   t-att-min="today" t-att-max="max_date" required="required"/>
+                                        </div>
+                                        <div class="bp-form-group">
+                                            <label for="bp_end_date">Départ <span class="bp-required">*</span></label>
+                                            <input type="date" id="bp_end_date" name="end_date"
+                                                   class="bp-input" t-att-value="end_date"
+                                                   t-att-min="today" t-att-max="max_date" required="required"/>
+                                        </div>
+                                    </div>
+                                    <div id="bpPriceEstimate" class="bp-price-estimate bp-hidden">
+                                        <div class="bp-price-row">
+                                            <span><span id="bpNights">0</span> nuits × <span id="bpGuestsBilled">-</span> pers. × <t t-out="'%.0f' % product.rate_per_person"/> XPF</span>
+                                            <span class="bpe-value" id="bpSubtotal"/>
+                                        </div>
+                                        <div id="bpFloorRow" class="bp-price-row bp-floor-row bp-hidden">
+                                            <span id="bpFloorMsg"/>
+                                        </div>
+                                        <div id="bpDiscountRow" class="bp-price-row bp-discount-row bp-hidden">
+                                            <span id="bpDiscountLabel"/>
+                                            <span class="bpe-value bp-discount" id="bpDiscountAmount"/>
+                                        </div>
+                                        <div class="bp-price-row bp-price-total">
+                                            <span>Total estimé</span>
+                                            <span class="bpe-value" id="bpTotal"/>
+                                        </div>
+                                    </div>
+                                    <div id="bpAvailAlert" class="bp-avail-alert bp-hidden"/>
+                                </div>
+
+                                <div class="bp-form-section">
+                                    <h4 class="bp-form-section-title"><span class="bp-step-num">2</span> Vos coordonnées</h4>
+                                    <div class="bp-form-group">
+                                        <label for="bp_name">Nom complet <span class="bp-required">*</span></label>
+                                        <input type="text" id="bp_name" name="name"
+                                               class="bp-input" required="required" placeholder="Jean Dupont"/>
+                                    </div>
+                                    <div class="bp-form-row bp-form-row-2">
+                                        <div class="bp-form-group">
+                                            <label for="bp_email">Email <span class="bp-required">*</span></label>
+                                            <input type="email" id="bp_email" name="email"
+                                                   class="bp-input" required="required" placeholder="jean@exemple.com"/>
+                                        </div>
+                                        <div class="bp-form-group">
+                                            <label for="bp_phone">Téléphone</label>
+                                            <input type="tel" id="bp_phone" name="phone"
+                                                   class="bp-input" placeholder="+689 87 xx xx xx"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bp-form-section">
+                                    <h4 class="bp-form-section-title"><span class="bp-step-num">3</span> Informations complémentaires</h4>
+                                    <div class="bp-form-group">
+                                        <label for="bp_notes">Remarques</label>
+                                        <textarea id="bp_notes" name="notes" class="bp-input bp-textarea"
+                                                  rows="3" placeholder="Heure d'arrivée, besoins particuliers…"/>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="bp-submit-btn">
+                                    <i class="fa fa-lock"/> Confirmer la réservation
+                                </button>
+                                <p class="bp-submit-hint">
+                                    <i class="fa fa-shield"/> Réservation sécurisée · Paiement à l'étape suivante
+                                </p>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <script type="application/json" id="bpBookingConfig">
+                {"product_id": <t t-out="product.id"/>, "min_nights": <t t-out="config.get('min_nights',2)"/>,
+                 "guests": <t t-out="guests or 1"/>, "availability_url": "/reservation/disponibilite"}
+            </script>
+        </div>
+    </t>
+</template>
+
+<!-- ================================================================
+     CONFIRMATION + EMBED BILLETWEB
+     Approche : iframe directe + init manuelle de export.js via JS
+     (plus fiable qu'une détection automatique au chargement du script)
+================================================================ -->
+<template id="bp_booking_confirmation" name="Belrose Place - Confirmation">
+    <t t-call="website.layout">
+        <div id="wrap" class="belrose-page bp-booking-page">
+            <section class="bp-section" style="padding-top:7rem">
+                <div class="bp-container bp-container-sm">
+                    <div class="bp-confirmation-card">
+                        <div class="bp-confirmation-icon"><i class="fa fa-check-circle"/></div>
+                        <h2>Réservation enregistrée !</h2>
+                        <p class="bp-confirmation-sub">
+                            Votre demande <strong t-out="booking.name"/> a bien été reçue.
+                        </p>
+
+                        <!-- Récap réservation -->
+                        <div class="bp-booking-summary">
+                            <div class="bp-summary-row">
+                                <span>Logement</span>
+                                <strong t-out="booking.product_id.name"/>
+                            </div>
+                            <div class="bp-summary-row">
+                                <span>Arrivée</span><strong t-out="booking.start_date"/>
+                            </div>
+                            <div class="bp-summary-row">
+                                <span>Départ</span><strong t-out="booking.end_date"/>
+                            </div>
+                            <div class="bp-summary-row">
+                                <span>Durée</span>
+                                <strong>
+                                    <t t-out="booking.nights"/> nuit<t t-if="booking.nights > 1">s</t>
+                                </strong>
+                            </div>
+                            <div class="bp-summary-row">
+                                <span>Voyageurs</span>
+                                <strong>
+                                    <t t-out="booking.guests_requested or booking.guests_billed or 1"/> pers.
+                                    <t t-if="booking.floor_applied">
+                                        <span class="bp-floor-badge">plancher appliqué</span>
+                                    </t>
+                                </strong>
+                            </div>
+                            <t t-if="booking.rate_per_person">
+                                <div class="bp-summary-row">
+                                    <span>Tarif / pers / nuit</span>
+                                    <strong><t t-out="'%.0f' % booking.rate_per_person"/> XPF</strong>
+                                </div>
+                            </t>
+                            <t t-if="booking.discount_percent">
+                                <div class="bp-summary-row bp-summary-discount">
+                                    <span>Réduction (<t t-out="'%.0f' % booking.discount_percent"/>%)</span>
+                                    <strong>− <t t-out="'%.0f' % booking.discount_amount"/> XPF</strong>
+                                </div>
+                            </t>
+                            <div class="bp-summary-row bp-summary-total">
+                                <span>Total</span>
+                                <t t-if="booking.total_amount">
+                                    <strong><t t-out="'%.0f' % booking.total_amount"/> XPF</strong>
+                                </t>
+                                <t t-else="">
+                                    <strong style="color:rgba(255,255,255,0.4);font-style:italic;font-size:0.85rem">
+                                        affiché à l'étape suivante
+                                    </strong>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- CAS 1 — URL disponible → iframe directe -->
+                        <t t-if="booking.billetweb_payment_url">
+                            <div class="bp-payment-section">
+                                <p class="bp-pay-hint" style="margin-bottom:1.25rem">
+                                    <i class="fa fa-lock" style="color:var(--bp-teal-light)"/>
+                                    Paiement sécurisé — votre réservation sera confirmée après règlement
+                                </p>
+
+                                <!-- Conteneur de l'iframe -->
+                                <div id="bpPaymentContainer" style="
+                                    min-height:640px;
+                                    border-radius:var(--bp-r-lg);
+                                    overflow:hidden;
+                                    border:1px solid var(--bp-border);
+                                ">
+                                    <!-- L'iframe est injectée par le JS ci-dessous -->
+                                </div>
+
+                                <!-- Lien de secours (masqué si l'iframe charge) -->
+                                <p class="bp-pay-hint" style="margin-top:0.75rem" id="bpPayFallback">
+                                    Si le formulaire ne s'affiche pas,
+                                    <a t-attf-href="{{booking.billetweb_payment_url}}"
+                                       target="_blank" rel="noopener noreferrer"
+                                       style="color:var(--bp-teal-light)">
+                                        ouvrez-le dans un nouvel onglet
+                                    </a>
+                                </p>
+
+                                <!--
+                                    On stocke l'URL dans un data-attribute sur un élément
+                                    neutre — QWeb résout correctement t-attf- sur div.
+                                    Le JS lit cette valeur et injecte l'iframe après
+                                    DOMContentLoaded, évitant tout problème de timing.
+                                -->
+                                <div id="bpPaymentData"
+                                     t-attf-data-url="{{booking.billetweb_payment_url}}"
+                                     style="display:none"/>
+                            </div>
+                        </t>
+
+                        <!-- CAS 2 — URL pas encore prête → spinner + auto-refresh -->
+                        <t t-else="">
+                            <div class="bp-pay-pending">
+                                <div class="bp-pay-pending-inner">
+                                    <i class="fa fa-circle-o-notch fa-spin fa-2x"
+                                       style="color:var(--bp-teal-light);flex-shrink:0"/>
+                                    <div>
+                                        <strong style="color:var(--bp-white)">
+                                            Préparation du paiement en cours…
+                                        </strong>
+                                        <p style="margin:0.35rem 0 0;font-size:0.85rem;color:rgba(255,255,255,0.5)">
+                                            La page se rafraîchit automatiquement dans quelques secondes.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button onclick="window.location.reload()"
+                                        class="bp-btn-primary"
+                                        style="margin-top:1rem;font-size:0.85rem;padding:0.7rem 1.5rem;width:100%">
+                                    <i class="fa fa-refresh" style="position:relative;z-index:1"/>
+                                    <span>Rafraîchir maintenant</span>
+                                </button>
+                            </div>
+                            <script type="text/javascript">
+                                setTimeout(function () { window.location.reload(); }, 5000);
+                            </script>
+                        </t>
+
+                        <div class="bp-confirmation-actions" style="margin-top:1.75rem">
+                            <a href="/reservation/mes-reservations" class="bp-btn-ghost-sm">
+                                <span>Mes réservations</span>
+                            </a>
+                            <a href="/reservation" class="bp-btn-ghost-sm"><span>Retour</span></a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Script d'injection iframe — après DOMContentLoaded -->
+        <script type="text/javascript">
+        (function () {
+            function injectPaymentIframe() {
+                var dataEl = document.getElementById('bpPaymentData');
+                var container = document.getElementById('bpPaymentContainer');
+                if (!dataEl || !container) return;
+
+                var url = dataEl.getAttribute('data-url');
+                if (!url) return;
+
+                var iframe = document.createElement('iframe');
+                iframe.src = url;
+                iframe.style.cssText = 'display:block;width:100%;min-height:640px;border:none;';
+                iframe.setAttribute('frameborder', '0');
+                iframe.setAttribute('scrolling', 'auto');
+                iframe.setAttribute('allow', 'payment');
+                iframe.setAttribute('title', 'Paiement Billetweb');
+
+                // Si l'iframe charge correctement, on masque le lien de secours
+                iframe.addEventListener('load', function () {
+                    var fallback = document.getElementById('bpPayFallback');
+                    if (fallback) fallback.style.display = 'none';
+                });
+
+                container.appendChild(iframe);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', injectPaymentIframe);
+            } else {
+                injectPaymentIframe();
+            }
+        }());
+        </script>
+    </t>
+</template>
+
+
+<!-- ================================================================
+     PAGE PAIEMENT  /reservation/paiement/<id>
+     Même approche : iframe injectée par JS après DOMContentLoaded.
+================================================================ -->
+<template id="bp_payment_iframe" name="Belrose Place - Paiement">
+    <t t-call="website.layout">
+        <div id="wrap" class="belrose-page bp-booking-page">
+
+            <section class="bp-page-hero">
+                <div class="bp-page-hero-overlay"/>
+                <div class="bp-container">
+                    <div class="bp-eyebrow">Paiement sécurisé</div>
+                    <h1 class="bp-page-hero-title">Réservation <em t-out="booking.name"/></h1>
+                </div>
+            </section>
+
+            <section class="bp-section">
+                <div class="bp-container bp-container-md">
+
+                    <!-- Barre récap -->
+                    <div class="bp-pay-summary-bar">
+                        <span>
+                            <i class="fa fa-home"/> <t t-out="booking.product_id.name"/>
+                        </span>
+                        <span>
+                            <i class="fa fa-calendar"/>
+                            <t t-out="booking.start_date"/> → <t t-out="booking.end_date"/>
+                        </span>
+                        <span>
+                            <i class="fa fa-users"/>
+                            <t t-out="booking.guests_requested or booking.guests_billed or 1"/> pers.
+                        </span>
+                        <span class="bp-pay-total">
+                            <i class="fa fa-money"/>
+                            <t t-if="booking.total_amount">
+                                <strong><t t-out="'%.0f' % booking.total_amount"/> XPF</strong>
+                            </t>
+                            <t t-else="">
+                                <span style="color:rgba(255,255,255,0.4);font-size:0.82rem">
+                                    montant sur Billetweb
+                                </span>
+                            </t>
+                        </span>
+                    </div>
+
+                    <!-- Conteneur iframe -->
+                    <div id="bpPaymentContainer" style="
+                        min-height:640px;
+                        border-radius:var(--bp-r-lg);
+                        overflow:hidden;
+                        border:1px solid var(--bp-border);
+                    "/>
+
+                    <!-- Lien de secours -->
+                    <div id="bpPayFallback" class="bp-iframe-direct-link" style="margin-top:1rem">
+                        <a t-attf-href="{{payment_url}}" target="_blank" rel="noopener noreferrer">
+                            <i class="fa fa-external-link"/> Ouvrir dans un nouvel onglet
+                        </a>
+                    </div>
+
+                    <!-- URL dans un data-attribute sur div (t-attf- fonctionne) -->
+                    <div id="bpPaymentData"
+                         t-attf-data-url="{{payment_url}}"
+                         style="display:none"/>
+
+                </div>
+            </section>
+        </div>
+
+        <script type="text/javascript">
+        (function () {
+            function injectPaymentIframe() {
+                var dataEl = document.getElementById('bpPaymentData');
+                var container = document.getElementById('bpPaymentContainer');
+                if (!dataEl || !container) return;
+
+                var url = dataEl.getAttribute('data-url');
+                if (!url) return;
+
+                var iframe = document.createElement('iframe');
+                iframe.src = url;
+                iframe.style.cssText = 'display:block;width:100%;min-height:640px;border:none;';
+                iframe.setAttribute('frameborder', '0');
+                iframe.setAttribute('scrolling', 'auto');
+                iframe.setAttribute('allow', 'payment');
+                iframe.setAttribute('title', 'Paiement Billetweb');
+
+                iframe.addEventListener('load', function () {
+                    var fallback = document.getElementById('bpPayFallback');
+                    if (fallback) fallback.style.display = 'none';
+                });
+
+                container.appendChild(iframe);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', injectPaymentIframe);
+            } else {
+                injectPaymentIframe();
+            }
+        }());
+        </script>
+    </t>
+</template>
+
+
+<!-- ================================================================
+     ERREUR
+================================================================ -->
+<template id="bp_booking_error" name="Belrose Place - Erreur">
+    <t t-call="website.layout">
+        <div id="wrap" class="belrose-page bp-booking-page">
+            <section class="bp-section bp-section-centered">
+                <div class="bp-container bp-container-sm">
+                    <div class="bp-error-card">
+                        <div class="bp-error-icon"><i class="fa fa-exclamation-triangle"/></div>
+                        <h2>Une erreur est survenue</h2>
+                        <p t-out="error_message"/>
+                        <div class="bp-confirmation-actions">
+                            <t t-if="product_id and start_date and end_date">
+                                <a t-attf-href="/reservation/nouveau?product_id={{product_id}}&amp;start_date={{start_date}}&amp;end_date={{end_date}}"
+                                   class="bp-btn-primary"><span>Réessayer</span></a>
+                            </t>
+                            <a href="/reservation" class="bp-btn-ghost-sm"><span>Retour</span></a>
+                            <a href="/contactus" class="bp-btn-ghost-sm"><span>Nous contacter</span></a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </t>
+</template>
+
+
+<!-- ================================================================
+     MES RÉSERVATIONS
+================================================================ -->
+<template id="bp_my_bookings" name="Belrose Place - Mes Réservations">
+    <t t-call="website.layout">
+        <div id="wrap" class="belrose-page bp-booking-page">
+            <section class="bp-page-hero">
+                <div class="bp-page-hero-overlay"/>
+                <div class="bp-container">
+                    <div class="bp-eyebrow">Mon espace</div>
+                    <h1 class="bp-page-hero-title">Mes <em>Réservations</em></h1>
+                </div>
+            </section>
+            <section class="bp-section">
+                <div class="bp-container">
+                    <t t-if="not bookings">
+                        <div class="bp-empty-state">
+                            <i class="fa fa-calendar-o fa-3x"/>
+                            <p>Aucune réservation pour le moment.</p>
+                            <a href="/reservation" class="bp-btn-primary"><span>Réserver</span></a>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="bp-bookings-list">
+                            <t t-foreach="bookings" t-as="booking">
+                                <div class="bp-booking-item">
+                                    <div class="bp-booking-item-img">
+                                        <img t-if="booking.product_id.image_1920"
+                                             t-att-src="'/web/image/product.template/%s/image_1920' % booking.product_id.id"
+                                             t-att-alt="booking.product_id.name"/>
+                                    </div>
+                                    <div class="bp-booking-item-body">
+                                        <div class="bp-booking-item-header">
+                                            <h4 t-out="booking.product_id.name"/>
+                                            <span t-if="booking.state=='draft'"        class="bp-status bp-status-draft">Brouillon</span>
+                                            <span t-if="booking.state=='confirmed'"    class="bp-status bp-status-confirmed">Confirmé</span>
+                                            <span t-if="booking.state=='payment_sent'" class="bp-status bp-status-pending">En attente de paiement</span>
+                                            <span t-if="booking.state=='paid'"         class="bp-status bp-status-paid">Payé</span>
+                                            <span t-if="booking.state=='cancelled'"    class="bp-status bp-status-cancelled">Annulé</span>
+                                        </div>
+                                        <div class="bp-booking-item-meta">
+                                            <span><i class="fa fa-hashtag"/> <t t-out="booking.name"/></span>
+                                            <span><i class="fa fa-calendar"/> <t t-out="booking.start_date"/> → <t t-out="booking.end_date"/></span>
+                                            <span><i class="fa fa-moon-o"/> <t t-out="booking.nights"/> nuit<t t-if="booking.nights > 1">s</t></span>
+                                            <span><i class="fa fa-users"/> <t t-out="booking.guests_billed"/> pers.</span>
+                                            <span><i class="fa fa-money"/> <t t-out="'%.0f' % booking.total_amount"/> XPF</span>
+                                        </div>
+                                    </div>
+                                    <div class="bp-booking-item-action">
+                                        <t t-if="booking.billetweb_payment_url and booking.state in ('confirmed','payment_sent')">
+                                            <a t-attf-href="/reservation/paiement/{{booking.id}}"
+                                               class="bp-btn-primary bp-btn-sm">
+                                                <i class="fa fa-credit-card"/> Payer
+                                            </a>
+                                        </t>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+                    <div class="bp-my-bookings-footer">
+                        <a href="/reservation" class="bp-btn-ghost-sm"><span>← Retour</span></a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </t>
+</template>
+
+
+<!-- ================================================================
+     CALENDRIER
+================================================================ -->
+<template id="bp_booking_calendar" name="Belrose Place - Calendrier">
+    <t t-call="website.layout">
+        <div id="wrap" class="belrose-page bp-booking-page">
+            <section class="bp-page-hero">
+                <div class="bp-page-hero-overlay"/>
+                <div class="bp-container">
+                    <div class="bp-eyebrow">Disponibilités</div>
+                    <h1 class="bp-page-hero-title"><t t-out="product.name"/></h1>
+                </div>
+            </section>
+            <section class="bp-section">
+                <div class="bp-container bp-container-md">
+                    <div class="bp-calendar-legend">
+                        <span class="bp-cal-leg bp-cal-leg-free">Disponible</span>
+                        <span class="bp-cal-leg bp-cal-leg-pending">En attente</span>
+                        <span class="bp-cal-leg bp-cal-leg-confirmed">Confirmé</span>
+                        <span class="bp-cal-leg bp-cal-leg-paid">Payé</span>
+                    </div>
+                    <div class="bp-calendar-wrap"><div id="bpFullCalendar"/></div>
+                    <div class="bp-calendar-cta">
+                        <a href="/reservation" class="bp-btn-primary"><span>Réserver</span></a>
+                        <a href="/reservation" class="bp-btn-ghost-sm"><span>Tous les logements</span></a>
+                    </div>
+                </div>
+            </section>
+            <script type="application/json" id="bpCalendarData"><t t-out="calendar_data_json"/></script>
+            <script type="application/json" id="bpCalendarMeta">{"today": "<t t-out='today'/>", "product_id": <t t-out="product.id"/>}</script>
+        </div>
+    </t>
+</template>
+
+</odoo>
