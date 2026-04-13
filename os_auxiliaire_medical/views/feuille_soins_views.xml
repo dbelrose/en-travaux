@@ -19,7 +19,7 @@
                     <button name="action_reset_draft" string="Remettre en brouillon" type="object"
                             invisible="state != 'cancelled'"/>
                     <button name="os_pdf_report_generator.pdf_report_4" string="Imprimer" type="action"
-                            icon="fa-print" class="btn-primary"/>
+                            icon="fa-print"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,confirmed,submitted,paid"/>
                 </header>
@@ -42,19 +42,33 @@
 
                         <group string="Auxiliaire médical">
                             <!--
-                                Affiché en lecture seule : pré-rempli depuis l'utilisateur connecté.
-                                Devient sélectionnable uniquement si "Auxiliaire remplaçant" est coché,
-                                pour désigner le praticien titulaire au nom duquel on saisit.
+                                En lecture seule : pré-rempli depuis l'utilisateur connecté.
+                                Devient modifiable uniquement si "Auxiliaire remplaçant" est coché.
                             -->
                             <field name="auxiliaire_remplacant"/>
                             <field name="praticien_id"
                                    readonly="not auxiliaire_remplacant"
                                    required="1"
                                    options="{'no_create': True}"/>
+                            <field name="praticien_profession" invisible="1"/>
                             <field name="code_auxiliaire" readonly="1"/>
                             <field name="accord_prealable"
                                    invisible="not auxiliaire_remplacant"/>
+                            <field name="company_id" groups="base.group_multi_company"
+                                   readonly="state != 'draft'"/>
                         </group>
+                    </group>
+
+                    <!--
+                        Modèle de feuille — filtré sur la profession du praticien connecté.
+                        La sélection d'un modèle remplace les lignes d'actes et reprend
+                        la condition + le taux de remboursement du modèle.
+                    -->
+                    <group string="Modèle de saisie rapide" invisible="state != 'draft'">
+                        <field name="modele_id"
+                               domain="[('profession', '=', praticien_profession)]"
+                               options="{'no_create': False}"
+                               help="Appliquer un modèle pré-remplit les actes ci-dessous. Les lignes existantes seront remplacées."/>
                     </group>
 
                     <group>
@@ -74,6 +88,16 @@
                         <page string="Prestations des actes">
                             <field name="acte_ids">
                                 <tree editable="bottom">
+                                    <!--
+                                        acte_type_id : filtré sur la profession du praticien
+                                        (actes communs + actes de sa profession).
+                                        Facultatif : on peut saisir lettre_cle directement.
+                                    -->
+                                    <field name="acte_type_id"
+                                           domain="[('profession', 'in', [False, parent.praticien_profession])]"
+                                           optional="show"
+                                           string="Acte (catalogue)"
+                                           options="{'no_create': False}"/>
                                     <field name="date_acte"/>
                                     <field name="lettre_cle"/>
                                     <field name="coefficient"/>

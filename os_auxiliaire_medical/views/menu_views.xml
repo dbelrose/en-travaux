@@ -14,4 +14,8 @@
               parent="menu_cps_referentiel" action="action_praticien" sequence="10"/>
     <menuitem id="menu_patient" name="Patients"
               parent="menu_cps_referentiel" action="action_patient" sequence="20"/>
+    <menuitem id="menu_acte_type" name="Types d'actes"
+              parent="menu_cps_referentiel" action="action_server_open_acte_type" sequence="30"/>
+    <menuitem id="menu_feuille_modele" name="Modèles de feuilles"
+              parent="menu_cps_referentiel" action="action_feuille_modele" sequence="40"/>
 </odoo>

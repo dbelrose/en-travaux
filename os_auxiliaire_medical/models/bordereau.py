@@ -37,6 +37,15 @@ class CpsBordereau(models.Model):
 
     notes = fields.Text(string='Notes')
 
+    # ── Multi-company ───────────────────────────────────────────────────────
+    company_id = fields.Many2one(
+        'res.company',
+        string='Société',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True,
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:

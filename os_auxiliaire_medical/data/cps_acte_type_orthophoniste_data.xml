@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             ORTHOPHONISTE — Lettre clé AMO (tarif unitaire : 433 F CFP)
+             Source : NPAP – Arrêté n° 447 CM du 27 mars 2019
+                      version en vigueur au 04/11/2024
+                      (modif. Arrêté n° 1239 CM du 31 juillet 2024)
+             Référence nomenclature : chapitre 4.1.1 – Annexe II
+        ══════════════════════════════════════════════════════════════ -->
+
+        <!-- ────────────────────────────────────────────────────
+             1. BILANS (avec compte rendu écrit obligatoire)
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amo_bilan_deglutition" model="cps.acte.type">
+            <!-- Code 04010101 -->
+            <field name="name">Bilan de la déglutition et des fonctions vélo-tubo-tympaniques</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">24</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_bilan_phonation" model="cps.acte.type">
+            <!-- Code 04010102 -->
+            <field name="name">Bilan de la phonation</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">34</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_bilan_fonctions_oro" model="cps.acte.type">
+            <!-- Code 04010103 -->
+            <field name="name">Bilan des fonctions oro-myo-faciales et de l'oralité</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">34</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_bilan_communication_langage_oral" model="cps.acte.type">
+            <!-- Code 04010104 -->
+            <field name="name">Bilan de la communication et du langage oral et/ou aptitudes à l'acquisition du langage écrit</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">34</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_bilan_langage_ecrit" model="cps.acte.type">
+            <!-- Code 04010105 -->
+            <field name="name">Bilan de la communication et du langage écrit</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">34</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_bilan_cognition_math" model="cps.acte.type">
+            <!-- Code 04010106 -->
+            <field name="name">Bilan de la cognition mathématique (dyscalculie, raisonnement logico-mathématique)</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">34</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_bilan_neurologique" model="cps.acte.type">
+            <!-- Code 04010107 -->
+            <field name="name">Bilan des troubles d'origine neurologique</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">40</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_bilan_begaiement" model="cps.acte.type">
+            <!-- Code 04010108 -->
+            <field name="name">Bilan des bégaiements et des autres troubles de la fluence</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">40</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_bilan_handicap" model="cps.acte.type">
+            <!-- Code 04010109 -->
+            <field name="name">Bilan de la communication et du langage – handicap moteur, sensoriel, déficience intellectuelle, paralysie cérébrale, TSA, maladies génétiques, surdité</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">40</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             2. RÉÉDUCATIONS INDIVIDUELLES – série 30+20 séances
+                (accord préalable valable 1 an, 100 séances max)
+                Durée minimale : 30 min/séance
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amo_reeducation_articulation" model="cps.acte.type">
+            <!-- Code 04010110 -->
+            <field name="name">Rééducation des troubles de l'articulation – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_deglutition_dysfonctionnelle" model="cps.acte.type">
+            <!-- Code 04010111 -->
+            <field name="name">Rééducation de la déglutition dysfonctionnelle – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_velo_tubo" model="cps.acte.type">
+            <!-- Code 04010112 -->
+            <field name="name">Rééducation vélo-tubo-tympanique – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_voix" model="cps.acte.type">
+            <!-- Code 04010113 -->
+            <field name="name">Rééducation des troubles de la voix d'origine organique ou fonctionnelle et dyskinésies laryngées – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">11.4</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_dysphagie" model="cps.acte.type">
+            <!-- Code 04010114 -->
+            <field name="name">Rééducation des dysphagies – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">11</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_oro_myo" model="cps.acte.type">
+            <!-- Code 04010115 -->
+            <field name="name">Rééducation des anomalies des fonctions oro-myo-faciales et de l'oralité – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">13.5</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_education_voix_oesophagienne" model="cps.acte.type">
+            <!-- Code 04010116 -->
+            <field name="name">Éducation à la voix oro-œsophagienne et/ou trachéo-œsophagienne avec ou sans prothèse phonatoire – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">11.2</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_langage_ecrit" model="cps.acte.type">
+            <!-- Code 04010117 -->
+            <field name="name">Rééducation des troubles de la communication et du langage écrit – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">10.1</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_cognition_math" model="cps.acte.type">
+            <!-- Code 04010118 -->
+            <field name="name">Rééducation des troubles de la cognition mathématique (dyscalculie, raisonnement logico-mathématique) – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">10.2</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_graphisme" model="cps.acte.type">
+            <!-- Code 04010119 -->
+            <field name="name">Rééducation des troubles du graphisme et de l'écriture – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">10</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_retard_parole" model="cps.acte.type">
+            <!-- Code 04010120 -->
+            <field name="name">Rééducation des retards de parole, troubles de la communication et du langage oral – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">12.1</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_begaiement" model="cps.acte.type">
+            <!-- Code 04010121 -->
+            <field name="name">Rééducation des bégaiements et des autres troubles de la fluence – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">12.2</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_readaptation_surdite" model="cps.acte.type">
+            <!-- Code 04010122 -->
+            <field name="name">Réadaptation à la communication dans les surdités acquises appareillées et/ou lecture labiale – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">12</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             3. RÉÉDUCATIONS INDIVIDUELLES – série 50+50 séances
+                (accord préalable, 100 séances max)
+                Durée minimale : 30 min/séance
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amo_reeducation_handicap" model="cps.acte.type">
+            <!-- Code 04010123 – modifié Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Éducation ou rééducation de la communication et du langage – handicap moteur, sensoriel, déficience intellectuelle (paralysie cérébrale, TSA, maladies génétiques) – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">13.8</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             4. RÉÉDUCATIONS INDIVIDUELLES – série 50+50 séances
+                Durée de l'ordre de 45 min (min 30 min)
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amo_reeducation_neuro_vasculaire" model="cps.acte.type">
+            <!-- Code 04010124 – modifié Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Rééducation et/ou maintien et/ou adaptation – pathologies neurologiques d'origine vasculaire, tumorale ou post-traumatique – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">15.7</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_reeducation_neuro_degenerative" model="cps.acte.type">
+            <!-- Code 04010125 – modifié Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Rééducation et/ou maintien et/ou adaptation – pathologies neuro-dégénératives – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">15.6</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             5. RÉÉDUCATIONS INDIVIDUELLES – série 50+50 séances
+                Durée minimale : 45 min/séance
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amo_reeducation_dysphasie" model="cps.acte.type">
+            <!-- Code 04010126 -->
+            <field name="name">Rééducation des dysphasies – séance (durée min. 30 min)</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">14</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_demutisation" model="cps.acte.type">
+            <!-- Code 04010127 -->
+            <field name="name">Démutisation, rééducation ou conservation de la communication dans les surdités appareillées ou non (implant cochléaire inclus) – séance</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">15.4</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             6. RÉÉDUCATION EN GROUPE
+                (ajouté Arrêté n° 1239 CM du 31/07/2024)
+                Max 4 patients par séance, hors rééducation
+                individuelle exclusive
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amo_reeducation_groupe" model="cps.acte.type">
+            <!-- Code 04010141 – modifié Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Rééducation en groupe homogène hors acte en rééducation individuelle exclusive – séance par patient (4 patients max)</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">9</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             7. MAJORATIONS ORTHOPHONISTES
+                (Art. 14-IV de l'arrêté)
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amo_majoration_meo" model="cps.acte.type">
+            <!-- Majoration MEO – Art. 14-IV -->
+            <field name="name">Majoration MEO – prise en charge enfant de moins de 3 ans (TSA, syndromes génétiques, pathologies neurologiques)</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">0</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+        <record id="acte_type_amo_majoration_ifn" model="cps.acte.type">
+            <!-- Majoration IFN – Art. 14-IV -->
+            <field name="name">Indemnité forfaitaire neurologique IFN – pathologies neurologiques ou neurodégénératives (actes 04010124 et 04010125)</field>
+            <field name="lettre_cle">AMO</field>
+            <field name="coefficient_defaut">0</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthophoniste</field>
+        </record>
+
+    </data>
+</odoo>

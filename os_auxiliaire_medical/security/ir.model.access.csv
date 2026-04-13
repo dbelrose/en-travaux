@@ -9,3 +9,9 @@ access_cps_feuille_soins_acte,cps.feuille.soins.acte,model_cps_feuille_soins_act
 access_cps_feuille_soins_acte_manager,cps.feuille.soins.acte manager,model_cps_feuille_soins_acte,base.group_system,1,1,1,1
 access_cps_bordereau,cps.bordereau,model_cps_bordereau,base.group_user,1,1,1,0
 access_cps_bordereau_manager,cps.bordereau manager,model_cps_bordereau,base.group_system,1,1,1,1
+access_cps_acte_type,cps.acte.type,model_cps_acte_type,base.group_user,1,0,0,0
+access_cps_acte_type_manager,cps.acte.type manager,model_cps_acte_type,base.group_system,1,1,1,1
+access_cps_feuille_modele,cps.feuille.soins.modele,model_cps_feuille_soins_modele,base.group_user,1,1,1,0
+access_cps_feuille_modele_manager,cps.feuille.soins.modele manager,model_cps_feuille_soins_modele,base.group_system,1,1,1,1
+access_cps_feuille_modele_ligne,cps.feuille.soins.modele.ligne,model_cps_feuille_soins_modele_ligne,base.group_user,1,1,1,0
+access_cps_feuille_modele_ligne_manager,cps.feuille.soins.modele.ligne manager,model_cps_feuille_soins_modele_ligne,base.group_system,1,1,1,1

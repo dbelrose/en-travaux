@@ -34,6 +34,7 @@
                     <group string="Compte Odoo associé">
                         <field name="user_id"
                                help="Associez un utilisateur pour que ses feuilles de soins lui soient pré-attribuées automatiquement."/>
+                        <field name="company_id" groups="base.group_multi_company"/>
                     </group>
                 </sheet>
                 <chatter/>
@@ -52,6 +53,7 @@
                 <field name="tel"/>
                 <field name="user_id"/>
                 <field name="feuille_count"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
             </tree>
         </field>
     </record>

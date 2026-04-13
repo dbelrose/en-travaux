@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Server action utilisé comme point d'entrée du menu "Types d'actes".
+        Il délègue à CpsActeType.action_open_acte_type() qui enrichit
+        le contexte avec default_profession (profession du praticien connecté)
+        avant d'ouvrir action_acte_type.
+
+        Dans le fichier menu.xml, remplacer :
+            action="action_acte_type"
+        par :
+            action="action_server_open_acte_type"
+    -->
+    <record id="action_server_open_acte_type" model="ir.actions.server">
+        <field name="name">Ouvrir Types d'actes (avec filtre profession)</field>
+        <field name="model_id" ref="model_cps_acte_type"/>
+        <field name="state">code</field>
+        <field name="code">
+action = model.action_open_acte_type()
+        </field>
+    </record>
+
+</odoo>

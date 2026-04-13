@@ -33,6 +33,15 @@ class CpsPraticien(models.Model):
     email = fields.Char(string='Email')
     active = fields.Boolean(default=True)
 
+    # ── Multi-company ───────────────────────────────────────────────────────
+    company_id = fields.Many2one(
+        'res.company',
+        string='Société',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True,
+    )
+
     feuille_soins_ids = fields.One2many(
         'cps.feuille.soins', 'praticien_id', string='Feuilles de soins',
     )

@@ -1,0 +1,1007 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             INFIRMIER(E) — Lettres clés AMI / AIS / DI (366 F CFP)
+             Source : NPAP – Arrêté n° 447 CM du 27 mars 2019
+                      version en vigueur au 04/11/2024
+                      (modif. Arrêté n° 1239 CM du 31 juillet 2024)
+             Référence nomenclature : chapitre 12 – Annexe II
+        ══════════════════════════════════════════════════════════════ -->
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.1 – PRÉLÈVEMENTS ET INJECTIONS
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_prelevement_veineux" model="cps.acte.type">
+            <!-- Code 12010101 -->
+            <field name="name">Prélèvement par ponction veineuse directe</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_saignee" model="cps.acte.type">
+            <!-- Code 12010102 -->
+            <field name="name">Saignée</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_prelevement_aseptique" model="cps.acte.type">
+            <!-- Code 12010103 -->
+            <field name="name">Prélèvement aseptique cutané ou de sécrétions muqueuses, selles ou urine pour examens cytologiques/bactériologiques/mycologiques/virologiques/parasitologiques</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_iv_isolee" model="cps.acte.type">
+            <!-- Code 12010104 -->
+            <field name="name">Injection intraveineuse directe isolée</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_iv_serie" model="cps.acte.type">
+            <!-- Code 12010105 -->
+            <field name="name">Injection intraveineuse directe en série</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_iv_enfant" model="cps.acte.type">
+            <!-- Code 12010106 -->
+            <field name="name">Injection intraveineuse directe chez un enfant de moins de 5 ans</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_im" model="cps.acte.type">
+            <!-- Code 12010107 -->
+            <field name="name">Injection intramusculaire</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_serum_besredka" model="cps.acte.type">
+            <!-- Code 12010108 -->
+            <field name="name">Injection d'un sérum d'origine humaine ou animale selon la méthode de Besredka (y compris surveillance)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_sc" model="cps.acte.type">
+            <!-- Code 12010109 -->
+            <field name="name">Injection sous-cutanée</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_id" model="cps.acte.type">
+            <!-- Code 12010110 -->
+            <field name="name">Injection intradermique</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_allergenes" model="cps.acte.type">
+            <!-- Code 12010111 -->
+            <field name="name">Injection d'un ou plusieurs allergènes – traitement d'hyposensibilisation (selon protocole, y compris surveillance et tenue du dossier)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_implant_sc" model="cps.acte.type">
+            <!-- Code 12010112 -->
+            <field name="name">Injection d'un implant sous-cutané</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_goutte_rectale" model="cps.acte.type">
+            <!-- Code 12010113 -->
+            <field name="name">Injection en goutte à goutte par voie rectale</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.2 – PANSEMENTS COURANTS
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_pansement_stomie" model="cps.acte.type">
+            <!-- Code 12010201 -->
+            <field name="name">Pansement de stomie</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_tracheotomie" model="cps.acte.type">
+            <!-- Code 12010202 -->
+            <field name="name">Pansement de trachéotomie (y compris aspiration et éventuel changement de canule ou sonde)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2.25</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_ablation_fils_10" model="cps.acte.type">
+            <!-- Code 12010203 -->
+            <field name="name">Ablation de fils ou agrafes (10 ou moins), y compris pansement éventuel</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_ablation_fils_plus10" model="cps.acte.type">
+            <!-- Code 12010204 -->
+            <field name="name">Ablation de fils ou agrafes (plus de 10), y compris pansement éventuel</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_autre" model="cps.acte.type">
+            <!-- Code 12010205 -->
+            <field name="name">Autre pansement</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.3 – PANSEMENTS LOURDS ET COMPLEXES
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_pansement_brulure" model="cps.acte.type">
+            <!-- Code 12010302 -->
+            <field name="name">Pansement de brûlure étendue ou plaie chimique/thermique étendue (surface supérieure à 5 % de la surface corporelle)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_ulcere" model="cps.acte.type">
+            <!-- Code 12010303 -->
+            <field name="name">Pansement d'ulcère étendu ou de greffe cutanée (surface supérieure à 60 cm²)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_amputation" model="cps.acte.type">
+            <!-- Code 12010304 -->
+            <field name="name">Pansement d'amputation nécessitant détersion, épluchage et régularisation</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_fistule_digestive" model="cps.acte.type">
+            <!-- Code 12010305 -->
+            <field name="name">Pansement de fistule digestive</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_perte_substance" model="cps.acte.type">
+            <!-- Code 12010306 -->
+            <field name="name">Pansement pour perte de substance traumatique ou néoplasique avec lésions profondes sous-aponévrotiques, musculaires, tendineuses ou osseuses</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_mechage" model="cps.acte.type">
+            <!-- Code 12010307 -->
+            <field name="name">Pansement chirurgical nécessitant un méchage ou une irrigation</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_escarre" model="cps.acte.type">
+            <!-- Code 12010308 -->
+            <field name="name">Pansement d'escarre profonde et étendue atteignant les muscles ou les tendons</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_osteosynth" model="cps.acte.type">
+            <!-- Code 12010309 -->
+            <field name="name">Pansement chirurgical avec matériel d'ostéosynthèse extériorisé</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pose_tpn" model="cps.acte.type">
+            <!-- Code 12010310 – ajouté Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Pose de système de traitement par pression négative (TPN) à usage unique avec pansement faisant office de réservoir</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4.6</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_additionnel_tpn" model="cps.acte.type">
+            <!-- Code 12010311 – ajouté Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Mise en place de pansement additionnel (sans changement de console) pour TPN à usage unique</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.4 – POSE DE SONDE ET ALIMENTATION
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_pose_sonde_gastrique" model="cps.acte.type">
+            <!-- Code 12010401 -->
+            <field name="name">Pose de sonde gastrique</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_alimentation_enterale_nutripompe" model="cps.acte.type">
+            <!-- Code 12010402 – modifié Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Alimentation entérale par nutri-pompe (y compris rinçage et surveillance) – séance</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_alimentation_jejunale" model="cps.acte.type">
+            <!-- Code 12010403 – modifié Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Alimentation entérale par voie jéjunale avec sondage de la stomie (y compris rinçage, pansement et surveillance) – séance</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_changement_bouton_gastrostomie" model="cps.acte.type">
+            <!-- Code 12010404 – ajouté Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Changement de bouton de gastrostomie (limite : 4 par an)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.5 – SOINS PORTANT SUR L'APPAREIL RESPIRATOIRE
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_aerosol" model="cps.acte.type">
+            <!-- Code 12010501 -->
+            <field name="name">Séance d'aérosol</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_lavage_sinus" model="cps.acte.type">
+            <!-- Code 12010502 -->
+            <field name="name">Lavage d'un sinus</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.6 – SOINS PORTANT SUR L'APPAREIL GÉNITO-URINAIRE
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_injection_vaginale" model="cps.acte.type">
+            <!-- Code 12010601 -->
+            <field name="name">Injection vaginale</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.25</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_soins_gyneco_curietherapie" model="cps.acte.type">
+            <!-- Code 12010602 -->
+            <field name="name">Soins gynécologiques au décours immédiat d'un traitement par curiethérapie</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_catheterisme_femme" model="cps.acte.type">
+            <!-- Code 12010603 -->
+            <field name="name">Cathétérisme urétral chez la femme</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_catheterisme_homme" model="cps.acte.type">
+            <!-- Code 12010604 -->
+            <field name="name">Cathétérisme urétral chez l'homme</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_changement_sonde_femme" model="cps.acte.type">
+            <!-- Code 12010605 -->
+            <field name="name">Changement de sonde urinaire à demeure chez la femme</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_changement_sonde_homme" model="cps.acte.type">
+            <!-- Code 12010606 -->
+            <field name="name">Changement de sonde urinaire à demeure chez l'homme</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_education_autosondage" model="cps.acte.type">
+            <!-- Code 12010607 -->
+            <field name="name">Éducation à l'autosondage (y compris sondage éventuel, max 10 séances)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_readaptation_vessie_neuro" model="cps.acte.type">
+            <!-- Code 12010608 -->
+            <field name="name">Réadaptation de vessie neurologique (y compris sondage éventuel)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_instillation_vesicale" model="cps.acte.type">
+            <!-- Code 12010609 -->
+            <field name="name">Instillation et/ou lavage vésical (sonde en place)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.25</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_etui_penien" model="cps.acte.type">
+            <!-- Code 12010610 -->
+            <field name="name">Pose isolée d'un étui pénien (une fois par 24 heures)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_retrait_sonde_vesicale" model="cps.acte.type">
+            <!-- Code 12010611 – ajouté Arrêté n° 1239 CM du 31/07/2024 -->
+            <field name="name">Retrait d'une sonde vésicale à demeure</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.7 – SOINS PORTANT SUR L'APPAREIL DIGESTIF
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_soins_bouche_radiotherapie" model="cps.acte.type">
+            <!-- Code 12010701 -->
+            <field name="name">Soins de bouche avec application de produits médicamenteux au décours immédiat d'une radiothérapie</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.25</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_lavement" model="cps.acte.type">
+            <!-- Code 12010702 -->
+            <field name="name">Lavement évacuateur ou médicamenteux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_extraction_fecalome" model="cps.acte.type">
+            <!-- Code 12010703 -->
+            <field name="name">Extraction de fécalome ou extraction manuelle des selles</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.8 – TESTS ET SOINS PORTANT SUR L'ENVELOPPE CUTANÉE
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_pulverisation" model="cps.acte.type">
+            <!-- Code 12010801 -->
+            <field name="name">Pulvérisation de produit(s) médicamenteux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.25</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_test_tuberculinique" model="cps.acte.type">
+            <!-- Code 12010802 -->
+            <field name="name">Réalisation de test tuberculinique</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">0.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_lecture_timbre_tuberculinique" model="cps.acte.type">
+            <!-- Code 12010803 -->
+            <field name="name">Lecture d'un timbre tuberculinique et transmission d'informations au médecin prescripteur</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.9 – SURVEILLANCE ET OBSERVATION D'UN PATIENT
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_admin_therapeutique_orale" model="cps.acte.type">
+            <!-- Code 12010901 -->
+            <field name="name">Administration et surveillance d'une thérapeutique orale à domicile – troubles psychiatriques ou cognitifs (1er mois) – par passage</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_admin_therapeutique_orale_suite" model="cps.acte.type">
+            <!-- Code 12010902 -->
+            <field name="name">Administration et surveillance d'une thérapeutique orale à domicile – au-delà du 1er mois – par passage (accord préalable)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_surveillance_traitement" model="cps.acte.type">
+            <!-- Code 12010903 -->
+            <field name="name">Surveillance et observation lors de la mise en œuvre ou modification d'un traitement (hors diabétiques insulino-dépendants) – max 15 jours – par jour</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.10 – SOINS INFIRMIERS À DOMICILE POUR PATIENT DÉPENDANT
+             Lettre clé : AIS / DI
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_di_demarche_soins_1ere" model="cps.acte.type">
+            <!-- Code 12011001 -->
+            <field name="name">Démarche de soins infirmiers à domicile – 1ère démarche</field>
+            <field name="lettre_cle">DI</field>
+            <field name="coefficient_defaut">1.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_di_demarche_soins_suivantes" model="cps.acte.type">
+            <!-- Code 12011002 -->
+            <field name="name">Démarche de soins infirmiers à domicile – démarches suivantes</field>
+            <field name="lettre_cle">DI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ais_seance_soins" model="cps.acte.type">
+            <!-- Code 12011003 -->
+            <field name="name">Séance de soins infirmiers pour patient dépendant – séance de 30 min (max 4 par 24h) – accord préalable</field>
+            <field name="lettre_cle">AIS</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ais_programme_aide" model="cps.acte.type">
+            <!-- Code 12011004 -->
+            <field name="name">Programme d'aide personnalisée pour patient dépendant – séance de 30 min (max 4 par 24h) – accord préalable</field>
+            <field name="lettre_cle">AIS</field>
+            <field name="coefficient_defaut">3.1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ais_surveillance_hebdo" model="cps.acte.type">
+            <!-- Code 12011005 -->
+            <field name="name">Séance hebdomadaire de surveillance clinique infirmière et de prévention – séance de 30 min – accord préalable</field>
+            <field name="lettre_cle">AIS</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.1.11 – GARDE À DOMICILE
+             Lettre clé : AIS
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ais_garde_jour" model="cps.acte.type">
+            <!-- Code 12011101 -->
+            <field name="name">Garde à domicile (surveillance constante et soins infirmiers répétés) – période de 6h entre 6h et 19h – accord préalable</field>
+            <field name="lettre_cle">AIS</field>
+            <field name="coefficient_defaut">13</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ais_garde_nuit" model="cps.acte.type">
+            <!-- Code 12011102 -->
+            <field name="name">Garde à domicile (surveillance constante et soins infirmiers répétés) – période de 6h entre 19h et 6h – accord préalable</field>
+            <field name="lettre_cle">AIS</field>
+            <field name="coefficient_defaut">16</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.2.1 – SOINS D'ENTRETIEN DES CATHÉTERS
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_entretien_catheter_peritoneal" model="cps.acte.type">
+            <!-- Code 12020101 -->
+            <field name="name">Séance d'entretien de cathéter péritonéal (y compris pansement)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_entretien_catheter_site" model="cps.acte.type">
+            <!-- Code 12020102 -->
+            <field name="name">Séance d'entretien – cathéter extériorisé, site implantable, cathéter veineux central périphérique ou cathéter périnerveux (y compris pansement)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.2.2 – INJECTIONS ET PRÉLÈVEMENTS SPÉCIALISÉS
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_injection_analgesique_catheter" model="cps.acte.type">
+            <!-- Code 12020201 -->
+            <field name="name">Injection d'analgésique(s) par cathéter intrathécal ou péridural (hors 1ère) – accord préalable</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_iv_site_implante" model="cps.acte.type">
+            <!-- Code 12020202 -->
+            <field name="name">Injection intraveineuse par site implanté (y compris héparinisation et pansement)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_iv_catheter_central" model="cps.acte.type">
+            <!-- Code 12020203 -->
+            <field name="name">Injection intraveineuse par cathéter central (y compris héparinisation et pansement)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_prelevement_catheter_central" model="cps.acte.type">
+            <!-- Code 12020204 -->
+            <field name="name">Prélèvement sanguin sur cathéter veineux central extériorisé ou chambre implantable</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.2.3 – PERFUSIONS (modifié Arrêté n° 1239 CM du 31/07/2024)
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_perfusion_courte_continue" model="cps.acte.type">
+            <!-- Code 12020301 -->
+            <field name="name">Forfait perfusion courte (≤ 30 min) avec surveillance continue</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">9</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perfusion_courte_sans_surveillance" model="cps.acte.type">
+            <!-- Code 12020302 -->
+            <field name="name">Forfait perfusion courte (≤ 30 min) sans surveillance continue</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">7</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perfusion_supplement_surveillance" model="cps.acte.type">
+            <!-- Code 12020303 -->
+            <field name="name">Supplément surveillance continue au-delà des 30 premières min – par tranche de 30 min (max 3h)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perfusion_longue_sans_surveillance" model="cps.acte.type">
+            <!-- Code 12020304 -->
+            <field name="name">Forfait perfusion sans surveillance continue (durée &gt; 1h) avec organisation d'une surveillance (max 1 facturation / 72h)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">14</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perfusion_arret_retrait" model="cps.acte.type">
+            <!-- Code 12020305 -->
+            <field name="name">Forfait arrêt et retrait du dispositif de perfusion (y compris pansement et transmission)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perfusion_organisation_surveillance" model="cps.acte.type">
+            <!-- Code 12020306 -->
+            <field name="name">Supplément organisation de la surveillance de perfusion et planification des soins – par jour (hors pose et retrait)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.6</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perfusion_changement_flacon" model="cps.acte.type">
+            <!-- Code 12020307 -->
+            <field name="name">Changement de flacon(s) ou branchement en Y / intervention ou contrôle du débit – perfusion sans surveillance continue (hors séance de pose)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3.9</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pose_dispositif_iv" model="cps.acte.type">
+            <!-- Code 12020308 -->
+            <field name="name">Pose d'un dispositif de perfusion veineuse</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pose_dispositif_sc" model="cps.acte.type">
+            <!-- Code 12020309 -->
+            <field name="name">Pose d'un dispositif de perfusion sous-cutanée</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2.9</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.2.4 – PATIENT IMMUNODÉPRIMÉ OU CANCÉREUX
+             (modifié Arrêté n° 1239 CM du 31/07/2024)
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_aerosolprophylactique_immuno" model="cps.acte.type">
+            <!-- Code 12020401 -->
+            <field name="name">Séance d'aérosols à visée prophylactique – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_im_sc_immuno" model="cps.acte.type">
+            <!-- Code 12020402 -->
+            <field name="name">Injection intramusculaire ou sous-cutanée – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_iv_immuno" model="cps.acte.type">
+            <!-- Code 12020403 -->
+            <field name="name">Injection intraveineuse – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_chimiotherapie" model="cps.acte.type">
+            <!-- Code 12020404 -->
+            <field name="name">Injection intraveineuse d'un produit de chimiothérapie anticancéreuse</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">7</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perf_courte_continue_immuno" model="cps.acte.type">
+            <!-- Code 12020405 -->
+            <field name="name">Forfait perfusion courte (≤ 30 min) avec surveillance continue – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">10</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perf_courte_sans_surveillance_immuno" model="cps.acte.type">
+            <!-- Code 12020406 -->
+            <field name="name">Forfait perfusion courte (≤ 30 min) sans surveillance continue – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perf_suppl_surveillance_immuno" model="cps.acte.type">
+            <!-- Code 12020407 -->
+            <field name="name">Supplément surveillance continue au-delà des 30 premières min – par tranche de 30 min (max 3h) – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perf_longue_immuno" model="cps.acte.type">
+            <!-- Code 12020408 -->
+            <field name="name">Forfait perfusion sans surveillance continue (durée &gt; 1h) avec organisation de surveillance (max 1 / 72h) – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">15</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perf_arret_retrait_immuno" model="cps.acte.type">
+            <!-- Code 12020409 -->
+            <field name="name">Forfait arrêt et retrait du dispositif de perfusion – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perf_organisation_immuno" model="cps.acte.type">
+            <!-- Code 12020410 -->
+            <field name="name">Supplément organisation de la surveillance et planification – par jour (hors pose et retrait) – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">2.6</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_perf_changement_flacon_immuno" model="cps.acte.type">
+            <!-- Code 12020411 -->
+            <field name="name">Changement de flacon(s) ou branchement en Y – perfusion sans surveillance continue – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4.9</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pose_dispositif_iv_immuno" model="cps.acte.type">
+            <!-- Code 12020412 -->
+            <field name="name">Pose d'un dispositif de perfusion veineuse – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4.5</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pose_dispositif_sc_immuno" model="cps.acte.type">
+            <!-- Code 12020413 -->
+            <field name="name">Pose d'un dispositif de perfusion sous-cutanée – patient immunodéprimé ou cancéreux</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">3.9</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.2.5 – MUCOVISCIDOSE
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_perfusion_mucoviscidose" model="cps.acte.type">
+            <!-- Code 12020501 -->
+            <field name="name">Séance de perfusion IV d'antibiotiques sous surveillance continue – patient atteint de mucoviscidose</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">15</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.2.6 – PATIENT DIABÉTIQUE INSULINO-TRAITÉ
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_surveillance_diabetique" model="cps.acte.type">
+            <!-- Code 12020601 -->
+            <field name="name">Surveillance et observation d'un patient diabétique insulino-traité avec adaptation des doses – séance</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_injection_insuline" model="cps.acte.type">
+            <!-- Code 12020602 -->
+            <field name="name">Injection sous-cutanée d'insuline</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_surveillance_diabetique_75ans" model="cps.acte.type">
+            <!-- Code 12020603 -->
+            <field name="name">Séance hebdomadaire de surveillance clinique et de prévention pour patient diabétique insulino-traité de plus de 75 ans – séance de 30 min</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_pansement_diabetique" model="cps.acte.type">
+            <!-- Code 12020604 -->
+            <field name="name">Pansement lourd et complexe pour patient diabétique insulino-traité (asepsie rigoureuse, détersion avec défibrination)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.2.7 – PRISE EN CHARGE SPÉCIALISÉE
+             (insuffisance cardiaque / BPCO post-hospitalisation)
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_surveillance_cardiaque_bpco" model="cps.acte.type">
+            <!-- Code 12020701 -->
+            <field name="name">Séance à domicile de surveillance clinique et de prévention – sortie d'hospitalisation pour décompensation cardiaque ou BPCO (max 15 séances)</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">5.8</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             12.2.8 – SOINS DIGESTIFS ET URINAIRES SPÉCIALISÉS
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_irrigation_colique" model="cps.acte.type">
+            <!-- Code 12020801 -->
+            <field name="name">Irrigation colique post-stomie définitive (y compris pansement et surveillance) – max 20 séances – séance</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_dialyse_peritoneale" model="cps.acte.type">
+            <!-- Code 12020802 -->
+            <field name="name">Dialyse péritonéale (max 4 séances par jour) – séance</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_dialyse_cycleur_branchement" model="cps.acte.type">
+            <!-- Code 12020803 -->
+            <field name="name">Dialyse péritonéale par cycleur – branchement ou débranchement – séance</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_dialyse_cycleur_surveillance" model="cps.acte.type">
+            <!-- Code 12020804 -->
+            <field name="name">Dialyse péritonéale par cycleur – organisation de la surveillance – par période de 12h</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             MAJORATIONS INFIRMIER(E)S (Art. 14-III)
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_ami_majoration_acte_unique" model="cps.acte.type">
+            <!-- Majoration MAU – Art. 14-III -->
+            <field name="name">Majoration acte unique (MAU) – acte unique au cabinet ou au domicile du patient</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">0</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+        <record id="acte_type_ami_majoration_coordination" model="cps.acte.type">
+            <!-- Majoration MCI – Art. 14-III -->
+            <field name="name">Majoration de coordination infirmier(e) (MCI) – pansement lourd et complexe ou soins palliatifs à domicile</field>
+            <field name="lettre_cle">AMI</field>
+            <field name="coefficient_defaut">0</field>
+            <field name="tarif_unitaire">366</field>
+            <field name="profession">infirmier</field>
+        </record>
+
+    </data>
+</odoo>

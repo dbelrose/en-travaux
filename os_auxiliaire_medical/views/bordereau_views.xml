@@ -32,6 +32,7 @@
                             <field name="praticien_id"/>
                             <field name="mois"/>
                             <field name="date_bordereau"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                         <group string="Totaux">
                             <field name="nb_feuilles" readonly="1"/>

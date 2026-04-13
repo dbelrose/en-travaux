@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             ORTHOPTISTE — Lettre clé AMY (433 F CFP)
+             Source : NPAP – Arrêté n° 447 CM du 27 mars 2019
+                      version en vigueur au 04/11/2024
+             Référence nomenclature : chapitre 3.2.1 et 3.2.2 – Annexe II
+        ══════════════════════════════════════════════════════════════ -->
+
+        <!-- ────────────────────────────────────────────────────
+             3.2.1 – BILANS ET RÉÉDUCATIONS ORTHOPTIQUES
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amy_acuite_visuelle" model="cps.acte.type">
+            <!-- Code 03020101 -->
+            <field name="name">Mesure de l'acuité visuelle et de la réfraction avec ou sans dilatation</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">8.5</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_bilan_basse_vision" model="cps.acte.type">
+            <!-- Code 03020102 -->
+            <field name="name">Bilan orthoptique des déficiences visuelles d'origine périphérique ou neuro-ophtalmologique (basse vision) – max 2 bilans par an</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">30</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_bilan_neuro_ophtalmo" model="cps.acte.type">
+            <!-- Code 03020103 -->
+            <field name="name">Bilan des conséquences neuro-ophtalmologiques des pathologies générales et déficiences neuro-visuelles d'origine fonctionnelle – max 2 bilans par an</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">30.5</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_bilan_fusion" model="cps.acte.type">
+            <!-- Code 03020104 -->
+            <field name="name">Bilan des déséquilibres de la vision binoculaire – trouble des capacités fusionnelles – max 2 par an (accord préalable au-delà)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">10</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_bilan_fusion_neurosensoriel" model="cps.acte.type">
+            <!-- Code 03020105 -->
+            <field name="name">Bilan des déséquilibres de la vision binoculaire – trouble des capacités fusionnelles et trouble neurosensoriel/accommodatif/orientation du regard (hors enregistrement) – max 2 par an (AP au-delà)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">14.5</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_bilan_oculomoteur" model="cps.acte.type">
+            <!-- Code 03020106 -->
+            <field name="name">Bilan des troubles oculomoteurs – hétérophories, strabismes, paralysies oculomotrices – max 2 par an (AP au-delà)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">15</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_bilan_amblyopie" model="cps.acte.type">
+            <!-- Code 03020107 -->
+            <field name="name">Bilan d'une amblyopie – max 2 par an (accord préalable au-delà)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">15.5</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <!-- Rééducations -->
+
+        <record id="acte_type_amy_reeducation_deficience_visuelle_60min" model="cps.acte.type">
+            <!-- Code 03020108 -->
+            <field name="name">Rééducation d'une déficience visuelle d'origine organique ou fonctionnelle – séance de ~60 min (patients de plus de 16 ans) – accord préalable</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">16.2</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_reeducation_deficience_visuelle_40min" model="cps.acte.type">
+            <!-- Code 03020109 -->
+            <field name="name">Rééducation d'une déficience visuelle d'origine organique ou fonctionnelle – séance de ~40 min (patients de 3 à 16 ans) – accord préalable</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">11.2</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_reeducation_deficience_visuelle_30min" model="cps.acte.type">
+            <!-- Code 03020110 -->
+            <field name="name">Rééducation d'une déficience visuelle d'origine organique ou fonctionnelle – séance de ~30 min (enfant de moins de 3 ans) – accord préalable</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">10.2</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_traitement_amblyopie" model="cps.acte.type">
+            <!-- Code 03020111 -->
+            <field name="name">Traitement de l'amblyopie – série de 20 séances de ~20 min – par séance (AP pour renouvellement)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">5.6</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_traitement_strabisme" model="cps.acte.type">
+            <!-- Code 03020112 -->
+            <field name="name">Traitement du strabisme – série de 20 séances de ~20 min – par séance (AP pour renouvellement)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">6.1</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_traitement_heterophorie" model="cps.acte.type">
+            <!-- Code 03020113 -->
+            <field name="name">Traitement des hétérophories et des déséquilibres binoculaires – série de 20 séances de ~20 min – par séance (AP pour renouvellement)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <!-- ────────────────────────────────────────────────────
+             3.2.2 – ACTES AVEC ENREGISTREMENTS
+        ──────────────────────────────────────────────────── -->
+
+        <record id="acte_type_amy_perimetrie_sans_seuil" model="cps.acte.type">
+            <!-- Code 03020201 -->
+            <field name="name">Périmétrie (champ visuel) ou campimétrie réalisée sans mesure de seuil</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">9.5</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_perimetrie_avec_seuil" model="cps.acte.type">
+            <!-- Code 03020202 -->
+            <field name="name">Périmétrie (champ visuel) ou campimétrie réalisée avec mesure de seuil</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">10.3</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_adaptation_obscurite" model="cps.acte.type">
+            <!-- Code 03020203 -->
+            <field name="name">Courbe d'adaptation à l'obscurité</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">9</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_sens_chromatique" model="cps.acte.type">
+            <!-- Code 03020204 -->
+            <field name="name">Exploration du sens chromatique</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">6</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_sens_chromatique_farnsworth" model="cps.acte.type">
+            <!-- Code 03020205 -->
+            <field name="name">Exploration du sens chromatique au test de Farnsworth 100 HUE assisté par ordinateur (avec graphique et score)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">9</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_retinographie_teletransmission" model="cps.acte.type">
+            <!-- Code 03020206 -->
+            <field name="name">Dépistage rétinopathie diabétique par rétinographie couleur avec télétransmission au médecin lecteur (2 clichés/œil, délai max 48h)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">6.7</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+        <record id="acte_type_amy_retinographie_autre_transmission" model="cps.acte.type">
+            <!-- Code 03020207 -->
+            <field name="name">Dépistage rétinopathie diabétique par rétinographie couleur avec transmission par autre moyen que la télétransmission (2 clichés/œil, délai max 48h)</field>
+            <field name="lettre_cle">AMY</field>
+            <field name="coefficient_defaut">6.1</field>
+            <field name="tarif_unitaire">433</field>
+            <field name="profession">orthoptiste</field>
+        </record>
+
+    </data>
+</odoo>
