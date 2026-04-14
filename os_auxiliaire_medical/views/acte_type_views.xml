@@ -5,10 +5,19 @@
         <field name="name">cps.acte.type.form</field>
         <field name="model">cps.acte.type</field>
         <field name="arch" type="xml">
+            <!--
+                Pas besoin de readonly explicite : ir.model.access.csv donne
+                perm_write=0 à base.group_user sur cps.acte.type. Odoo 17
+                bascule automatiquement le formulaire en mode lecture seule
+                lorsque l'utilisateur n'a pas le droit d'écriture.
+                Seul base.group_system (Paramètres) peut modifier le catalogue.
+            -->
             <form string="Type d'acte">
                 <sheet>
                     <div class="oe_title">
-                        <h1><field name="name"/></h1>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
                     </div>
                     <group>
                         <group string="Identification">
@@ -50,11 +59,6 @@
             <search>
                 <field name="name"/>
                 <field name="lettre_cle"/>
-                <!--
-                    Filtre dynamique activé par défaut : n'affiche que les actes
-                    de la profession du praticien connecté (injecté via le contexte
-                    de l'action). Reste désactivable manuellement par l'utilisateur.
-                -->
                 <filter name="ma_profession"
                         string="Ma profession"
                         domain="[('profession', '=', context.get('default_profession'))]"/>
@@ -78,16 +82,6 @@
         <field name="res_model">cps.acte.type</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_acte_type_search"/>
-        <!--
-            default_profession est injecté dynamiquement par
-            CpsActeType.action_open_acte_type() (voir acte_type.py).
-            Lorsque l'action est ouverte depuis le menu, Odoo résout le
-            contexte statiquement ; le filtre par défaut reste actif mais
-            domain() retourne [] si default_profession est absent —
-            l'utilisateur voit alors tous les actes, sans erreur.
-            La valeur est positionnée par la méthode Python qui enrichit
-            le contexte avant d'ouvrir la vue (cf. acte_type.py).
-        -->
         <field name="context">{'search_default_ma_profession': 1}</field>
     </record>
 

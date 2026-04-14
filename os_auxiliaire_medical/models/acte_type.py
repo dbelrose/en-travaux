@@ -1,3 +1,4 @@
+import ast
 from odoo import models, fields, api
 
 
@@ -33,9 +34,6 @@ class CpsActeType(models.Model):
     )
 
     # ── Multi-company ───────────────────────────────────────────────────────
-    # Les actes de nomenclature NPAP sont des données réglementaires
-    # partagées entre toutes les sociétés (company_id = False).
-    # company_id peut être renseigné pour des actes spécifiques à une société.
     company_id = fields.Many2one(
         'res.company',
         string='Société',
@@ -62,21 +60,15 @@ class CpsActeType(models.Model):
 
     def action_open_acte_type(self):
         """
-        Point d'entrée alternatif depuis un bouton ou un menu personnalisé.
+        Point d'entrée du menu "Types d'actes".
         Enrichit le contexte avec la profession du praticien connecté
-        afin que le filtre "Ma profession" soit actif et pertinent.
+        afin que le filtre "Ma profession" soit actif par défaut.
 
-        Usage dans le menu XML :
-            <menuitem action="action_open_acte_type_menu" .../>
-
-        avec :
-            <record id="action_open_acte_type_menu" model="ir.actions.act_window">
-                ...
-                <field name="binding_model_id" .../>
-            </record>
-
-        Ou directement en remplaçant action_acte_type par un server action
-        qui appelle self.env['cps.acte.type'].action_open_acte_type().
+        Note : ir.actions.act_window stocke le champ `context` en base comme
+        une chaîne de caractères (fields.Char). _for_xml_id / read() le
+        retourne donc sous forme de str. On utilise ast.literal_eval pour
+        le convertir en dict avant de le modifier, en gérant le cas où il
+        serait déjà un dict (évolution future d'Odoo).
         """
         praticien = self.env['cps.praticien'].search(
             [('user_id', '=', self.env.uid)], limit=1
@@ -86,9 +78,25 @@ class CpsActeType(models.Model):
         action = self.env['ir.actions.act_window']._for_xml_id(
             'os_auxiliaire_medical.action_acte_type'
         )
-        # Injecte default_profession dans le contexte existant de l'action
-        ctx = dict(action.get('context') or {})
+
+        # --- Parsing robuste du contexte -----------------------------------
+        # Le champ context d'ir.actions.act_window est un Char : read()
+        # retourne une str. dict(str) lèverait un TypeError ; on évalue
+        # d'abord la chaîne avec ast.literal_eval.
+        ctx_raw = action.get('context') or {}
+        if isinstance(ctx_raw, str):
+            try:
+                ctx = ast.literal_eval(ctx_raw)
+            except (ValueError, SyntaxError):
+                ctx = {}
+        else:
+            ctx = dict(ctx_raw)
+        # -------------------------------------------------------------------
+
         ctx['default_profession'] = profession
+        # Active le filtre "Ma profession" uniquement si une profession est
+        # trouvée ; sinon on désactive le filtre pour ne pas masquer tous
+        # les actes à un utilisateur sans praticien associé.
         ctx['search_default_ma_profession'] = 1 if profession else 0
         action['context'] = ctx
         return action

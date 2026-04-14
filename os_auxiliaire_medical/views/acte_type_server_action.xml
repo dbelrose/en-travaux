@@ -2,22 +2,19 @@
 <odoo>
 
     <!--
-        Server action utilisé comme point d'entrée du menu "Types d'actes".
-        Il délègue à CpsActeType.action_open_acte_type() qui enrichit
-        le contexte avec default_profession (profession du praticien connecté)
-        avant d'ouvrir action_acte_type.
-
-        Dans le fichier menu.xml, remplacer :
-            action="action_acte_type"
-        par :
-            action="action_server_open_acte_type"
+        model_id = cps.praticien : seul modèle du module qui a perm_write=1
+        pour base.group_user. Odoo 17 vérifie check_access_rights('write') sur
+        le model_id AVANT d'exécuter le code du server action — tous les autres
+        modèles candidats (cps.acte.type, res.users) déclenchent une erreur
+        d'accès pour les praticiens. cps.praticien est donc le bon choix.
+        Le code utilise env['cps.acte.type'] explicitement.
     -->
     <record id="action_server_open_acte_type" model="ir.actions.server">
         <field name="name">Ouvrir Types d'actes (avec filtre profession)</field>
-        <field name="model_id" ref="model_cps_acte_type"/>
+        <field name="model_id" ref="model_cps_praticien"/>
         <field name="state">code</field>
         <field name="code">
-action = model.action_open_acte_type()
+action = env['cps.acte.type'].action_open_acte_type()
         </field>
     </record>
 

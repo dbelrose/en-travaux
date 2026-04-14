@@ -15,3 +15,4 @@ access_cps_feuille_modele,cps.feuille.soins.modele,model_cps_feuille_soins_model
 access_cps_feuille_modele_manager,cps.feuille.soins.modele manager,model_cps_feuille_soins_modele,base.group_system,1,1,1,1
 access_cps_feuille_modele_ligne,cps.feuille.soins.modele.ligne,model_cps_feuille_soins_modele_ligne,base.group_user,1,1,1,0
 access_cps_feuille_modele_ligne_manager,cps.feuille.soins.modele.ligne manager,model_cps_feuille_soins_modele_ligne,base.group_system,1,1,1,1
+access_cps_wizard_bordereau,cps.wizard.bordereau,model_cps_wizard_bordereau,base.group_user,1,1,1,1
