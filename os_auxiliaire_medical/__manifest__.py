@@ -1,6 +1,6 @@
 {
     'name': 'OS Auxiliaire Médical',
-    'version': '17.0.2.0.0',
+    'version': '17.0.2.1.0',
     'summary': 'Gestion des feuilles de soins et bordereaux CPS Polynésie française',
     'description': """
 Gestion complète des feuilles de soins auxiliaires médicaux pour la
@@ -23,16 +23,16 @@ Fonctionnalités :
         'base',
         'mail',
         'account',
-        'partner_firstname',   # OCA — champs firstname / lastname sur res.partner
-        'partner_contact_birthdate',   # OCA — champ birthdate_date sur res.partner
+        'partner_firstname',
+        'partner_contact_birthdate',
     ],
     'data': [
+        # ── Sécurité — groupes AVANT les droits d'accès ──────────────────
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'security/ir_rule_multi_company.xml',
 
         'data/ir_sequence_data.xml',
-        # Catalogue des actes — chargé avant les vues pour que les données
-        # soient disponibles dès l'installation
         'data/cps_acte_type_orthophoniste_data.xml',
         'data/cps_acte_type_orthoptiste_data.xml',
         'data/cps_acte_type_pedicure_data.xml',

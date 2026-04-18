@@ -1,18 +1,18 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_cps_praticien,cps.praticien,model_cps_praticien,base.group_user,1,1,1,0
-access_cps_praticien_manager,cps.praticien manager,model_cps_praticien,base.group_system,1,1,1,1
-access_cps_patient,cps.patient,model_cps_patient,base.group_user,1,1,1,0
-access_cps_patient_manager,cps.patient manager,model_cps_patient,base.group_system,1,1,1,1
-access_cps_feuille_soins,cps.feuille.soins,model_cps_feuille_soins,base.group_user,1,1,1,0
-access_cps_feuille_soins_manager,cps.feuille.soins manager,model_cps_feuille_soins,base.group_system,1,1,1,1
-access_cps_feuille_soins_acte,cps.feuille.soins.acte,model_cps_feuille_soins_acte,base.group_user,1,1,1,0
-access_cps_feuille_soins_acte_manager,cps.feuille.soins.acte manager,model_cps_feuille_soins_acte,base.group_system,1,1,1,1
-access_cps_bordereau,cps.bordereau,model_cps_bordereau,base.group_user,1,1,1,0
-access_cps_bordereau_manager,cps.bordereau manager,model_cps_bordereau,base.group_system,1,1,1,1
-access_cps_acte_type,cps.acte.type,model_cps_acte_type,base.group_user,1,0,0,0
-access_cps_acte_type_manager,cps.acte.type manager,model_cps_acte_type,base.group_system,1,1,1,1
-access_cps_feuille_modele,cps.feuille.soins.modele,model_cps_feuille_soins_modele,base.group_user,1,1,1,0
-access_cps_feuille_modele_manager,cps.feuille.soins.modele manager,model_cps_feuille_soins_modele,base.group_system,1,1,1,1
-access_cps_feuille_modele_ligne,cps.feuille.soins.modele.ligne,model_cps_feuille_soins_modele_ligne,base.group_user,1,1,1,0
-access_cps_feuille_modele_ligne_manager,cps.feuille.soins.modele.ligne manager,model_cps_feuille_soins_modele_ligne,base.group_system,1,1,1,1
-access_cps_wizard_bordereau,cps.wizard.bordereau,model_cps_wizard_bordereau,base.group_user,1,1,1,1
+access_cps_praticien_user,cps.praticien user,model_cps_praticien,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_praticien_manager,cps.praticien manager,model_cps_praticien,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_patient_user,cps.patient user,model_cps_patient,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_patient_manager,cps.patient manager,model_cps_patient,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_feuille_soins_user,cps.feuille.soins user,model_cps_feuille_soins,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_feuille_soins_manager,cps.feuille.soins manager,model_cps_feuille_soins,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_feuille_soins_acte_user,cps.feuille.soins.acte user,model_cps_feuille_soins_acte,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_feuille_soins_acte_manager,cps.feuille.soins.acte manager,model_cps_feuille_soins_acte,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_bordereau_user,cps.bordereau user,model_cps_bordereau,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_bordereau_manager,cps.bordereau manager,model_cps_bordereau,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_acte_type_user,cps.acte.type user,model_cps_acte_type,os_auxiliaire_medical.group_cps_user,1,0,0,0
+access_cps_acte_type_manager,cps.acte.type manager,model_cps_acte_type,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_feuille_modele_user,cps.feuille.soins.modele user,model_cps_feuille_soins_modele,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_feuille_modele_manager,cps.feuille.soins.modele manager,model_cps_feuille_soins_modele,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_feuille_modele_ligne_user,cps.feuille.soins.modele.ligne user,model_cps_feuille_soins_modele_ligne,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_feuille_modele_ligne_manager,cps.feuille.soins.modele.ligne manager,model_cps_feuille_soins_modele_ligne,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_wizard_bordereau,cps.wizard.bordereau,model_cps_wizard_bordereau,os_auxiliaire_medical.group_cps_user,1,1,1,1
