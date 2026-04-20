@@ -24,12 +24,10 @@ class CpsBordereauController(http.Controller):
             s = Side(style='thin', color='AAAAAA')
             return Border(left=s, right=s, top=s, bottom=s)
 
-        # Largeurs colonnes — 7 colonnes (Total supprimé)
         for col, w in zip("ABCDEFG", [6, 28, 14, 13, 13, 16, 18]):
             ws.column_dimensions[col].width = w
 
         row = 1
-        # Titre
         ws.merge_cells(f"A{row}:G{row}")
         ws[f"A{row}"] = "BORDEREAU DE FACTURATION"
         ws[f"A{row}"].font = Font(bold=True, size=14, color="FFFFFF")
@@ -38,7 +36,6 @@ class CpsBordereauController(http.Controller):
         ws.row_dimensions[row].height = 28
         row += 1
 
-        # Infos (3 paires sur la même ligne)
         for i, (lbl, val) in enumerate([
             ("N° bordereau :", bordereau.name),
             ("Date :", bordereau.date_bordereau.strftime('%d.%m.%Y') if bordereau.date_bordereau else ''),
@@ -51,10 +48,9 @@ class CpsBordereauController(http.Controller):
             ws[f"{c2}{row}"].font = Font(size=10)
         row += 1
 
-        # Praticien
-        ws.merge_cells(f"A{row}:G{row}")
         prat = bordereau.praticien_id
-        ws[f"A{row}"] = f"{prat.code_auxiliaire}  ·  {prat.name}  ·  Tél : {prat.tel or ''}  ·  {prat.bp or ''}"
+        ws.merge_cells(f"A{row}:G{row}")
+        ws[f"A{row}"] = f"{prat.vat or ''}  ·  {prat.name}  ·  Tél : {prat.phone or ''}  ·  {prat.street or ''}"
         ws[f"A{row}"].font = Font(size=10, italic=True, color=GREEN)
         ws[f"A{row}"].fill = PatternFill("solid", fgColor=LIGHT_GREEN)
         ws[f"A{row}"].alignment = Alignment(horizontal="center")
@@ -66,7 +62,6 @@ class CpsBordereauController(http.Controller):
         ws[f"A{row}"].alignment = Alignment(horizontal="center")
         row += 2
 
-        # En-têtes colonnes (sans "Total")
         headers = ["N°", "Nom Prénom", "DN", "Soins DU", "Soins AU", "Pmt CPS", "Pmt Patient"]
         for i, h in enumerate(headers):
             c = ws.cell(row=row, column=i + 1, value=h)
@@ -81,7 +76,6 @@ class CpsBordereauController(http.Controller):
         lignes = bordereau.get_lignes_for_report()
         for idx, l in enumerate(lignes):
             bg = "F5F5F5" if idx % 2 == 0 else "FFFFFF"
-            # montant_total exclu
             data = [l['n'], l['nom_prenom'], l['dn'], l['date_debut'], l['date_fin'],
                     l['montant_cps'], l['montant_patient']]
             for ci, val in enumerate(data):
@@ -94,7 +88,6 @@ class CpsBordereauController(http.Controller):
                     c.number_format = '#,##0 "F"'
             row += 1
 
-        # Ligne totaux
         ws.merge_cells(f"A{row}:E{row}")
         ws[f"A{row}"] = "TOTAL"
         ws[f"A{row}"].font = Font(bold=True, size=11, color="FFFFFF")

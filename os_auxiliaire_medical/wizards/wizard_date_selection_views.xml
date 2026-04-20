@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_wizard_date_selection_form" model="ir.ui.view">
+        <field name="name">cps.wizard.date.selection.form</field>
+        <field name="model">cps.wizard.date.selection</field>
+        <field name="arch" type="xml">
+            <form string="Ajouter des séances par sélection de dates">
+                <sheet>
+
+                    <!-- ── Acte et paramètres communs ── -->
+                    <group string="Acte et paramètres communs">
+                        <group>
+                            <!--
+                                acte_type_id FACULTATIF.
+                                Domaine : limité aux actes de l'ordonnance si présente.
+                                Si vide → distribution automatique.
+                            -->
+                            <field name="acte_type_ids_disponibles" invisible="1"/>
+                            <field name="ordonnance_id" invisible="1"/>
+                            <field name="acte_type_id"
+                                   domain="[('id', 'in', acte_type_ids_disponibles)]"
+                                   options="{'no_create': False}"
+                                   placeholder="Laisser vide pour auto-distribuer…"/>
+                            <field name="praticien_profession" invisible="1"/>
+                            <field name="delai_min_jours"
+                                   help="Délai minimum entre 2 séances (pré-rempli depuis l'acte, modifiable)"/>
+                        </group>
+                        <group>
+                            <field name="ifd" help="Nb unités IFD appliqué à toutes les séances"/>
+                            <field name="dimanche_ferie"/>
+                            <field name="nuit"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Plage de dates ── -->
+                    <group string="Plage de dates">
+                        <group>
+                            <field name="date_debut"/>
+                            <field name="date_fin"
+                                   help="Par défaut : date de fin de validité de l'ordonnance"/>
+                        </group>
+                        <!-- Jours de la semaine : checkboxes standards (fiables dans tous les contextes) -->
+                        <group string="Jours à inclure" col="7">
+                            <field name="lundi"        string="Lun"/>
+                            <field name="mardi"        string="Mar"/>
+                            <field name="mercredi"     string="Mer"/>
+                            <field name="jeudi"        string="Jeu"/>
+                            <field name="vendredi"     string="Ven"/>
+                            <field name="samedi"       string="Sam"/>
+                            <field name="dimanche_jour" string="Dim"/>
+                        </group>
+                    </group>
+
+                    <div class="text-center mb8">
+                        <button name="action_generer_dates"
+                                string="🗓 Générer les dates"
+                                type="object"
+                                class="btn btn-secondary btn-lg"/>
+                    </div>
+
+                    <!-- ── Résumé avant application ── -->
+                    <group invisible="nb_selectionnees == 0 and not ligne_ids">
+                        <div class="row o_setting_box">
+                            <div class="col-3">
+                                <button name="action_tout_selectionner"
+                                        string="Tout cocher" type="object"
+                                        class="btn btn-link btn-sm"/>
+                            </div>
+                            <div class="col-3">
+                                <button name="action_tout_deselectionner"
+                                        string="Tout décocher" type="object"
+                                        class="btn btn-link btn-sm"/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong><field name="nb_selectionnees" readonly="1"/> séance(s)</strong>
+                                ·
+                                <field name="montant_total_estime" readonly="1"/> F XPF
+                                <span class="text-danger ms-2"
+                                      invisible="nb_non_assignees == 0">
+                                    ⚠ <field name="nb_non_assignees" readonly="1"/> non assignée(s)
+                                </span>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- ── Liste des dates générées ── -->
+                    <separator string="Dates générées – cochez les séances à créer"/>
+                    <field name="ligne_ids" nolabel="1">
+                        <tree editable="bottom">
+                            <field name="selected" string="✓"/>
+                            <field name="date"/>
+                            <field name="jour_semaine" readonly="1"/>
+                            <field name="acte_type_id" string="Acte"
+                                   options="{'no_create': False}"/>
+                            <field name="ordonnance_ligne_id" string="Ligne ord." readonly="1" optional="show"/>
+                            <field name="montant" string="Montant (F)" sum="Total"/>
+                            <field name="warning" readonly="1" string="⚠"
+                                   decoration-danger="warning != ''"
+                                   optional="show"/>
+                        </tree>
+                    </field>
+
+                </sheet>
+                <footer>
+                    <button name="action_appliquer"
+                            string="✅ Créer les séances"
+                            type="object"
+                            class="btn-primary"
+                            invisible="nb_selectionnees == 0"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

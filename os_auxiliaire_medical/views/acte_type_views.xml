@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <record id="view_acte_type_form" model="ir.ui.view">
         <field name="name">cps.acte.type.form</field>
         <field name="model">cps.acte.type</field>
         <field name="arch" type="xml">
-            <!--
-                Pas besoin de readonly explicite : ir.model.access.csv donne
-                perm_write=0 à base.group_user sur cps.acte.type. Odoo 17
-                bascule automatiquement le formulaire en mode lecture seule
-                lorsque l'utilisateur n'a pas le droit d'écriture.
-                Seul base.group_system (Paramètres) peut modifier le catalogue.
-            -->
             <form string="Type d'acte">
                 <sheet>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="name"/>
-                        </h1>
-                    </div>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
                     <group>
                         <group string="Identification">
+                            <field name="sequence"/>
                             <field name="lettre_cle"/>
                             <field name="profession"/>
+                            <field name="type_supplement"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                         <group string="Tarification">
                             <field name="tarif_unitaire"/>
                             <field name="coefficient_defaut"/>
                             <field name="montant_indicatif" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Contraintes de planification">
+                        <group>
+                            <field name="nb_seances_defaut"/>
+                            <field name="nb_seances_max"/>
+                            <field name="duree_seance"/>
+                        </group>
+                        <group>
+                            <field name="delai_min_jours"/>
                         </group>
                     </group>
                 </sheet>
@@ -40,12 +40,17 @@
         <field name="name">cps.acte.type.list</field>
         <field name="model">cps.acte.type</field>
         <field name="arch" type="xml">
-            <tree string="Types d'actes">
+            <tree string="Types d'actes" default_order="sequence,profession,lettre_cle">
+                <field name="sequence" widget="handle"/>
                 <field name="profession"/>
                 <field name="lettre_cle"/>
                 <field name="coefficient_defaut"/>
                 <field name="tarif_unitaire"/>
                 <field name="montant_indicatif"/>
+                <field name="nb_seances_defaut" optional="hide"/>
+                <field name="nb_seances_max"    optional="hide"/>
+                <field name="duree_seance"       optional="hide"/>
+                <field name="delai_min_jours"    optional="hide"/>
                 <field name="name"/>
                 <field name="company_id" groups="base.group_multi_company" optional="show"/>
             </tree>
@@ -59,8 +64,8 @@
             <search>
                 <field name="name"/>
                 <field name="lettre_cle"/>
-                <filter name="ma_profession"
-                        string="Ma profession"
+                <field name="coefficient_defaut" string="Coefficient"/>
+                <filter name="ma_profession" string="Ma profession"
                         domain="[('profession', '=', context.get('default_profession'))]"/>
                 <separator/>
                 <filter name="orthophoniste"    string="Orthophoniste"    domain="[('profession','=','orthophoniste')]"/>
@@ -84,5 +89,4 @@
         <field name="search_view_id" ref="view_acte_type_search"/>
         <field name="context">{'search_default_ma_profession': 1}</field>
     </record>
-
 </odoo>

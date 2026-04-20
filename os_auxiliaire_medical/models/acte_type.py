@@ -4,17 +4,48 @@ from odoo import models, fields, api
 
 class CpsActeType(models.Model):
     _name = 'cps.acte.type'
-    _description = 'Type d\'acte CPS (catalogue)'
-    _order = 'profession, lettre_cle, coefficient_defaut'
+    _description = "Type d'acte CPS (catalogue)"
+    _order = 'sequence, profession, lettre_cle, coefficient_defaut'
+
+    # ── Ordre de priorité (distribution automatique) ──────────────────────────
+    sequence = fields.Integer(
+        string='Séquence', default=10,
+        help='Ordre de priorité lors de la distribution automatique des séances '
+             '(le plus petit en premier).',
+    )
 
     name = fields.Char(string='Libellé', required=True)
     lettre_cle = fields.Char(string='Lettre clé', required=True, size=10,
-                              help='Ex: AMO, AMK, AMS, AMI...')
+                              help='Ex: AMO, AMK, AMS, AMI…')
     coefficient_defaut = fields.Float(string='Coefficient par défaut', digits=(6, 2))
-    tarif_unitaire = fields.Float(string='Tarif unitaire (F CFP)', digits=(10, 0),
-                                   help='Valeur de la lettre clé en F CFP')
+    tarif_unitaire = fields.Float(string='Tarif unitaire (F XPF)', digits=(10, 0),
+                                   help='Valeur de la lettre clé en F XPF')
 
-    # Profession concernée — False / vide = applicable à toutes les professions
+    # ── Contraintes de planification ──────────────────────────────────────────
+    duree_seance = fields.Integer(
+        string='Durée de la séance (min)', default=30,
+        help='Durée standard en minutes.',
+    )
+    nb_seances_defaut = fields.Integer(
+        string='Nb de séances par défaut', default=1,
+        help='Pré-remplit le nombre de séances dans les lignes d\'ordonnance.',
+    )
+    nb_seances_max = fields.Integer(
+        string='Séances max / prescription', default=0,
+        help='0 = pas de limite.',
+    )
+    delai_min_jours = fields.Integer(
+        string='Délai min entre 2 séances (j)', default=0,
+        help='Nombre de jours minimum entre deux séances de cet acte. 0 = sans contrainte.',
+    )
+
+    # ── Type supplément ───────────────────────────────────────────────────────
+    type_supplement = fields.Selection([
+        ('none', 'Acte standard'),
+        ('ifn', 'Supplément IFN (montant depuis la configuration)'),
+        ('ifd', 'Supplément IFD/unité (montant depuis la configuration)'),
+    ], string='Type de supplément', default='none')
+
     profession = fields.Selection([
         ('kinesitherapeute', 'Masseur-kinésithérapeute'),
         ('orthophoniste', 'Orthophoniste'),
@@ -22,67 +53,68 @@ class CpsActeType(models.Model):
         ('pedicure', 'Pédicure-Podologue'),
         ('infirmier', 'Infirmier(e)'),
         ('autre', 'Autre'),
-    ], string='Profession', help='Laisser vide pour un acte commun à toutes les professions.')
+    ], string='Profession',
+       help='Laisser vide pour un acte commun à toutes les professions.')
 
     active = fields.Boolean(default=True)
 
-    # Montant indicatif calculé (coefficient × tarif)
     montant_indicatif = fields.Float(
-        string='Montant indicatif (F CFP)',
+        string='Montant indicatif (F XPF)',
         compute='_compute_montant_indicatif',
         digits=(10, 0),
     )
 
-    # ── Multi-company ───────────────────────────────────────────────────────
     company_id = fields.Many2one(
-        'res.company',
-        string='Société',
-        index=True,
-        help='Laisser vide pour que l\'acte soit visible par toutes les sociétés.\n'
-             'Renseigner uniquement pour restreindre à une société particulière.',
+        'res.company', string='Société', index=True,
+        help='Laisser vide pour que l\'acte soit visible par toutes les sociétés.',
     )
 
-    # ── Compute ─────────────────────────────────────────────────────────────
-
-    @api.depends('coefficient_defaut', 'tarif_unitaire')
+    @api.depends('coefficient_defaut', 'tarif_unitaire', 'type_supplement')
     def _compute_montant_indicatif(self):
         for rec in self:
-            rec.montant_indicatif = round(rec.coefficient_defaut * rec.tarif_unitaire, 0)
+            if rec.type_supplement == 'ifn':
+                montant = float(
+                    self.env['ir.config_parameter'].sudo()
+                    .get_param('cps.supplement.ifn', 250)
+                )
+            elif rec.type_supplement == 'ifd':
+                montant = float(
+                    self.env['ir.config_parameter'].sudo()
+                    .get_param('cps.supplement.ifd', 250)
+                )
+            else:
+                montant = round(rec.coefficient_defaut * rec.tarif_unitaire, 0)
+            rec.montant_indicatif = montant
 
     def name_get(self):
         result = []
         for rec in self:
-            label = f"{rec.lettre_cle} {rec.coefficient_defaut:g} – {rec.name}"
+            coef = '{:g}'.format(rec.coefficient_defaut) if rec.coefficient_defaut else '—'
+            label = f"{coef} – {rec.lettre_cle} – {rec.name}"
             result.append((rec.id, label))
         return result
 
-    # ── Ouverture depuis le menu — injection de default_profession ──────────
+    @api.model
+    def _name_search(self, name='', domain=None, operator='ilike', limit=100, order=None):
+        domain = list(domain or [])
+        if name:
+            text_domain = ['|', ('name', operator, name), ('lettre_cle', operator, name)]
+            try:
+                coef = float(name.replace(',', '.'))
+                text_domain = ['|'] + text_domain + [('coefficient_defaut', '=', coef)]
+            except (ValueError, TypeError):
+                pass
+            domain = text_domain + domain
+        return self._search(domain, limit=limit, order=order)
 
     def action_open_acte_type(self):
-        """
-        Point d'entrée du menu "Types d'actes".
-        Enrichit le contexte avec la profession du praticien connecté
-        afin que le filtre "Ma profession" soit actif par défaut.
-
-        Note : ir.actions.act_window stocke le champ `context` en base comme
-        une chaîne de caractères (fields.Char). _for_xml_id / read() le
-        retourne donc sous forme de str. On utilise ast.literal_eval pour
-        le convertir en dict avant de le modifier, en gérant le cas où il
-        serait déjà un dict (évolution future d'Odoo).
-        """
-        praticien = self.env['cps.praticien'].search(
-            [('user_id', '=', self.env.uid)], limit=1
+        praticien = self.env['res.partner'].search(
+            [('user_id', '=', self.env.uid), ('category_id.name', '=', 'Praticien CPS')], limit=1
         )
-        profession = praticien.profession if praticien else False
-
+        profession = praticien.get_cps_profession_key() if praticien else False
         action = self.env['ir.actions.act_window']._for_xml_id(
             'os_auxiliaire_medical.action_acte_type'
         )
-
-        # --- Parsing robuste du contexte -----------------------------------
-        # Le champ context d'ir.actions.act_window est un Char : read()
-        # retourne une str. dict(str) lèverait un TypeError ; on évalue
-        # d'abord la chaîne avec ast.literal_eval.
         ctx_raw = action.get('context') or {}
         if isinstance(ctx_raw, str):
             try:
@@ -91,12 +123,7 @@ class CpsActeType(models.Model):
                 ctx = {}
         else:
             ctx = dict(ctx_raw)
-        # -------------------------------------------------------------------
-
         ctx['default_profession'] = profession
-        # Active le filtre "Ma profession" uniquement si une profession est
-        # trouvée ; sinon on désactive le filtre pour ne pas masquer tous
-        # les actes à un utilisateur sans praticien associé.
         ctx['search_default_ma_profession'] = 1 if profession else 0
         action['context'] = ctx
         return action

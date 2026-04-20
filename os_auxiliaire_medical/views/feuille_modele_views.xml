@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <record id="view_feuille_modele_form" model="ir.ui.view">
         <field name="name">cps.feuille.soins.modele.form</field>
         <field name="model">cps.feuille.soins.modele</field>
@@ -22,15 +21,13 @@
                             <field name="nb_lignes" readonly="1"/>
                         </group>
                     </group>
-
                     <notebook>
                         <page string="Actes du modèle">
                             <field name="ligne_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="acte_type_id"
-                                           domain="[('profession', 'in', [False, parent.profession])]"
-                                           options="{'no_create': False}"/>
+                                           domain="[('profession', 'in', [False, parent.profession])]"/>
                                     <field name="lettre_cle" readonly="1"/>
                                     <field name="coefficient"/>
                                     <field name="ifd"/>
@@ -68,8 +65,7 @@
                 <field name="name"/>
                 <field name="profession"/>
                 <group expand="0" string="Grouper par">
-                    <filter name="group_profession" string="Profession"
-                            context="{'group_by': 'profession'}"/>
+                    <filter name="group_profession" string="Profession" context="{'group_by': 'profession'}"/>
                 </group>
             </search>
         </field>
@@ -81,5 +77,4 @@
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_feuille_modele_search"/>
     </record>
-
 </odoo>

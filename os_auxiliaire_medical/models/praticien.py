@@ -1,5 +1,15 @@
 from odoo import models, fields, api
 
+# Map profession → xmlid de la catégorie partenaire
+PROFESSION_CATEGORY_XMLID = {
+    'kinesitherapeute': 'os_auxiliaire_medical.partner_category_kinesitherapeute',
+    'orthophoniste':    'os_auxiliaire_medical.partner_category_orthophoniste',
+    'orthoptiste':      'os_auxiliaire_medical.partner_category_orthoptiste',
+    'pedicure':         'os_auxiliaire_medical.partner_category_pedicure',
+    'infirmier':        'os_auxiliaire_medical.partner_category_infirmier',
+    'autre':            'os_auxiliaire_medical.partner_category_autre_praticien',
+}
+
 
 class CpsPraticien(models.Model):
     _name = 'cps.praticien'
@@ -20,47 +30,51 @@ class CpsPraticien(models.Model):
         ('autre', 'Autre'),
     ], string='Profession', required=True, default='orthophoniste')
 
-    # Liaison avec l'utilisateur Odoo
+    # Utilisateur Odoo associé – par défaut l'utilisateur connecté
     user_id = fields.Many2one(
         'res.users', string='Utilisateur Odoo',
-        help='Associer ce praticien à un utilisateur pour pré-remplir les feuilles de soins.',
         ondelete='set null',
+        default=lambda self: self.env.user,
     )
 
-    # Coordonnées — synchronisables depuis le partenaire de l'utilisateur
+    # Lien vers res.partner (pour partage avec l'annuaire Odoo)
+    partner_id = fields.Many2one(
+        'res.partner', string='Contact Odoo',
+        ondelete='set null',
+        help='Contact partenaire associé (tagué automatiquement "Praticien CPS").',
+    )
+
     tel = fields.Char(string='Téléphone')
     bp = fields.Char(string='BP / Adresse')
     email = fields.Char(string='Email')
     active = fields.Boolean(default=True)
 
-    # ── Multi-company ───────────────────────────────────────────────────────
     company_id = fields.Many2one(
-        'res.company',
-        string='Société',
-        required=True,
-        default=lambda self: self.env.company,
-        index=True,
-    )
-
-    feuille_soins_ids = fields.One2many(
-        'cps.feuille.soins', 'praticien_id', string='Feuilles de soins',
-    )
-    bordereau_ids = fields.One2many(
-        'cps.bordereau', 'praticien_id', string='Bordereaux',
+        'res.company', string='Société', required=True,
+        default=lambda self: self.env.company, index=True,
     )
 
     feuille_count = fields.Integer(compute='_compute_counts', string='Feuilles')
     bordereau_count = fields.Integer(compute='_compute_counts', string='Bordereaux')
 
-    @api.depends('feuille_soins_ids', 'bordereau_ids')
+    @api.depends('partner_id')
     def _compute_counts(self):
+        FeuilleSoins = self.env['cps.feuille.soins']
+        Bordereau = self.env['cps.bordereau']
         for rec in self:
-            rec.feuille_count = len(rec.feuille_soins_ids)
-            rec.bordereau_count = len(rec.bordereau_ids)
+            if rec.partner_id:
+                rec.feuille_count = FeuilleSoins.search_count(
+                    [('praticien_id', '=', rec.partner_id.id)]
+                )
+                rec.bordereau_count = Bordereau.search_count(
+                    [('praticien_id', '=', rec.partner_id.id)]
+                )
+            else:
+                rec.feuille_count = 0
+                rec.bordereau_count = 0
 
     @api.onchange('user_id')
     def _onchange_user_id(self):
-        """Pré-remplit les coordonnées depuis le partenaire de l'utilisateur."""
         if self.user_id and self.user_id.partner_id:
             partner = self.user_id.partner_id
             if not self.name:
@@ -70,20 +84,53 @@ class CpsPraticien(models.Model):
             if not self.email:
                 self.email = partner.email
 
+    # ── Tagger le partenaire à la création/modification ───────────────────────
+
+    def _get_profession_category(self):
+        """Retourne la catégorie res.partner correspondant à la profession."""
+        self.ensure_one()
+        xmlid = PROFESSION_CATEGORY_XMLID.get(self.profession)
+        if xmlid:
+            try:
+                return self.env.ref(xmlid)
+            except Exception:
+                pass
+        return None
+
+    def _tag_partner(self, partner):
+        """Ajoute les catégories Praticien CPS + profession sur le partenaire."""
+        if not partner:
+            return
+        cat_praticien = self.env.ref(
+            'os_auxiliaire_medical.partner_category_praticien', raise_if_not_found=False
+        )
+        cat_profession = self._get_profession_category()
+        cats_to_add = [c for c in [cat_praticien, cat_profession] if c]
+        if cats_to_add:
+            partner.write({'category_id': [(4, c.id) for c in cats_to_add]})
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for rec in records:
+            if rec.user_id and rec.user_id.partner_id and not rec.partner_id:
+                rec.partner_id = rec.user_id.partner_id
+            rec._tag_partner(rec.partner_id)
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'profession' in vals or 'partner_id' in vals:
+            for rec in self:
+                rec._tag_partner(rec.partner_id)
+        return res
+
     def action_view_feuilles(self):
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Feuilles de soins',
-            'res_model': 'cps.feuille.soins',
-            'view_mode': 'list,form',
-            'domain': [('praticien_id', '=', self.id)],
-        }
+        return {'type': 'ir.actions.act_window', 'name': 'Feuilles de soins',
+                'res_model': 'cps.feuille.soins', 'view_mode': 'list,form',
+                'domain': [('praticien_id', '=', self.partner_id.id)]}
 
     def action_view_bordereaux(self):
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Bordereaux',
-            'res_model': 'cps.bordereau',
-            'view_mode': 'list,form',
-            'domain': [('praticien_id', '=', self.id)],
-        }
+        return {'type': 'ir.actions.act_window', 'name': 'Bordereaux',
+                'res_model': 'cps.bordereau', 'view_mode': 'list,form',
+                'domain': [('praticien_id', '=', self.partner_id.id)]}

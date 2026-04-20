@@ -12,12 +12,6 @@
                         <field name="annee"/>
                     </group>
                 </group>
-
-                <!--
-                    La liste des feuilles est placée hors de tout <group> pour
-                    occuper toute la largeur de la fenêtre de dialogue.
-                    Un <separator> remplace le libellé du groupe.
-                -->
                 <separator string="Feuilles de soins à inclure"/>
                 <field name="feuille_ids" nolabel="1">
                     <tree string="Feuilles de soins">
@@ -31,7 +25,6 @@
                         <field name="montant_total"        sum="Total"/>
                     </tree>
                 </field>
-
                 <footer>
                     <button name="action_generate" string="Générer le bordereau"
                             type="object" class="btn-primary"/>
@@ -48,6 +41,4 @@
         <field name="target">new</field>
     </record>
 
-    <menuitem id="menu_wizard_bordereau" name="Générer un bordereau"
-              parent="menu_cps_main" action="action_wizard_bordereau" sequence="30"/>
 </odoo>

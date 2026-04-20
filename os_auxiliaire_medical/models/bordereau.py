@@ -11,40 +11,30 @@ class CpsBordereau(models.Model):
 
     name = fields.Char(string='N° Bordereau', required=True, copy=False,
                         default=lambda self: _('Nouveau'), tracking=True)
-    praticien_id = fields.Many2one('cps.praticien', string='Praticien', required=True,
-                                    tracking=True, ondelete='restrict')
+
+    # praticien → res.partner catégorie Praticien CPS
+    praticien_id = fields.Many2one(
+        'res.partner', string='Praticien',
+        domain="[('category_id.name', '=', 'Praticien CPS')]",
+        required=True, tracking=True, ondelete='restrict',
+    )
     date_bordereau = fields.Date(string='Date du bordereau', required=True,
                                   default=fields.Date.today, tracking=True)
-    mois = fields.Char(string='Mois / Période', required=True,
-                        help='Ex: Février 2026', tracking=True)
-
+    mois = fields.Char(string='Mois / Période', required=True, tracking=True)
     state = fields.Selection([
-        ('draft', 'Brouillon'),
-        ('validated', 'Validé'),
-        ('submitted', 'Transmis CPS'),
-        ('closed', 'Clôturé'),
-    ], string='État', default='draft', tracking=True)
+        ('draft', 'Brouillon'), ('validated', 'Validé'),
+        ('submitted', 'Transmis CPS'), ('closed', 'Clôturé'),
+    ], default='draft', tracking=True)
 
     feuille_ids = fields.One2many('cps.feuille.soins', 'bordereau_id', string='Feuilles de soins')
-    nb_feuilles = fields.Integer(compute='_compute_totaux', string='Nb feuilles', store=True)
+    nb_feuilles  = fields.Integer(compute='_compute_totaux', store=True)
+    total_cps    = fields.Float(compute='_compute_totaux', store=True, digits=(12, 0))
+    total_patient = fields.Float(compute='_compute_totaux', store=True, digits=(12, 0))
+    total_general = fields.Float(compute='_compute_totaux', store=True, digits=(12, 0))
+    notes = fields.Text()
 
-    total_cps = fields.Float(string='Total CPS', compute='_compute_totaux', store=True,
-                              digits=(12, 0))
-    total_patient = fields.Float(string='Total Patient', compute='_compute_totaux', store=True,
-                                  digits=(12, 0))
-    total_general = fields.Float(string='Total général', compute='_compute_totaux', store=True,
-                                  digits=(12, 0))
-
-    notes = fields.Text(string='Notes')
-
-    # ── Multi-company ───────────────────────────────────────────────────────
-    company_id = fields.Many2one(
-        'res.company',
-        string='Société',
-        required=True,
-        default=lambda self: self.env.company,
-        index=True,
-    )
+    company_id = fields.Many2one('res.company', required=True,
+                                  default=lambda self: self.env.company, index=True)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -57,8 +47,8 @@ class CpsBordereau(models.Model):
                  'feuille_ids.montant_patient')
     def _compute_totaux(self):
         for rec in self:
-            rec.nb_feuilles = len(rec.feuille_ids)
-            rec.total_cps = sum(rec.feuille_ids.mapped('montant_tiers_payant'))
+            rec.nb_feuilles   = len(rec.feuille_ids)
+            rec.total_cps     = sum(rec.feuille_ids.mapped('montant_tiers_payant'))
             rec.total_patient = sum(rec.feuille_ids.mapped('montant_patient'))
             rec.total_general = rec.total_cps + rec.total_patient
 
@@ -69,37 +59,28 @@ class CpsBordereau(models.Model):
             rec.feuille_ids.action_submit()
             rec.state = 'validated'
 
-    def action_submit_cps(self):
-        self.state = 'submitted'
-
-    def action_close(self):
-        self.state = 'closed'
-
-    def action_reset_draft(self):
-        self.state = 'draft'
+    def action_submit_cps(self): self.state = 'submitted'
+    def action_close(self):      self.state = 'closed'
+    def action_reset_draft(self): self.state = 'draft'
 
     def action_print_bordereau(self):
         return self.env.ref('os_auxiliaire_medical.action_report_bordereau').report_action(self)
 
     def action_export_excel(self):
-        return {
-            'type': 'ir.actions.act_url',
-            'url': f'/cps/bordereau/{self.id}/xlsx',
-            'target': 'new',
-        }
+        return {'type': 'ir.actions.act_url', 'url': f'/cps/bordereau/{self.id}/xlsx', 'target': 'new'}
 
     def get_lignes_for_report(self):
-        """Retourne les lignes ordonnées pour le rapport."""
         lignes = []
         for i, feuille in enumerate(self.feuille_ids.sorted('date_debut_soins'), start=1):
+            p = feuille.patient_id
             lignes.append({
                 'n': i,
-                'nom_prenom': f"{feuille.patient_id.nom} {feuille.patient_id.prenom}",
-                'dn': feuille.patient_id.dn or '',
+                'nom_prenom': f"{p.lastname or ''} {p.firstname or ''}".strip(),
+                'dn': p.vat or '',
                 'date_debut': feuille.date_debut_soins.strftime('%d/%m/%y') if feuille.date_debut_soins else '',
-                'date_fin': feuille.date_fin_soins.strftime('%d/%m/%y') if feuille.date_fin_soins else '',
-                'montant_cps': feuille.montant_tiers_payant,
+                'date_fin':   feuille.date_fin_soins.strftime('%d/%m/%y')   if feuille.date_fin_soins   else '',
+                'montant_cps':     feuille.montant_tiers_payant,
                 'montant_patient': feuille.montant_patient,
-                'montant_total': feuille.montant_total,
+                'montant_total':   feuille.montant_total,
             })
         return lignes

@@ -1,566 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-
-        <!-- ══════════════════════════════════════════════════════════════
-             MASSEUR-KINÉSITHÉRAPEUTE — Lettres clés AMS / AMK / AMC
-             Tarif unitaire : AMS = 283 F CFP | AMK = 433 F CFP | AMC = 433 F CFP
-             Source : NPAP – Arrêté n° 447 CM du 27 mars 2019
-                      version en vigueur au 04/11/2024
-                      (modif. Arrêté n° 775 CM du 24/05/2019)
-             Référence nomenclature : chapitre 10 – Annexe II
-        ══════════════════════════════════════════════════════════════ -->
-
-        <!-- ────────────────────────────────────────────────────
-             10.1.1 – BILANS OSTÉO-ARTICULAIRES ET MUSCULAIRES
-        ──────────────────────────────────────────────────── -->
-
         <record id="acte_type_amk_bilan_osteo_1membre" model="cps.acte.type">
-            <!-- Code 10010101 -->
-            <field name="name">Bilan ostéo-articulaire simple – 1 membre (affections orthopédiques ou rhumatologiques)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">5</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Bilan ostéo-articulaire simple – 1 membre</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">5</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_amk_bilan_osteo_2membres" model="cps.acte.type">
-            <!-- Code 10010102 -->
-            <field name="name">Bilan ostéo-articulaire simple – 2 membres ou 1 membre et le tronc</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
         <record id="acte_type_amk_bilan_osteo_corps_entier" model="cps.acte.type">
-            <!-- Code 10010103 -->
             <field name="name">Bilan ostéo-articulaire simple – tout le corps</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">10</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">10</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_amk_bilan_musculaire_1membre" model="cps.acte.type">
-            <!-- Code 10010104 -->
-            <field name="name">Bilan musculaire (avec tests) – 1 membre (affections neurologiques)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">5</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_bilan_musculaire_2membres" model="cps.acte.type">
-            <!-- Code 10010105 -->
-            <field name="name">Bilan musculaire (avec tests) – 2 membres</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">10</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_bilan_musculaire_corps_entier" model="cps.acte.type">
-            <!-- Code 10010106 -->
-            <field name="name">Bilan musculaire (avec tests) – tout le corps</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">20</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.1.2 – BILAN-DIAGNOSTIC KINÉSITHÉRAPIQUE (BDK)
-        ──────────────────────────────────────────────────── -->
-
         <record id="acte_type_amk_bdk_10_20_seances" model="cps.acte.type">
-            <!-- Code 10010201 -->
-            <field name="name">Bilan-diagnostic kinésithérapique – pour 10 à 20 séances (puis toutes les 20 séances)</field>
-            <field name="lettre_cle">AMS</field>
-            <field name="coefficient_defaut">10.7</field>
-            <field name="tarif_unitaire">283</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Bilan-diagnostic kinésithérapique – pour 10 à 20 séances</field>
+            <field name="lettre_cle">AMS</field><field name="coefficient_defaut">10.7</field>
+            <field name="tarif_unitaire">283</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_amk_bdk_neuro_10_50_seances" model="cps.acte.type">
-            <!-- Code 10010202 -->
-            <field name="name">Bilan-diagnostic kinésithérapique – affections neurologiques et musculaires (hors atteintes périphériques) – pour 10 à 50 séances (puis toutes les 50 séances)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">10.8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.1 – RÉÉDUCATION ORTHOPÉDIQUE ET RHUMATOLOGIQUE
-             Lettre clé AMS (actes relevant de AMS ou K selon contexte)
-        ──────────────────────────────────────────────────── -->
-
         <record id="acte_type_ams_reeducation_1membre" model="cps.acte.type">
-            <!-- Code 10020101 -->
-            <field name="name">Rééducation d'un membre et de sa racine (toute nature et localisation) – séance</field>
-            <field name="lettre_cle">AMS</field>
-            <field name="coefficient_defaut">7.5</field>
-            <field name="tarif_unitaire">283</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Rééducation d'un membre et de sa racine – séance</field>
+            <field name="lettre_cle">AMS</field><field name="coefficient_defaut">7.5</field>
+            <field name="tarif_unitaire">283</field><field name="profession">kinesitherapeute</field>
         </record>
-
         <record id="acte_type_ams_reeducation_plusieurs_membres" model="cps.acte.type">
-            <!-- Code 10020102 -->
             <field name="name">Rééducation de plusieurs membres ou du tronc et d'un ou plusieurs membres – séance</field>
-            <field name="lettre_cle">AMS</field>
-            <field name="coefficient_defaut">9.5</field>
-            <field name="tarif_unitaire">283</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="lettre_cle">AMS</field><field name="coefficient_defaut">9.5</field>
+            <field name="tarif_unitaire">283</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_ams_reeducation_amputation_1membre" model="cps.acte.type">
-            <!-- Code 10020103 -->
-            <field name="name">Rééducation et réadaptation après amputation d'un membre (y compris adaptation à l'appareillage) – séance</field>
-            <field name="lettre_cle">AMS</field>
-            <field name="coefficient_defaut">8.5</field>
-            <field name="tarif_unitaire">283</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_ams_reeducation_amputation_plusieurs_membres" model="cps.acte.type">
-            <!-- Code 10020104 -->
-            <field name="name">Rééducation et réadaptation après amputation de plusieurs membres (y compris adaptation à l'appareillage) – séance</field>
-            <field name="lettre_cle">AMS</field>
-            <field name="coefficient_defaut">10.5</field>
-            <field name="tarif_unitaire">283</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
         <record id="acte_type_ams_reeducation_rachis" model="cps.acte.type">
-            <!-- Code 10020105 -->
-            <field name="name">Rééducation du rachis et/ou des ceintures (toute nature et localisation, inclus radiculalgie sans déficit moteur) – séance</field>
-            <field name="lettre_cle">AMS</field>
-            <field name="coefficient_defaut">7.5</field>
-            <field name="tarif_unitaire">283</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Rééducation du rachis et/ou des ceintures – séance</field>
+            <field name="lettre_cle">AMS</field><field name="coefficient_defaut">7.5</field>
+            <field name="tarif_unitaire">283</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_ams_reeducation_scoliose" model="cps.acte.type">
-            <!-- Code 10020106 -->
-            <field name="name">Rééducation de l'enfant ou adolescent pour déviation latérale ou sagittale du rachis – séance</field>
-            <field name="lettre_cle">AMS</field>
-            <field name="coefficient_defaut">7.5</field>
-            <field name="tarif_unitaire">283</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.2 – RHUMATISMES INFLAMMATOIRES
-        ──────────────────────────────────────────────────── -->
-
         <record id="acte_type_amk_rhumato_localise" model="cps.acte.type">
-            <!-- Code 10020201 -->
-            <field name="name">Rééducation – rhumatisme inflammatoire (pelvispondylite, polyarthrite…) – atteinte localisée à un membre ou le tronc – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Rééducation rhumatisme inflammatoire – atteinte localisée à un membre ou le tronc – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">7</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_amk_rhumato_plusieurs_membres" model="cps.acte.type">
-            <!-- Code 10020202 -->
-            <field name="name">Rééducation – rhumatisme inflammatoire – atteinte de plusieurs membres ou du tronc et d'un ou plusieurs membres – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">9</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.3 – RÉÉDUCATION DE LA PAROI ABDOMINALE
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_reeducation_abdominale_chirurgie" model="cps.acte.type">
-            <!-- Code 10020301 -->
-            <field name="name">Rééducation abdominale pré-opératoire ou post-opératoire – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_reeducation_abdominale_postpartum" model="cps.acte.type">
-            <!-- Code 10020302 -->
-            <field name="name">Rééducation abdominale du post-partum – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.4 – AFFECTIONS NEUROLOGIQUES ET MUSCULAIRES
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_neuro_peripherique_1membre" model="cps.acte.type">
-            <!-- Code 10020401 -->
-            <field name="name">Rééducation – atteintes périphériques radiculaires ou tronculaires – 1 membre ou la face – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_neuro_peripherique_plusieurs_membres" model="cps.acte.type">
-            <!-- Code 10020402 -->
-            <field name="name">Rééducation – atteintes périphériques radiculaires ou tronculaires – plusieurs membres – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">10</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
         <record id="acte_type_amk_hemiplegie" model="cps.acte.type">
-            <!-- Code 10020403 -->
             <field name="name">Rééducation de l'hémiplégie – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">9</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">9</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
         <record id="acte_type_amk_paraplegie_tetraplegie" model="cps.acte.type">
-            <!-- Code 10020404 -->
             <field name="name">Rééducation de la paraplégie et de la tétraplégie – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">11</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">11</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_amk_neuro_stable_1membre" model="cps.acte.type">
-            <!-- Code 10020405 -->
-            <field name="name">Rééducation – affections neurologiques stables ou évolutives (hors hémiplégie/paraplégie) – déficiences à 1 membre et sa racine – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_neuro_stable_2membres" model="cps.acte.type">
-            <!-- Code 10020406 -->
-            <field name="name">Rééducation – affections neurologiques stables ou évolutives (hors hémiplégie/paraplégie) – déficiences à 2 membres ou plus – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">10</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_myopathie" model="cps.acte.type">
-            <!-- Code 10020407 -->
-            <field name="name">Rééducation des malades atteints de myopathie – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">11</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_encephalopathie_infantile" model="cps.acte.type">
-            <!-- Code 10020408 -->
-            <field name="name">Rééducation des malades atteints d'encéphalopathie infantile – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">11</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.5 – AFFECTIONS RESPIRATOIRES
-        ──────────────────────────────────────────────────── -->
-
         <record id="acte_type_amk_resp_urgence" model="cps.acte.type">
-            <!-- Code 10020501 -->
-            <field name="name">Rééducation respiratoire avec désencombrement urgent (bronchiolite nourrisson, poussée aiguë) – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Rééducation respiratoire avec désencombrement urgent (bronchiolite nourrisson) – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
         <record id="acte_type_amk_resp_obstructive" model="cps.acte.type">
-            <!-- Code 10020502 -->
-            <field name="name">Rééducation maladies respiratoires obstructives/restrictives/mixtes (hors urgence) – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Rééducation maladies respiratoires obstructives/restrictives (hors urgence) – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_amk_resp_prepost_op" model="cps.acte.type">
-            <!-- Code 10020503 -->
-            <field name="name">Rééducation respiratoire pré-opératoire ou post-opératoire – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_resp_mucoviscidose" model="cps.acte.type">
-            <!-- Code 10020504 -->
-            <field name="name">Prise en charge kinésithérapique respiratoire – patient atteint de mucoviscidose – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">10</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_readaptation_resp_individuelle" model="cps.acte.type">
-            <!-- Code 10020505 -->
-            <field name="name">Réadaptation respiratoire kinésithérapique – handicap respiratoire chronique – prise en charge individuelle (séance ~90 min, séquence de 20 séances)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">28</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_readaptation_resp_groupe" model="cps.acte.type">
-            <!-- Code 10020506 -->
-            <field name="name">Réadaptation respiratoire kinésithérapique – handicap respiratoire chronique – groupe de 2 à 4 personnes avec rééducation respiratoire individuelle (séance ~90 min)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">20</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.6 – PATHOLOGIES MAXILLO-FACIALES ET ORL
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_maxillofaciale" model="cps.acte.type">
-            <!-- Code 10020601 -->
-            <field name="name">Rééducation maxillo-faciale (hors paralysie faciale) – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_vestibulaire" model="cps.acte.type">
-            <!-- Code 10020602 -->
-            <field name="name">Rééducation vestibulaire et des troubles de l'équilibre – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_deglutition_isolee" model="cps.acte.type">
-            <!-- Code 10020603 -->
-            <field name="name">Rééducation des troubles de la déglutition isolés – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.7 – AFFECTIONS VASCULAIRES
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_arteriopathie" model="cps.acte.type">
-            <!-- Code 10020701 -->
-            <field name="name">Rééducation – artériopathie des membres inférieurs (claudication, troubles trophiques) – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_insuffisance_veineuse" model="cps.acte.type">
-            <!-- Code 10020702 -->
-            <field name="name">Rééducation – insuffisance veineuse des membres inférieurs avec retentissement articulaire et/ou troubles trophiques – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
         <record id="acte_type_amk_lymphoedeme_1membre" model="cps.acte.type">
-            <!-- Code 10020703 -->
-            <field name="name">Rééducation – lymphœdème vrai (drainage manuel) – 1 membre ou le cou et la face – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Rééducation lymphœdème vrai (drainage manuel) – 1 membre – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">7</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_amk_lymphoedeme_2membres" model="cps.acte.type">
-            <!-- Code 10020704 -->
-            <field name="name">Rééducation – lymphœdème vrai (drainage manuel) – 2 membres – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">9</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_lymphoedeme_sein" model="cps.acte.type">
-            <!-- Code 10020705 -->
-            <field name="name">Rééducation – lymphœdème du membre supérieur après cancer du sein + rééducation de l'épaule – phase intensive (séance ~60 min, max 10 séances sans BDK préalable)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">15.5</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_bandage_multicouche_1membre" model="cps.acte.type">
-            <!-- Code 10020708 -->
-            <field name="name">Supplément bandage multicouche – 1 membre</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">1</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_bandage_multicouche_2membres" model="cps.acte.type">
-            <!-- Code 10020709 -->
-            <field name="name">Supplément bandage multicouche – 2 membres</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">2</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.8 – AFFECTIONS PÉRINÉO-SPHINCTÉRIENNES
-        ──────────────────────────────────────────────────── -->
-
         <record id="acte_type_amk_perinee" model="cps.acte.type">
-            <!-- Code 10020801 -->
-            <field name="name">Rééducation périnéale active sous contrôle manuel et/ou électrostimulation et/ou biofeedback – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Rééducation périnéale active sous contrôle manuel et/ou biofeedback – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.9 – RÉÉDUCATION DE LA DÉAMBULATION DU SUJET ÂGÉ
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_sujet_age_analytique" model="cps.acte.type">
-            <!-- Code 10020901 -->
-            <field name="name">Rééducation analytique et globale musculo-articulaire des deux membres inférieurs, posture, équilibre et coordination – sujet âgé – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_sujet_age_marche" model="cps.acte.type">
-            <!-- Code 10020902 -->
-            <field name="name">Rééducation de la déambulation – maintien de l'autonomie de la personne âgée – séance (~20 min)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">6</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.10 – BRÛLURES
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_brulures_localise" model="cps.acte.type">
-            <!-- Code 10021001 -->
-            <field name="name">Rééducation – brûlures localisées à 1 membre ou un segment de membre – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">7</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_brulures_etendues" model="cps.acte.type">
-            <!-- Code 10021002 -->
-            <field name="name">Rééducation – brûlures étendues à plusieurs membres et/ou au tronc – séance</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">9</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.2.11 – SOINS PALLIATIFS
-        ──────────────────────────────────────────────────── -->
-
         <record id="acte_type_amk_soins_palliatifs" model="cps.acte.type">
-            <!-- Code 10021101 -->
-            <field name="name">Soins palliatifs – mobilisation, massage, drainage bronchique… – cotation journalière forfaitaire (quel que soit le nombre d'interventions)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">12</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+            <field name="name">Soins palliatifs – cotation journalière forfaitaire</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">12</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <!-- ────────────────────────────────────────────────────
-             10.4 – DIVERS : KINÉBALNÉOTHÉRAPIE
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_kinebalneo_bassin" model="cps.acte.type">
-            <!-- Code 10040101 -->
-            <field name="name">Supplément kinébalnéothérapie en bassin (min. 2m × 1,80m × 0,60m)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">1.2</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
+        <record id="acte_type_amk_reeducation_abdominale_postpartum" model="cps.acte.type">
+            <field name="name">Rééducation abdominale du post-partum – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">7</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
         </record>
-
-        <record id="acte_type_amk_kinebalneo_piscine" model="cps.acte.type">
-            <!-- Code 10040102 -->
-            <field name="name">Supplément kinébalnéothérapie en piscine (min. 2m × 3m × 1,10m)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">2.2</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             11.1.1 – ÉLECTROTHÉRAPIE (accord préalable)
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_electro_surface" model="cps.acte.type">
-            <!-- Code 11010101 -->
-            <field name="name">Électrothérapie – courants galvaniques/faradiques/excitomoteurs, ultrasons, diathermie, ondes courtes – application de surface – séance de 20 min (accord préalable)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">3</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_electro_intracavitaire" model="cps.acte.type">
-            <!-- Code 11010102 -->
-            <field name="name">Électrothérapie – application intracavitaire (accord préalable)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">4</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <record id="acte_type_amk_electro_courants_excito_mobile" model="cps.acte.type">
-            <!-- Code 11010103 -->
-            <field name="name">Électrothérapie – courants excitomoteurs par électrode mobile ou courants progressifs (accord préalable)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">5</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
-        <!-- ────────────────────────────────────────────────────
-             MAJORATION MASSEUR-KINÉSITHÉRAPEUTE (Art. 14-V)
-        ──────────────────────────────────────────────────── -->
-
-        <record id="acte_type_amk_majoration_ifs" model="cps.acte.type">
-            <!-- Majoration IFS – Art. 14-V -->
-            <field name="name">Indemnité forfaitaire prise en charge précoce post-hospitalisation (IFS) – affection neurologique ou prothèse articulaire membre inférieur (bilan initial dans les 7j, min 15 séances sur 2 mois à domicile)</field>
-            <field name="lettre_cle">AMK</field>
-            <field name="coefficient_defaut">0</field>
-            <field name="tarif_unitaire">433</field>
-            <field name="profession">kinesitherapeute</field>
-        </record>
-
     </data>
 </odoo>

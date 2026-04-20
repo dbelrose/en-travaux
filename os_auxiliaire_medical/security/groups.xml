@@ -1,46 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-    <!--
-        Catégorie visible dans Paramètres → Utilisateurs → onglet "Droits d'accès".
-        sequence élevé pour apparaître après les modules standard.
-    -->
     <record id="module_category_cps" model="ir.module.category">
         <field name="name">CPS Feuilles de Soins</field>
         <field name="description">Gestion des feuilles de soins et bordereaux CPS Polynésie française</field>
         <field name="sequence">100</field>
     </record>
 
-    <!-- ── Utilisateur CPS ───────────────────────────────────────────────── -->
-    <!--
-        Peut créer / modifier ses feuilles et patients.
-        Ne peut PAS supprimer ni accéder au catalogue des actes en écriture.
-    -->
     <record id="group_cps_user" model="res.groups">
         <field name="name">Utilisateur</field>
         <field name="category_id" ref="module_category_cps"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-        <field name="comment">
-            Accès standard : saisie des feuilles de soins, gestion des patients
-            et génération des bordereaux. Lecture seule sur le catalogue des actes.
-        </field>
     </record>
 
-    <!-- ── Responsable CPS ───────────────────────────────────────────────── -->
-    <!--
-        Hérite des droits Utilisateur + peut supprimer des enregistrements
-        et modifier le catalogue des actes.
-        Sélectionner ce groupe implique automatiquement "Utilisateur".
-    -->
     <record id="group_cps_manager" model="res.groups">
         <field name="name">Responsable</field>
         <field name="category_id" ref="module_category_cps"/>
         <field name="implied_ids" eval="[(4, ref('group_cps_user'))]"/>
         <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
-        <field name="comment">
-            Accès complet : suppression des enregistrements, gestion du catalogue
-            des actes (création / modification / suppression), administration des praticiens.
-        </field>
     </record>
-
 </odoo>
