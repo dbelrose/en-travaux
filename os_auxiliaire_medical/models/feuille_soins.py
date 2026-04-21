@@ -76,11 +76,11 @@ class CpsFeuillesSoins(models.Model):
     praticien_id = fields.Many2one(
         'res.partner', string='Auxiliaire médical',
         domain="[('category_id.name', '=', 'Praticien CPS')]",
-        required=True, tracking=True, ondelete='restrict',
-        store=True, readonly=False,
-        default=lambda self: _default_praticien(self.env),
-        compute='_compute_praticien_id',
+        tracking=True, ondelete='restrict',
+        compute='_compute_praticien_id', store=True, readonly=False,
+        # required validé par constrains (pas required=True pour éviter le bug ORM)
     )
+
     # Profession du praticien : calculée en Python depuis ses catégories,
     # sans aucun champ stocké sur res.partner
     praticien_profession = fields.Char(
@@ -95,10 +95,14 @@ class CpsFeuillesSoins(models.Model):
 
     @api.depends('ordonnance_id.praticien_id')
     def _compute_praticien_id(self):
+        default_praticien = self.env['res.partner'].search(
+            [('user_id', '=', self.env.uid), ('category_id.name', '=', 'Praticien CPS')], limit=1,
+        )
         for rec in self:
             if rec.ordonnance_id and rec.ordonnance_id.praticien_id:
                 rec.praticien_id = rec.ordonnance_id.praticien_id
-            # Si pas d'ordonnance, ne pas toucher (la valeur manuelle est conservée)
+            elif not rec.praticien_id:
+                rec.praticien_id = default_praticien
 
     @api.constrains('praticien_id')
     def _check_praticien_id(self):
@@ -170,6 +174,7 @@ class CpsFeuillesSoins(models.Model):
     praticien_bp_texte = fields.Char(compute='_compute_champs_texte', store=True)
     praticien_tel_texte = fields.Char(compute='_compute_champs_texte', store=True)
     bordereau_name_texte = fields.Char(compute='_compute_champs_texte', store=True)
+
     acte_01_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
     acte_01_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
     acte_01_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
@@ -181,6 +186,7 @@ class CpsFeuillesSoins(models.Model):
     acte_01_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
     acte_01_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
     acte_01_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
     acte_02_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
     acte_02_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
     acte_02_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
@@ -192,6 +198,174 @@ class CpsFeuillesSoins(models.Model):
     acte_02_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
     acte_02_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
     acte_02_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_03_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_03_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_04_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_04_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_05_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_05_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_06_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_06_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_07_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_07_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_08_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_08_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_09_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_09_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_10_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_10_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_11_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_11_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_12_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_12_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_13_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_13_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_14_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_14_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_15_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_15_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
+
+    acte_16_date_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_lettre_cle_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_coefficient_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_ifd_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_ik_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_taux_majoration_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_montant_texte = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_dimanche_ferie_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_dimanche_ferie_non = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_nuit_oui = fields.Char(compute='_compute_champs_texte', store=True)
+    acte_16_nuit_non = fields.Char(compute='_compute_champs_texte', store=True)
 
     # ── Onchanges ─────────────────────────────────────────────────────────────
 
@@ -294,30 +468,71 @@ class CpsFeuillesSoins(models.Model):
             rec.praticien_bp_texte  = (pr.street or '') if pr else ''
             rec.praticien_tel_texte = (pr.phone  or '') if pr else ''
             rec.bordereau_name_texte = (rec.bordereau_id.name or '') if rec.bordereau_id else ''
-            a1 = rec.acte_ids[0] if len(rec.acte_ids) >= 1 else None
-            rec.acte_01_date_texte           = fd(a1.date_acte) if a1 else ''
-            rec.acte_01_lettre_cle_texte     = (a1.lettre_cle or '') if a1 else ''
-            rec.acte_01_coefficient_texte    = '{:g}'.format(a1.coefficient) if a1 and a1.coefficient else ''
-            rec.acte_01_ifd_texte            = ff(a1.ifd) if a1 and a1.ifd else ''
-            rec.acte_01_ik_texte             = ff(a1.ik)  if a1 and a1.ik  else ''
-            rec.acte_01_taux_majoration_texte = '{:g}'.format(a1.taux_majoration) if a1 and a1.taux_majoration else ''
-            rec.acte_01_montant_texte        = ff(a1.montant) if a1 else ''
-            rec.acte_01_dimanche_ferie_oui   = ('x' if a1.dimanche_ferie else '') if a1 else ''
-            rec.acte_01_dimanche_ferie_non   = ('' if a1.dimanche_ferie else 'x') if a1 else ''
-            rec.acte_01_nuit_oui             = ('x' if a1.nuit else '') if a1 else ''
-            rec.acte_01_nuit_non             = ('' if a1.nuit else 'x') if a1 else ''
-            a2 = rec.acte_ids[1] if len(rec.acte_ids) >= 2 else None
-            rec.acte_02_date_texte           = fd(a2.date_acte) if a2 else ''
-            rec.acte_02_lettre_cle_texte     = (a2.lettre_cle or '') if a2 else ''
-            rec.acte_02_coefficient_texte    = '{:g}'.format(a2.coefficient) if a2 and a2.coefficient else ''
-            rec.acte_02_ifd_texte            = ff(a2.ifd) if a2 and a2.ifd else ''
-            rec.acte_02_ik_texte             = ff(a2.ik)  if a2 and a2.ik  else ''
-            rec.acte_02_taux_majoration_texte = '{:g}'.format(a2.taux_majoration) if a2 and a2.taux_majoration else ''
-            rec.acte_02_montant_texte        = ff(a2.montant) if a2 else ''
-            rec.acte_02_dimanche_ferie_oui   = ('x' if a2.dimanche_ferie else '') if a2 else ''
-            rec.acte_02_dimanche_ferie_non   = ('' if a2.dimanche_ferie else 'x') if a2 else ''
-            rec.acte_02_nuit_oui             = ('x' if a2.nuit else '') if a2 else ''
-            rec.acte_02_nuit_non             = ('' if a2.nuit else 'x') if a2 else ''
+
+            # a1 = rec.acte_ids[0] if len(rec.acte_ids) >= 1 else None
+            # rec.acte_01_date_texte           = fd(a1.date_acte) if a1 else ''
+            # rec.acte_01_lettre_cle_texte     = (a1.lettre_cle or '') if a1 else ''
+            # rec.acte_01_coefficient_texte    = '{:g}'.format(a1.coefficient) if a1 and a1.coefficient else ''
+            # rec.acte_01_ifd_texte            = ff(a1.ifd) if a1 and a1.ifd else ''
+            # rec.acte_01_ik_texte             = ff(a1.ik)  if a1 and a1.ik  else ''
+            # rec.acte_01_taux_majoration_texte = '{:g}'.format(a1.taux_majoration) if a1 and a1.taux_majoration else ''
+            # rec.acte_01_montant_texte        = ff(a1.montant) if a1 else ''
+            # rec.acte_01_dimanche_ferie_oui   = ('x' if a1.dimanche_ferie else '') if a1 else ''
+            # rec.acte_01_dimanche_ferie_non   = ('' if a1.dimanche_ferie else 'x') if a1 else ''
+            # rec.acte_01_nuit_oui             = ('x' if a1.nuit else '') if a1 else ''
+            # rec.acte_01_nuit_non             = ('' if a1.nuit else 'x') if a1 else ''
+
+            # a2 = rec.acte_ids[1] if len(rec.acte_ids) >= 2 else None
+            # rec.acte_02_date_texte           = fd(a2.date_acte) if a2 else ''
+            # rec.acte_02_lettre_cle_texte     = (a2.lettre_cle or '') if a2 else ''
+            # rec.acte_02_coefficient_texte    = '{:g}'.format(a2.coefficient) if a2 and a2.coefficient else ''
+            # rec.acte_02_ifd_texte            = ff(a2.ifd) if a2 and a2.ifd else ''
+            # rec.acte_02_ik_texte             = ff(a2.ik)  if a2 and a2.ik  else ''
+            # rec.acte_02_taux_majoration_texte = '{:g}'.format(a2.taux_majoration) if a2 and a2.taux_majoration else ''
+            # rec.acte_02_montant_texte        = ff(a2.montant) if a2 else ''
+            # rec.acte_02_dimanche_ferie_oui   = ('x' if a2.dimanche_ferie else '') if a2 else ''
+            # rec.acte_02_dimanche_ferie_non   = ('' if a2.dimanche_ferie else 'x') if a2 else ''
+            # rec.acte_02_nuit_oui             = ('x' if a2.nuit else '') if a2 else ''
+            # rec.acte_02_nuit_non             = ('' if a2.nuit else 'x') if a2 else ''
+
+            # Boucle sur les actes 01 à 16
+            for i in range(1, 17):
+                idx = i - 1
+                acte = rec.acte_ids[idx] if len(rec.acte_ids) > idx else None
+                suffix = f'{i:02d}'
+
+                setattr(rec, f'acte_{suffix}_date_texte',
+                        fd(acte.date_acte) if acte else '')
+
+                setattr(rec, f'acte_{suffix}_lettre_cle_texte',
+                        (acte.lettre_cle or '') if acte else '')
+
+                setattr(rec, f'acte_{suffix}_coefficient_texte',
+                        '{:g}'.format(acte.coefficient) if acte and acte.coefficient else '')
+
+                setattr(rec, f'acte_{suffix}_ifd_texte',
+                        ff(acte.ifd) if acte and acte.ifd else '')
+
+                setattr(rec, f'acte_{suffix}_ik_texte',
+                        ff(acte.ik) if acte and acte.ik else '')
+
+                setattr(rec, f'acte_{suffix}_taux_majoration_texte',
+                        '{:g}'.format(acte.taux_majoration) if acte and acte.taux_majoration else '')
+
+                setattr(rec, f'acte_{suffix}_montant_texte',
+                        ff(acte.montant) if acte else '')
+
+                setattr(rec, f'acte_{suffix}_dimanche_ferie_oui',
+                        'x' if acte and acte.dimanche_ferie else '')
+
+                setattr(rec, f'acte_{suffix}_dimanche_ferie_non',
+                        '' if acte and acte.dimanche_ferie else 'x' if acte else '')
+
+                setattr(rec, f'acte_{suffix}_nuit_oui',
+                        'x' if acte and acte.nuit else '')
+
+                setattr(rec, f'acte_{suffix}_nuit_non',
+                        '' if acte and acte.nuit else 'x' if acte else '')
 
     @api.model_create_multi
     def create(self, vals_list):

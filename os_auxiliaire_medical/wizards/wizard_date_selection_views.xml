@@ -37,8 +37,8 @@
                     <group string="Plage de dates">
                         <group>
                             <field name="date_debut"/>
-                            <field name="date_fin"
-                                   help="Par défaut : date de fin de validité de l'ordonnance"/>
+                            <field name="date_fin"/>
+                            <field name="nb_seances"/>
                         </group>
                         <!-- Jours de la semaine : checkboxes standards (fiables dans tous les contextes) -->
                         <group string="Jours à inclure" col="7">

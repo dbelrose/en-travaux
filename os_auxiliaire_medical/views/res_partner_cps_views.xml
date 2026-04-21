@@ -135,7 +135,13 @@
         <field name="name">Praticiens</field>
         <field name="res_model">res.partner</field>
         <field name="domain">[('category_id.name', '=', 'Praticien CPS')]</field>
-        <field name="context" eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_praticien'))], 'search_default_customer_rank': 0}"/>
+        <field name="context"
+               eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_praticien'))], 'search_default_customer_rank': 0}"/>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids"
+               eval="[(5, 0, 0),
+                      (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_praticien_list')}),
+                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_praticien_form')})]"/>
     </record>
 
     <!--
@@ -216,7 +222,13 @@
         <field name="res_model">res.partner</field>
         <field name="domain">[('category_id.name', '=', 'Patient CPS')]</field>
         <field name="search_view_id" ref="view_partner_patient_search"/>
-        <field name="context" eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_patient'))], 'search_default_customer_rank': 0}"/>
+        <field name="context"
+               eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_patient'))], 'search_default_customer_rank': 0}"/>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids"
+               eval="[(5, 0, 0),
+                      (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_patient_list')}),
+                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_patient_form')})]"/>
     </record>
 
     <!--
@@ -271,7 +283,13 @@
         <field name="name">Prescripteurs</field>
         <field name="res_model">res.partner</field>
         <field name="domain">[('category_id.name', '=', 'Prescripteur')]</field>
-        <field name="context" eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_prescripteur'))], 'search_default_customer_rank': 0}"/>
+        <field name="context"
+               eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_prescripteur'))], 'search_default_customer_rank': 0}"/>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids"
+               eval="[(5, 0, 0),
+                      (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_prescripteur_list')}),
+                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_prescripteur_form')})]"/>
     </record>
 
 </odoo>

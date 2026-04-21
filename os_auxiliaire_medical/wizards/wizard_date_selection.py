@@ -35,7 +35,8 @@ class WizardDateSelection(models.TransientModel):
 
     # ── Plage de dates ────────────────────────────────────────────────────────
     date_debut = fields.Date(string='Du', required=True, default=fields.Date.today)
-    date_fin = fields.Date(string='Au', required=True)
+    date_fin = fields.Date(string='Au')
+    nb_seances = fields.Integer(string='Nombre de séances')
 
     # ── Jours (checkboxes standards) ──────────────────────────────────────────
     lundi        = fields.Boolean(string='Lundi',    default=True)
@@ -62,8 +63,6 @@ class WizardDateSelection(models.TransientModel):
                 ordonnance = self.env['cps.ordonnance'].browse(ordonnance_id)
                 if ordonnance.date_fin_validite:
                     res['date_fin'] = ordonnance.date_fin_validite
-            if not res.get('date_fin'):
-                res['date_fin'] = fields.Date.today()
         return res
 
     @api.onchange('ordonnance_id')
@@ -98,8 +97,12 @@ class WizardDateSelection(models.TransientModel):
 
     def action_generer_dates(self):
         self.ensure_one()
-        if self.date_debut > self.date_fin:
+        if self.date_fin and self.date_debut > self.date_fin:
             raise UserError(_('La date de début doit être ≤ à la date de fin.'))
+        if self.date_fin and self.nb_seances:
+            raise UserError(_('Choisir un et un seul des deux critères entre la date de fin et le nombre de séances.'))
+        if self.date_fin is None and self.nb_seances is None:
+            raise UserError(_('Choisir un et un seul des deux critères entre la date de fin et le nombre de séances.'))
         jours = []
         for coché, idx in [
             (self.lundi, 0), (self.mardi, 1), (self.mercredi, 2), (self.jeudi, 3),
@@ -112,7 +115,7 @@ class WizardDateSelection(models.TransientModel):
 
         dates = []
         current = self.date_debut
-        while current <= self.date_fin:
+        while current <= self.date_fin or len(dates) <= self.nb_seances:
             if current.weekday() in jours:
                 dates.append(current)
             current += datetime.timedelta(days=1)

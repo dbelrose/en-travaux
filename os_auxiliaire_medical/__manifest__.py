@@ -19,8 +19,6 @@
         'data/cps_acte_type_infirmier_data.xml',
         'data/cps_acte_type_kinesitherapeute_data.xml',
         'views/res_partner_cps_views.xml',
-        'views/patient_views.xml',
-        'views/praticien_views.xml',
         'views/acte_type_server_action.xml',
         'views/acte_type_views.xml',
         'views/feuille_modele_views.xml',

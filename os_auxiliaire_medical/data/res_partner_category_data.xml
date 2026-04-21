@@ -51,6 +51,12 @@
             <field name="color">1</field>
         </record>
 
+        <record id="partner_category_remplacant" model="res.partner.category">
+            <field name="name">Remplaçant(e)</field>
+            <field name="parent_id" ref="partner_category_praticien"/>
+            <field name="color">4</field>
+        </record>
+
         <record id="partner_category_autre_praticien" model="res.partner.category">
             <field name="name">Autre auxiliaire médical</field>
             <field name="parent_id" ref="partner_category_praticien"/>

@@ -54,8 +54,6 @@
                             <field name="prescripteur_id"
                                    domain="[('category_id.name','=','Prescripteur')]"
                                    options="{'no_create': False}"/>
-                            <field name="prescripteur_nom"
-                                   placeholder="Nom (auto depuis contact)"/>
                             <!--
                                 prescripteur_code = prescripteur_id.vat (readonly)
                                 Affiché en lecture seule, modifiable depuis la fiche prescripteur.
