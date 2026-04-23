@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bordereau_form" model="ir.ui.view">
+        <field name="name">cps.bordereau.form</field>
+        <field name="model">cps.bordereau</field>
+        <field name="arch" type="xml">
+            <form string="Bordereau de facturation">
+                <header>
+                    <button name="action_validate" string="Valider" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_submit_cps" string="Transmettre à la CPS" type="object"
+                            class="btn-primary" invisible="state != 'validated'"/>
+                    <button name="action_close" string="Clôturer" type="object"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="Remettre en brouillon" type="object"
+                            invisible="state == 'draft'"/>
+                    <button name="action_print_bordereau" string="Imprimer PDF" type="object"
+                            icon="fa-file-pdf-o"/>
+                    <button name="action_export_excel" string="Exporter Excel" type="object"
+                            icon="fa-file-excel-o"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,validated,submitted,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identification">
+                            <field name="praticien_id"/>
+                            <field name="mois"/>
+                            <field name="date_bordereau"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Totaux">
+                            <field name="nb_feuilles" readonly="1"/>
+                            <field name="total_cps" readonly="1"/>
+                            <field name="total_patient" readonly="1"/>
+                            <field name="total_general" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Feuilles de soins">
+                            <field name="feuille_ids" readonly="state != 'draft'">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="patient_id"/>
+                                    <field name="patient_dn"/>
+                                    <field name="date_debut_soins"/>
+                                    <field name="date_fin_soins"/>
+                                    <field name="montant_tiers_payant" sum="Total CPS"/>
+                                    <field name="montant_patient" sum="Total Patient"/>
+                                    <field name="montant_total" sum="Total"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Notes internes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_bordereau_list" model="ir.ui.view">
+        <field name="name">cps.bordereau.list</field>
+        <field name="model">cps.bordereau</field>
+        <field name="arch" type="xml">
+            <tree string="Bordereaux" decoration-success="state=='closed'"
+                  decoration-info="state=='submitted'">
+                <field name="name"/>
+                <field name="praticien_id"/>
+                <field name="mois"/>
+                <field name="date_bordereau"/>
+                <field name="nb_feuilles"/>
+                <field name="total_cps" sum="Total CPS"/>
+                <field name="total_patient" sum="Total Patient"/>
+                <field name="total_general" sum="Total général"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='closed'"
+                       decoration-info="state=='submitted'"
+                       decoration-warning="state=='validated'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_bordereau" model="ir.actions.act_window">
+        <field name="name">Bordereaux</field>
+        <field name="res_model">cps.bordereau</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

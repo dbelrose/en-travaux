@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+    ══════════════════════════════════════════════════════════════════════
+    Extension du formulaire res.partner : onglet CPS
+    Le rôle est porté par les étiquettes (category_id).
+    is_praticien_cps / is_patient_cps / is_prescripteur sont des booléens
+    calculés depuis category_id via IDs externes.
+
+    Libellé du champ vat :
+      • cps_vat_praticien    → « Code auxiliaire médical (CPS) »
+      • cps_vat_patient      → « N° DN (matricule CPS) »
+      • cps_vat_prescripteur → « Code prescripteur (AM/RPPS) »
+    Chaque champ est affiché selon le rôle du partenaire.
+    ══════════════════════════════════════════════════════════════════════
+    -->
+    <record id="view_partner_form_cps_inherit" model="ir.ui.view">
+        <field name="name">res.partner.form.cps</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- Boutons statistiques CPS dans button_box -->
+            <xpath expr="//notebook" position="inside">
+                <button name="action_view_feuilles_patient" type="object"
+                        class="oe_stat_button" icon="fa-file-medical"
+                        invisible="not is_patient_cps">
+                    <field name="cps_feuille_patient_count" widget="statinfo" string="Feuilles"/>
+                </button>
+                <button name="action_view_feuilles_praticien" type="object"
+                        class="oe_stat_button" icon="fa-stethoscope"
+                        invisible="not is_praticien_cps">
+                    <field name="cps_feuille_praticien_count" widget="statinfo" string="Feuilles"/>
+                </button>
+                <button name="action_view_bordereaux" type="object"
+                        class="oe_stat_button" icon="fa-list-alt"
+                        invisible="not is_praticien_cps">
+                    <field name="cps_bordereau_count" widget="statinfo" string="Bordereaux"/>
+                </button>
+                <!-- Champs techniques nécessaires aux conditions invisible -->
+                <field name="is_praticien_cps" invisible="1"/>
+                <field name="is_patient_cps"   invisible="1"/>
+                <field name="is_prescripteur"  invisible="1"/>
+                <field name="is_cps"           invisible="1"/>
+            </xpath>
+
+            <!-- Onglet CPS visible dès qu'une étiquette CPS est présente -->
+            <xpath expr="//notebook" position="inside">
+                <page name="cps_tab" string="CPS" invisible="not is_cps">
+
+                    <!--
+                        Libellé du champ identifiant selon le rôle.
+                        Un seul champ visible à la fois grâce aux conditions invisible.
+                        Praticien est prioritaire si les deux flags sont vrais (cas rare).
+                    -->
+                    <group string="Identifiant CPS">
+                        <!-- Praticien : code auxiliaire -->
+                        <field name="cps_vat_praticien"
+                               invisible="not is_praticien_cps"/>
+                        <!-- Patient uniquement (pas praticien) : N° DN -->
+                        <field name="cps_vat_patient"
+                               invisible="not is_patient_cps or is_praticien_cps"/>
+                        <!-- Prescripteur uniquement : code AM/RPPS -->
+                        <field name="cps_vat_prescripteur"
+                               invisible="not is_prescripteur or is_praticien_cps or is_patient_cps"/>
+                    </group>
+
+                    <!-- Section Praticien -->
+                    <group string="Praticien CPS" invisible="not is_praticien_cps">
+                        <field name="cps_profession"/>
+                    </group>
+
+                    <!-- Section Patient -->
+                    <group string="Patient CPS" invisible="not is_patient_cps">
+                        <field name="birthdate_date" string="Date de naissance"/>
+                    </group>
+
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!--
+    ══════════════════════════════════════════════════════════════════════
+    Vue formulaire dédiée Praticien CPS
+    ══════════════════════════════════════════════════════════════════════
+    -->
+    <record id="view_partner_praticien_form" model="ir.ui.view">
+        <field name="name">res.partner.praticien.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="Praticien CPS">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_feuilles_praticien" type="object"
+                                class="oe_stat_button" icon="fa-stethoscope">
+                            <field name="cps_feuille_praticien_count" widget="statinfo" string="Feuilles"/>
+                        </button>
+                        <button name="action_view_bordereaux" type="object"
+                                class="oe_stat_button" icon="fa-list-alt">
+                            <field name="cps_bordereau_count" widget="statinfo" string="Bordereaux"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identification CPS">
+                            <!-- Libellé explicite dans la vue dédiée praticien -->
+                            <field name="vat" string="Code auxiliaire médical (CPS)"/>
+                            <field name="cps_profession" readonly="1" string="Profession"/>
+                            <field name="category_id" widget="many2many_tags"
+                                   options="{'color_field': 'color'}"
+                                   string="Étiquettes"/>
+                        </group>
+                        <group string="Coordonnées">
+                            <field name="phone"/>
+                            <field name="mobile"/>
+                            <field name="email"/>
+                            <field name="street" string="BP / Adresse"/>
+                        </group>
+                    </group>
+                    <group string="Compte Odoo associé">
+                        <field name="user_id"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_partner_praticien_list" model="ir.ui.view">
+        <field name="name">res.partner.praticien.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree string="Praticiens CPS">
+                <field name="name"/>
+                <!-- Colonne avec libellé spécifique praticien -->
+                <field name="vat" string="Code auxiliaire (CPS)"/>
+                <field name="cps_profession"/>
+                <field name="phone"/>
+                <field name="user_id"/>
+                <field name="cps_feuille_praticien_count" string="Feuilles"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_praticien_partner" model="ir.actions.act_window">
+        <field name="name">Praticiens</field>
+        <field name="res_model">res.partner</field>
+        <field name="domain">[('category_id.name', '=', 'Praticien CPS')]</field>
+        <field name="context"
+               eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_praticien'))], 'search_default_customer_rank': 0}"/>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids"
+               eval="[(5, 0, 0),
+                      (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_praticien_list')}),
+                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_praticien_form')})]"/>
+    </record>
+
+    <!--
+    ══════════════════════════════════════════════════════════════════════
+    Vue formulaire dédiée Patient CPS
+    ══════════════════════════════════════════════════════════════════════
+    -->
+    <record id="view_partner_patient_form" model="ir.ui.view">
+        <field name="name">res.partner.patient.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="Patient CPS">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_feuilles_patient" type="object"
+                                class="oe_stat_button" icon="fa-file-medical">
+                            <field name="cps_feuille_patient_count" widget="statinfo" string="Feuilles"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identité CPS">
+                            <field name="lastname"  string="Nom"/>
+                            <field name="firstname" string="Prénom"/>
+                            <!-- Libellé explicite N° DN dans la vue dédiée patient -->
+                            <field name="vat" string="N° DN (matricule CPS)"/>
+                            <field name="birthdate_date" string="Date de naissance"/>
+                        </group>
+                        <group string="Coordonnées">
+                            <field name="phone"/>
+                            <field name="mobile"/>
+                            <field name="email"/>
+                            <field name="street" string="Adresse"/>
+                        </group>
+                    </group>
+                    <group string="Étiquettes">
+                        <field name="category_id" widget="many2many_tags"
+                               options="{'color_field': 'color'}" nolabel="1"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_partner_patient_list" model="ir.ui.view">
+        <field name="name">res.partner.patient.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree string="Patients CPS">
+                <field name="lastname"  string="Nom"/>
+                <field name="firstname" string="Prénom"/>
+                <!-- Libellé explicite N° DN dans la liste patient -->
+                <field name="vat" string="N° DN"/>
+                <field name="birthdate_date" string="Naissance"/>
+                <field name="phone"/>
+                <field name="cps_feuille_patient_count" string="Feuilles"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_partner_patient_search" model="ir.ui.view">
+        <field name="name">res.partner.patient.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="vat" string="N° DN"/>
+                <field name="phone"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_patient_partner" model="ir.actions.act_window">
+        <field name="name">Patients</field>
+        <field name="res_model">res.partner</field>
+        <field name="domain">[('category_id.name', '=', 'Patient CPS')]</field>
+        <field name="search_view_id" ref="view_partner_patient_search"/>
+        <field name="context"
+               eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_patient'))], 'search_default_customer_rank': 0}"/>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids"
+               eval="[(5, 0, 0),
+                      (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_patient_list')}),
+                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_patient_form')})]"/>
+    </record>
+
+    <!--
+    ══════════════════════════════════════════════════════════════════════
+    Vue formulaire dédiée Prescripteur
+    ══════════════════════════════════════════════════════════════════════
+    -->
+    <record id="view_partner_prescripteur_form" model="ir.ui.view">
+        <field name="name">res.partner.prescripteur.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="Prescripteur">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identification">
+                            <!-- Libellé explicite code AM/RPPS dans la vue dédiée prescripteur -->
+                            <field name="vat" string="Code prescripteur (AM/RPPS)"/>
+                            <field name="category_id" widget="many2many_tags"
+                                   options="{'color_field': 'color'}" string="Étiquettes"/>
+                        </group>
+                        <group string="Coordonnées">
+                            <field name="phone"/>
+                            <field name="email"/>
+                            <field name="street" string="Adresse / Cabinet"/>
+                            <field name="zip"/>
+                            <field name="city"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_partner_prescripteur_list" model="ir.ui.view">
+        <field name="name">res.partner.prescripteur.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree string="Prescripteurs">
+                <field name="name"/>
+                <!-- Libellé explicite AM/RPPS dans la liste prescripteur -->
+                <field name="vat" string="Code AM/RPPS"/>
+                <field name="phone"/>
+                <field name="city"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_prescripteur_partner" model="ir.actions.act_window">
+        <field name="name">Prescripteurs</field>
+        <field name="res_model">res.partner</field>
+        <field name="domain">[('category_id.name', '=', 'Prescripteur')]</field>
+        <field name="context"
+               eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_prescripteur'))], 'search_default_customer_rank': 0}"/>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids"
+               eval="[(5, 0, 0),
+                      (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_prescripteur_list')}),
+                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_prescripteur_form')})]"/>
+    </record>
+
+</odoo>

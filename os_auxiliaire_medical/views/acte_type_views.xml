@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_acte_type_form" model="ir.ui.view">
+        <field name="name">cps.acte.type.form</field>
+        <field name="model">cps.acte.type</field>
+        <field name="arch" type="xml">
+            <form string="Type d'acte">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group string="Identification">
+                            <field name="sequence"/>
+                            <field name="lettre_cle"/>
+                            <field name="profession"/>
+                            <field name="type_supplement"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Tarification">
+                            <field name="tarif_unitaire"/>
+                            <field name="coefficient_defaut"/>
+                            <field name="montant_indicatif" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Contraintes de planification">
+                        <group>
+                            <field name="nb_seances_defaut"/>
+                            <field name="nb_seances_max"/>
+                            <field name="duree_seance"/>
+                        </group>
+                        <group>
+                            <field name="delai_min_jours"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_acte_type_list" model="ir.ui.view">
+        <field name="name">cps.acte.type.list</field>
+        <field name="model">cps.acte.type</field>
+        <field name="arch" type="xml">
+            <tree string="Types d'actes" default_order="sequence,profession,lettre_cle">
+                <field name="sequence" widget="handle"/>
+                <field name="profession"/>
+                <field name="lettre_cle"/>
+                <field name="coefficient_defaut"/>
+                <field name="tarif_unitaire"/>
+                <field name="montant_indicatif"/>
+                <field name="nb_seances_defaut" optional="hide"/>
+                <field name="nb_seances_max"    optional="hide"/>
+                <field name="duree_seance"       optional="hide"/>
+                <field name="delai_min_jours"    optional="hide"/>
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_acte_type_search" model="ir.ui.view">
+        <field name="name">cps.acte.type.search</field>
+        <field name="model">cps.acte.type</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="lettre_cle"/>
+                <field name="coefficient_defaut" string="Coefficient"/>
+                <filter name="ma_profession" string="Ma profession"
+                        domain="[('profession', '=', context.get('default_profession'))]"/>
+                <separator/>
+                <filter name="orthophoniste"    string="Orthophoniste"    domain="[('profession','=','orthophoniste')]"/>
+                <filter name="kinesitherapeute" string="Kinésithérapeute" domain="[('profession','=','kinesitherapeute')]"/>
+                <filter name="infirmier"        string="Infirmier"        domain="[('profession','=','infirmier')]"/>
+                <filter name="pedicure"         string="Pédicure"         domain="[('profession','=','pedicure')]"/>
+                <filter name="orthoptiste"      string="Orthoptiste"      domain="[('profession','=','orthoptiste')]"/>
+                <filter name="communs"          string="Toutes professions" domain="[('profession','=',False)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_profession" string="Profession" context="{'group_by': 'profession'}"/>
+                    <filter name="group_lettre"     string="Lettre clé" context="{'group_by': 'lettre_cle'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_acte_type" model="ir.actions.act_window">
+        <field name="name">Types d'actes</field>
+        <field name="res_model">cps.acte.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_acte_type_search"/>
+        <field name="context">{'search_default_ma_profession': 1}</field>
+    </record>
+</odoo>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="rule_acte_type_multi_company" model="ir.rule">
+        <field name="name">Types d'actes NPAP – multi-company</field>
+        <field name="model_id" ref="model_cps_acte_type"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_feuille_soins_multi_company" model="ir.rule">
+        <field name="name">Feuilles de soins – multi-company</field>
+        <field name="model_id" ref="model_cps_feuille_soins"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_bordereau_multi_company" model="ir.rule">
+        <field name="name">Bordereaux – multi-company</field>
+        <field name="model_id" ref="model_cps_bordereau"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_feuille_modele_multi_company" model="ir.rule">
+        <field name="name">Modèles de feuilles – multi-company</field>
+        <field name="model_id" ref="model_cps_feuille_soins_modele"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_ordonnance_multi_company" model="ir.rule">
+        <field name="name">Ordonnances – multi-company</field>
+        <field name="model_id" ref="model_cps_ordonnance"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_tarif_historique_multi_company" model="ir.rule">
+        <field name="name">Historique des tarifs – multi-company</field>
+        <field name="model_id" ref="model_cps_tarif_historique"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

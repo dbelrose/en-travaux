@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="acte_type_amy_acuite_visuelle" model="cps.acte.type">
+            <field name="name">Mesure de l'acuité visuelle et de la réfraction avec ou sans dilatation</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">8.5</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_bilan_basse_vision" model="cps.acte.type">
+            <field name="name">Bilan orthoptique des déficiences visuelles (basse vision) – max 2 bilans/an</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">30</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_bilan_neuro_ophtalmo" model="cps.acte.type">
+            <field name="name">Bilan des conséquences neuro-ophtalmologiques – max 2 bilans/an</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">30.5</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_bilan_fusion" model="cps.acte.type">
+            <field name="name">Bilan des déséquilibres de la vision binoculaire – trouble des capacités fusionnelles</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">10</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_bilan_fusion_neurosensoriel" model="cps.acte.type">
+            <field name="name">Bilan vision binoculaire – trouble fusionnel et neurosensoriel/accommodatif</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">14.5</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_bilan_oculomoteur" model="cps.acte.type">
+            <field name="name">Bilan des troubles oculomoteurs – hétérophories, strabismes, paralysies oculomotrices</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">15</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_bilan_amblyopie" model="cps.acte.type">
+            <field name="name">Bilan d'une amblyopie</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">15.5</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_reeducation_deficience_visuelle_60min" model="cps.acte.type">
+            <field name="name">Rééducation déficience visuelle – séance ~60 min (plus de 16 ans)</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">16.2</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_reeducation_deficience_visuelle_40min" model="cps.acte.type">
+            <field name="name">Rééducation déficience visuelle – séance ~40 min (3 à 16 ans)</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">11.2</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_reeducation_deficience_visuelle_30min" model="cps.acte.type">
+            <field name="name">Rééducation déficience visuelle – séance ~30 min (moins de 3 ans)</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">10.2</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_traitement_amblyopie" model="cps.acte.type">
+            <field name="name">Traitement de l'amblyopie – série de 20 séances ~20 min – par séance</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">5.6</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_traitement_strabisme" model="cps.acte.type">
+            <field name="name">Traitement du strabisme – série de 20 séances ~20 min – par séance</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">6.1</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_traitement_heterophorie" model="cps.acte.type">
+            <field name="name">Traitement des hétérophories et déséquilibres binoculaires – par séance</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_perimetrie_sans_seuil" model="cps.acte.type">
+            <field name="name">Périmétrie (champ visuel) réalisée sans mesure de seuil</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">9.5</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_perimetrie_avec_seuil" model="cps.acte.type">
+            <field name="name">Périmétrie (champ visuel) réalisée avec mesure de seuil</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">10.3</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+        <record id="acte_type_amy_retinographie_teletransmission" model="cps.acte.type">
+            <field name="name">Dépistage rétinopathie diabétique par rétinographie couleur avec télétransmission</field>
+            <field name="lettre_cle">AMY</field><field name="coefficient_defaut">6.7</field>
+            <field name="tarif_unitaire">490</field><field name="profession">orthoptiste</field>
+        </record>
+    </data>
+</odoo>

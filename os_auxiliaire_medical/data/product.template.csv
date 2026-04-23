@@ -1,0 +1,9 @@
+id,name,default_code,type,list_price,standard_price,sale_ok,purchase_ok,description_sale,sale_line_warn
+product_template_amo34,Bilan orthophonique simple (langage oral),AMO34,Service,8500,0,True,False,Bilan du langage oral et écrit,no-message
+product_template_amo40,Bilan orthophonique approfondi (neurologique),AMO40,Service,10000,0,True,False,Bilan neurologique / bégaiement,no-message
+product_template_amo26,Bilan de la déglutition,AMO26,Service,7500,0,True,False,Bilan des troubles de la déglutition,no-message
+product_template_amo10,Rééducation langage oral - séance,AMO10,Service,3000,0,True,False,Séance de rééducation du langage oral,no-message
+product_template_amo101,Rééducation langage écrit - séance,AMO10.1,Service,3200,0,True,False,Séance troubles dyslexie / dysorthographie,no-message
+product_template_amo15,Rééducation neurologique (aphasie),AMO15,Service,4000,0,True,False,Rééducation des troubles neurologiques,no-message
+product_template_amo12,Rééducation déglutition,AMO12,Service,3500,0,True,False,Rééducation troubles de la déglutition,no-message
+product_template_amo8,Rééducation voix,AMO8,Service,2800,0,True,False,Rééducation troubles de la voix,no-message

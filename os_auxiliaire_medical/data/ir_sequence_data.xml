@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Séquence feuille de soins (conservée pour compatibilité) -->
+        <record id="seq_feuille_soins" model="ir.sequence">
+            <field name="name">Feuille de soins CPS</field>
+            <field name="code">cps.feuille.soins</field>
+            <field name="prefix">FSA-%(year)s-</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <!-- Séquence N° FSA25 : format XXXXXX (6 chiffres, pas de préfixe) -->
+        <record id="seq_fsa_numero" model="ir.sequence">
+            <field name="name">N° FSA25 (feuille de soins CPS)</field>
+            <field name="code">cps.feuille.soins.fsa</field>
+            <field name="prefix"></field>
+            <field name="padding">6</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <!-- Séquence bordereaux -->
+        <record id="seq_bordereau" model="ir.sequence">
+            <field name="name">Bordereau CPS</field>
+            <field name="code">cps.bordereau</field>
+            <field name="prefix">BD-%(year)s%(month)s</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <!-- Séquence ordonnances -->
+        <record id="seq_ordonnance" model="ir.sequence">
+            <field name="name">Ordonnance CPS</field>
+            <field name="code">cps.ordonnance</field>
+            <field name="prefix">ORD-%(year)s-</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+    </data>
+</odoo>

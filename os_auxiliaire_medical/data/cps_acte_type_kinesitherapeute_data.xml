@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="acte_type_amk_bilan_osteo_1membre" model="cps.acte.type">
+            <field name="name">Bilan ostéo-articulaire simple – 1 membre</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">5</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_bilan_osteo_corps_entier" model="cps.acte.type">
+            <field name="name">Bilan ostéo-articulaire simple – tout le corps</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">10</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_bdk_10_20_seances" model="cps.acte.type">
+            <field name="name">Bilan-diagnostic kinésithérapique – pour 10 à 20 séances</field>
+            <field name="lettre_cle">AMS</field><field name="coefficient_defaut">10.7</field>
+            <field name="tarif_unitaire">283</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_ams_reeducation_1membre" model="cps.acte.type">
+            <field name="name">Rééducation d'un membre et de sa racine – séance</field>
+            <field name="lettre_cle">AMS</field><field name="coefficient_defaut">7.5</field>
+            <field name="tarif_unitaire">283</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_ams_reeducation_plusieurs_membres" model="cps.acte.type">
+            <field name="name">Rééducation de plusieurs membres ou du tronc et d'un ou plusieurs membres – séance</field>
+            <field name="lettre_cle">AMS</field><field name="coefficient_defaut">9.5</field>
+            <field name="tarif_unitaire">283</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_ams_reeducation_rachis" model="cps.acte.type">
+            <field name="name">Rééducation du rachis et/ou des ceintures – séance</field>
+            <field name="lettre_cle">AMS</field><field name="coefficient_defaut">7.5</field>
+            <field name="tarif_unitaire">283</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_rhumato_localise" model="cps.acte.type">
+            <field name="name">Rééducation rhumatisme inflammatoire – atteinte localisée à un membre ou le tronc – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">7</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_hemiplegie" model="cps.acte.type">
+            <field name="name">Rééducation de l'hémiplégie – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">9</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_paraplegie_tetraplegie" model="cps.acte.type">
+            <field name="name">Rééducation de la paraplégie et de la tétraplégie – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">11</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_resp_urgence" model="cps.acte.type">
+            <field name="name">Rééducation respiratoire avec désencombrement urgent (bronchiolite nourrisson) – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_resp_obstructive" model="cps.acte.type">
+            <field name="name">Rééducation maladies respiratoires obstructives/restrictives (hors urgence) – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_lymphoedeme_1membre" model="cps.acte.type">
+            <field name="name">Rééducation lymphœdème vrai (drainage manuel) – 1 membre – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">7</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_perinee" model="cps.acte.type">
+            <field name="name">Rééducation périnéale active sous contrôle manuel et/ou biofeedback – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">8</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_soins_palliatifs" model="cps.acte.type">
+            <field name="name">Soins palliatifs – cotation journalière forfaitaire</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">12</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+        <record id="acte_type_amk_reeducation_abdominale_postpartum" model="cps.acte.type">
+            <field name="name">Rééducation abdominale du post-partum – séance</field>
+            <field name="lettre_cle">AMK</field><field name="coefficient_defaut">7</field>
+            <field name="tarif_unitaire">490</field><field name="profession">kinesitherapeute</field>
+        </record>
+    </data>
+</odoo>

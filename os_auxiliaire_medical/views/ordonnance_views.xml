@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ordonnance_form" model="ir.ui.view">
+        <field name="name">cps.ordonnance.form</field>
+        <field name="model">cps.ordonnance</field>
+        <field name="arch" type="xml">
+            <form string="Ordonnance">
+                <header>
+                    <button name="action_open_ocr_wizard" string="📷 Importer par OCR"
+                            type="object" class="btn-secondary" invisible="state in ('annulee')"/>
+                    <button name="action_annuler" string="Annuler" type="object"
+                            invisible="state in ('annulee', 'expiree')"
+                            confirm="Annuler cette ordonnance ?"/>
+                    <button name="action_reactiver" string="Réactiver" type="object"
+                            invisible="state != 'annulee'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="active,epuisee,expiree,annulee"/>
+                </header>
+                <sheet>
+                    <!--
+                    ── button_box : Feuilles + Prescrites / Effectuées / Restantes ──
+                    Les trois compteurs de séances sont affichés comme des stat buttons
+                    non-interactifs (pas de name/type) aux côtés du bouton "Feuilles".
+                    -->
+                    <div class="oe_button_box" name="button_box">
+
+                        <!-- Bouton navigable : feuilles de soins -->
+                        <button name="action_view_feuilles" type="object"
+                                class="oe_stat_button" icon="fa-file-medical">
+                            <field name="feuille_ids" widget="statinfo" string="Feuilles"/>
+                        </button>
+
+                        <!-- Séances prescrites (affichage seul) -->
+                        <div class="oe_stat_button" style="cursor:default;pointer-events:none;">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="nb_seances_prescrites" readonly="1" nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">Prescrites</span>
+                            </div>
+                        </div>
+
+                        <!-- Séances effectuées -->
+                        <div class="oe_stat_button" style="cursor:default;pointer-events:none;">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value text-success">
+                                    <field name="nb_seances_effectuees" readonly="1" nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">Effectuées</span>
+                            </div>
+                        </div>
+
+                        <!-- Séances restantes -->
+                        <div class="oe_stat_button" style="cursor:default;pointer-events:none;">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value text-warning">
+                                    <field name="nb_seances_restantes" readonly="1" nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">Restantes</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Bénéficiaire et praticien">
+                            <field name="patient_id" domain="[('category_id.name','=','Patient CPS')]"/>
+                            <field name="praticien_id" domain="[('category_id.name','=','Praticien CPS')]"/>
+                            <field name="praticien_profession" invisible="1"/>
+                        </group>
+                        <group string="Prescripteur">
+                            <field name="prescripteur_id"
+                                   domain="[('category_id.name','=','Prescripteur')]"
+                                   options="{'no_create': False}"/>
+                            <field name="prescripteur_code" readonly="1"
+                                   string="Code AM/RPPS (depuis la fiche prescripteur)"/>
+                            <field name="date_prescription"/>
+                            <field name="date_fin_validite"
+                                   help="Calculée automatiquement depuis la date de prescription + durée configurée (modifiable)."/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Condition de prise en charge">
+                            <field name="condition"/>
+                            <field name="motif_derogation"
+                                   invisible="condition != 'autre'"
+                                   required="condition == 'autre'"
+                                   placeholder="Précisez le motif…"/>
+                            <field name="accord_prealable"/>
+                        </group>
+                        <group string="Codes">
+                            <field name="num_rsr"/>
+                            <field name="num_panier"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Actes prescrits (stock de séances)">
+                            <field name="ligne_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="acte_type_id"
+                                           domain="[('profession', 'in', [False, parent.praticien_profession])]"
+                                           options="{'no_create': False}"/>
+                                    <field name="lettre_cle" readonly="1"/>
+                                    <field name="coefficient" readonly="1"/>
+                                    <field name="duree_seance" readonly="1" optional="show"/>
+                                    <field name="delai_min_jours" readonly="1" optional="show"/>
+                                    <field name="nb_seances_prescrites"/>
+                                    <field name="nb_seances_effectuees" readonly="1"/>
+                                    <field name="nb_seances_restantes" readonly="1"
+                                           decoration-danger="nb_seances_restantes == 0"
+                                           decoration-warning="nb_seances_restantes &gt; 0 and nb_seances_restantes &lt;= 3"/>
+                                    <field name="progress" widget="progressbar"
+                                           options="{'editable': false}"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ordonnance_list" model="ir.ui.view">
+        <field name="name">cps.ordonnance.list</field>
+        <field name="model">cps.ordonnance</field>
+        <field name="arch" type="xml">
+            <tree string="Ordonnances"
+                  decoration-muted="state in ('annulee', 'expiree')"
+                  decoration-warning="state == 'epuisee'">
+                <field name="name"/>
+                <field name="patient_id"/>
+                <field name="praticien_id"/>
+                <field name="prescripteur_nom"/>
+                <field name="date_prescription"/>
+                <field name="date_fin_validite"/>
+                <field name="nb_seances_prescrites"/>
+                <field name="nb_seances_effectuees"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'active'" decoration-warning="state == 'epuisee'"
+                       decoration-danger="state in ('expiree', 'annulee')"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ordonnance_search" model="ir.ui.view">
+        <field name="name">cps.ordonnance.search</field>
+        <field name="model">cps.ordonnance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="patient_id"/>
+                <field name="praticien_id"/>
+                <field name="prescripteur_nom"/>
+                <filter name="active_only" string="Actives" domain="[('state','=','active')]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_patient"   string="Patient"   context="{'group_by':'patient_id'}"/>
+                    <filter name="group_praticien" string="Praticien" context="{'group_by':'praticien_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ordonnance" model="ir.actions.act_window">
+        <field name="name">Ordonnances</field>
+        <field name="res_model">cps.ordonnance</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ordonnance_search"/>
+        <field name="context">{'search_default_active_only': 1}</field>
+    </record>
+</odoo>

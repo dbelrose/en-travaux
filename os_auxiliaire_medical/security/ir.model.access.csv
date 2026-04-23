@@ -1,0 +1,23 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cps_feuille_soins_user,cps.feuille.soins user,model_cps_feuille_soins,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_feuille_soins_manager,cps.feuille.soins manager,model_cps_feuille_soins,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_feuille_soins_acte_user,cps.feuille.soins.acte user,model_cps_feuille_soins_acte,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_feuille_soins_acte_manager,cps.feuille.soins.acte manager,model_cps_feuille_soins_acte,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_bordereau_user,cps.bordereau user,model_cps_bordereau,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_bordereau_manager,cps.bordereau manager,model_cps_bordereau,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_acte_type_user,cps.acte.type user,model_cps_acte_type,os_auxiliaire_medical.group_cps_user,1,0,0,0
+access_cps_acte_type_manager,cps.acte.type manager,model_cps_acte_type,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_feuille_modele_user,cps.feuille.soins.modele user,model_cps_feuille_soins_modele,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_feuille_modele_manager,cps.feuille.soins.modele manager,model_cps_feuille_soins_modele,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_feuille_modele_ligne_user,cps.feuille.soins.modele.ligne user,model_cps_feuille_soins_modele_ligne,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_feuille_modele_ligne_manager,cps.feuille.soins.modele.ligne manager,model_cps_feuille_soins_modele_ligne,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_wizard_bordereau,cps.wizard.bordereau,model_cps_wizard_bordereau,os_auxiliaire_medical.group_cps_user,1,1,1,1
+access_cps_tarif_historique_user,cps.tarif.historique user,model_cps_tarif_historique,os_auxiliaire_medical.group_cps_user,1,0,0,0
+access_cps_tarif_historique_manager,cps.tarif.historique manager,model_cps_tarif_historique,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_ordonnance_user,cps.ordonnance user,model_cps_ordonnance,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_ordonnance_manager,cps.ordonnance manager,model_cps_ordonnance,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_ordonnance_ligne_user,cps.ordonnance.ligne user,model_cps_ordonnance_ligne,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_ordonnance_ligne_manager,cps.ordonnance.ligne manager,model_cps_ordonnance_ligne,os_auxiliaire_medical.group_cps_manager,1,1,1,1
+access_cps_wizard_date_selection,cps.wizard.date.selection,model_cps_wizard_date_selection,os_auxiliaire_medical.group_cps_user,1,1,1,1
+access_cps_wizard_date_selection_ligne,cps.wizard.date.selection.ligne,model_cps_wizard_date_selection_ligne,os_auxiliaire_medical.group_cps_user,1,1,1,1
+access_cps_wizard_ocr_ordonnance,cps.wizard.ocr.ordonnance,model_cps_wizard_ocr_ordonnance,os_auxiliaire_medical.group_cps_user,1,1,1,1
