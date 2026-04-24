@@ -11,6 +11,7 @@
         'security/groups.xml',
         'security/ir.model.access.csv',
         'security/ir_rule_multi_company.xml',
+
         'data/ir_sequence_data.xml',
         'data/res_partner_category_data.xml',
         'data/cps_acte_type_orthophoniste_data.xml',
@@ -18,6 +19,7 @@
         'data/cps_acte_type_pedicure_data.xml',
         'data/cps_acte_type_infirmier_data.xml',
         'data/cps_acte_type_kinesitherapeute_data.xml',
+
         'views/res_partner_cps_views.xml',
         'views/acte_type_server_action.xml',
         'views/acte_type_views.xml',
@@ -28,8 +30,10 @@
         'views/tarif_historique_views.xml',
         'views/config_settings_views.xml',
         'views/menu_views.xml',
+
         'report/report_bordereau.xml',
         'report/report_feuille_soins.xml',
+
         'wizards/wizard_bordereau_views.xml',
         'wizards/wizard_date_selection_views.xml',
         'wizards/wizard_ocr_ordonnance_views.xml',

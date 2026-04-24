@@ -16,8 +16,8 @@
                             invisible="state == 'draft'"/>
                     <button name="action_print_bordereau" string="Imprimer PDF" type="object"
                             icon="fa-file-pdf-o"/>
-                    <button name="action_export_excel" string="Exporter Excel" type="object"
-                            icon="fa-file-excel-o"/>
+<!--                    <button name="action_export_excel" string="Exporter Excel" type="object"-->
+<!--                            icon="fa-file-excel-o"/>-->
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,validated,submitted,closed"/>
                 </header>

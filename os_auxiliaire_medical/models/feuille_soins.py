@@ -96,7 +96,7 @@ class CpsFeuillesSoins(models.Model):
     @api.depends('ordonnance_id.praticien_id')
     def _compute_praticien_id(self):
         default_praticien = self.env['res.partner'].search(
-            [('user_id', '=', self.env.uid), ('category_id.name', '=', 'Praticien CPS')], limit=1,
+            [('user_ids', 'in', self.env.uid), ('category_id.name', '=', 'Praticien CPS')], limit=1,
         )
         for rec in self:
             if rec.ordonnance_id and rec.ordonnance_id.praticien_id:

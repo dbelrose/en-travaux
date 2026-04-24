@@ -15,8 +15,9 @@
                         <!-- Option Claude -->
                         <group string="Option Claude Haiku 4.5 (analyse IA)">
                             <field name="use_claude_ai"/>
+                            <field name="use_claude_vision"/>
                             <field name="claude_api_key"
-                                   invisible="not use_claude_ai"
+                                   invisible="not use_claude_ai and not use_claude_vision"
                                    placeholder="Laisser vide pour utiliser la clé des Paramètres CPS"
                                    password="True"/>
                         </group>
@@ -24,8 +25,12 @@
                             <strong>OCR local :</strong>
                             <code>pip install pdfminer.six pytesseract Pillow</code>
                             + <code>tesseract-ocr-fra</code><br/>
-                            <strong>Claude IA :</strong> clé API Anthropic requise
-                            (Paramètres CPS → Clé API Anthropic).
+                            <strong>Claude texte :</strong> clé API Anthropic requise
+                            (Paramètres CPS → Clé API Anthropic).<br/>
+                            <strong>Claude vision :</strong>
+                            <code>pip install anthropic</code>
+                            + clé API Anthropic. Recommandé pour les ordonnances
+                            manuscrites ou peu lisibles.
                         </div>
                         <div class="mt8">
                             <button name="action_extraire" string="🔍 Extraire le texte"
@@ -39,7 +44,7 @@
 
                         <!-- Statut Claude -->
                         <div class="alert alert-success"
-                             invisible="not claude_status or 'Erreur' in claude_status or '⚠' in claude_status">
+                             invisible="not claude_status or 'Erreur' in claude_status or '⚠' in claude_status or '❌' in claude_status">
                             <field name="claude_status" readonly="1" nolabel="1"/>
                         </div>
                         <div class="alert alert-warning"
@@ -71,10 +76,10 @@
                             <group>
                                 <field name="patient_nom"/>
                                 <field name="patient_prenom"
-                                       help="Ce prénom sera masqué avant envoi à Claude."/>
+                                       help="Ce prénom sera masqué avant envoi à Claude (mode texte)."/>
                                 <div class="text-muted small" invisible="not use_claude_ai">
                                     <i class="fa fa-shield"/> Le prénom du patient est remplacé
-                                    par [PRÉNOM] avant toute transmission à Claude.
+                                    par [PRÉNOM] avant toute transmission à Claude (mode texte).
                                 </div>
                             </group>
                         </group>
@@ -87,6 +92,7 @@
 
                     <field name="etat" invisible="1"/>
                     <field name="use_claude_ai" invisible="1"/>
+                    <field name="use_claude_vision" invisible="1"/>
                     <field name="claude_status" invisible="1"/>
                 </sheet>
                 <footer>

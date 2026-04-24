@@ -1,6 +1,10 @@
 """
-Wizard OCR pour l'import d'ordonnances – v5.
-Option : anonymisation du prénom patient + soumission à Claude Haiku 4.5.
+Wizard OCR pour l'import d'ordonnances – v6.
+Options :
+  - OCR local (pdfminer + pytesseract)
+  - Claude Haiku 4.5 texte   : envoie le texte extrait (prénom anonymisé)
+  - Claude Haiku 4.5 vision  : envoie l'image directement (plus fiable sur
+                               ordonnances manuscrites ou peu lisibles)
 """
 import base64, io, re, datetime, json, logging
 import urllib.request, urllib.error
@@ -92,7 +96,7 @@ def parse_ordonnance_text(text):
     dates = []
     for m in RE_DATE.finditer(text):
         d = _parse_date(m.group(1), m.group(2), m.group(3))
-        if d and datetime.date(2000,1,1) <= d <= datetime.date(2099,12,31):
+        if d and datetime.date(2000, 1, 1) <= d <= datetime.date(2099, 12, 31):
             dates.append(d)
     for m in RE_DATE_L.finditer(text.lower()):
         mo = MOIS_FR.get(m.group(2).lower())
@@ -109,7 +113,7 @@ def parse_ordonnance_text(text):
     if code:
         result['prescripteur_code'] = code.group(1).strip()
     # Patient
-    mid_s = max(0, len(lines) // 4); mid_e = min(len(lines), len(lines)*3//4)
+    mid_s = max(0, len(lines) // 4); mid_e = min(len(lines), len(lines) * 3 // 4)
     pm = RE_PATIENT.search('\n'.join(lines[mid_s:mid_e]))
     if pm:
         parts = pm.group(1).strip().split()
@@ -149,6 +153,22 @@ Format strict :
 Le prénom du patient a été remplacé par [PRÉNOM] pour des raisons de confidentialité.
 Ne retourne rien d'autre que le JSON."""
 
+CLAUDE_VISION_PROMPT = (
+    "Tu es un assistant médical analysant des ordonnances de Polynésie française. "
+    "Analyse cette image d'ordonnance et extrais les informations en JSON.\n"
+    "Format strict (sans markdown, sans texte autour) :\n"
+    "{\n"
+    "  \"prescripteur_nom\": \"...\",\n"
+    "  \"prescripteur_code\": \"...\",\n"
+    "  \"date_prescription\": \"YYYY-MM-DD ou null\",\n"
+    "  \"patient_nom\": \"...\",\n"
+    "  \"actes\": [\n"
+    "    {\"lettre_cle\": \"AMO\", \"coefficient\": 10.0, \"nb_seances\": 30}\n"
+    "  ]\n"
+    "}\n"
+    "Ne retourne rien d'autre que le JSON."
+)
+
 
 class WizardOcrOrdonnance(models.TransientModel):
     _name = 'cps.wizard.ocr.ordonnance'
@@ -167,12 +187,19 @@ class WizardOcrOrdonnance(models.TransientModel):
     patient_prenom = fields.Char(string='Prénom du patient')
     actes_detectes = fields.Text(string='Actes détectés', readonly=True)
 
-    # ── Option Claude ──────────────────────────────────────────────────────────
+    # ── Options Claude ─────────────────────────────────────────────────────────
     use_claude_ai = fields.Boolean(
-        string='Analyser avec Claude Haiku 4.5',
+        string='Analyser avec Claude Haiku 4.5 (texte)',
         default=False,
-        help='Envoie le texte (prénom patient anonymisé) à Claude Haiku 4.5 '
+        help='Envoie le texte extrait (prénom patient anonymisé) à Claude Haiku 4.5 '
              'pour une extraction plus fiable. Nécessite une clé API Anthropic.',
+    )
+    use_claude_vision = fields.Boolean(
+        string='Analyser avec Claude Haiku 4.5 (vision)',
+        default=False,
+        help='Envoie directement l\'image à Claude Haiku 4.5 pour analyse visuelle. '
+             'Plus efficace sur les ordonnances manuscrites ou peu lisibles. '
+             'Nécessite le paquet Python "anthropic" et une clé API Anthropic.',
     )
     claude_api_key = fields.Char(
         string='Clé API Anthropic',
@@ -192,9 +219,25 @@ class WizardOcrOrdonnance(models.TransientModel):
         self.ensure_one()
         if not self.fichier:
             raise UserError(_('Veuillez charger un fichier.'))
+
         data = base64.b64decode(self.fichier)
         nom = (self.fichier_nom or '').lower()
         texte = ''
+
+        # ── Vision Claude en priorité si demandé ──────────────────────────────
+        if self.use_claude_vision:
+            vision_vals = self._run_claude_vision(data, nom)
+            # Si Claude vision a réussi, on fusionne et on ouvre
+            if vision_vals.get('claude_status', '').startswith('✅'):
+                vision_vals['etat'] = 'extrait'
+                # Générer un texte_extrait synthétique pour permettre la ré-analyse
+                vision_vals.setdefault('texte_extrait', _('(Image analysée directement par Claude vision)'))
+                self.write(vision_vals)
+                return self._reopen()
+            # Sinon on continue avec l'OCR local et on garde le statut d'erreur
+            self.write({'claude_status': vision_vals.get('claude_status', '')})
+
+        # ── OCR local ─────────────────────────────────────────────────────────
         if nom.endswith('.pdf'):
             texte = _extract_text_pdf(data)
             if not texte.strip():
@@ -211,7 +254,8 @@ class WizardOcrOrdonnance(models.TransientModel):
             raise UserError(_(
                 'Impossible d\'extraire le texte.\n'
                 '• PDF texte : pip install pdfminer.six\n'
-                '• Image/PDF scanné : pip install pytesseract Pillow + tesseract-ocr-fra'
+                '• Image/PDF scanné : pip install pytesseract Pillow + tesseract-ocr-fra\n'
+                '• Ou activez l\'option "Vision" pour envoyer l\'image directement à Claude.'
             ))
 
         parsed = parse_ordonnance_text(texte)
@@ -228,9 +272,9 @@ class WizardOcrOrdonnance(models.TransientModel):
             'etat': 'extrait',
         }
 
-        # Appel Claude si demandé
+        # Appel Claude texte si demandé
         if self.use_claude_ai:
-            vals.update(self._run_claude(texte, parsed.get('patient_prenom', '')))
+            vals.update(self._run_claude_texte(texte, parsed.get('patient_prenom', '')))
 
         self.write(vals)
         return self._reopen()
@@ -248,14 +292,14 @@ class WizardOcrOrdonnance(models.TransientModel):
             'actes_detectes': actes_txt or _('Aucun acte détecté.'),
         }
         if self.use_claude_ai:
-            vals.update(self._run_claude(
+            vals.update(self._run_claude_texte(
                 self.texte_extrait or '',
                 parsed.get('patient_prenom', '') or self.patient_prenom or ''
             ))
         self.write(vals)
         return self._reopen()
 
-    # ── Claude Haiku 4.5 ──────────────────────────────────────────────────────
+    # ── Helpers API ───────────────────────────────────────────────────────────
 
     def _get_api_key(self):
         if self.claude_api_key:
@@ -264,16 +308,56 @@ class WizardOcrOrdonnance(models.TransientModel):
             'cps.anthropic.api.key', ''
         )
 
+    def _get_model(self):
+        return self.env['ir.config_parameter'].sudo().get_param(
+            'claude_model', 'claude-haiku-4-5-20251001'
+        )
+
     def _anonymize_prenom(self, texte, prenom):
         """Remplace le prénom du patient par [PRÉNOM] dans le texte."""
         if not prenom or len(prenom) < 2:
             return texte
         return re.sub(re.escape(prenom), '[PRÉNOM]', texte, flags=re.IGNORECASE)
 
-    def _run_claude(self, texte, prenom):
+    def _parse_claude_json(self, raw):
         """
-        Anonymise le prénom du patient puis envoie à Claude Haiku 4.5.
-        Retourne un dict de vals à merger dans le write().
+        Nettoie et parse la réponse JSON de Claude.
+        Retourne (data_dict, error_msg). error_msg est None si succès.
+        """
+        try:
+            clean = re.sub(r'```(?:json)?', '', raw).strip('` \n')
+            return json.loads(clean), None
+        except (json.JSONDecodeError, KeyError) as e:
+            _logger.warning('Claude JSON parse error: %s – raw: %s', e, raw[:500])
+            return None, _('⚠ Réponse Claude non parseable.')
+
+    def _vals_from_claude_data(self, data):
+        """Construit le dict de vals Odoo depuis le JSON retourné par Claude."""
+        vals = {'claude_status': _('✅ Analyse Claude réussie.')}
+        if data.get('prescripteur_nom'):
+            vals['prescripteur_nom'] = data['prescripteur_nom']
+        if data.get('prescripteur_code'):
+            vals['prescripteur_code'] = data['prescripteur_code']
+        if data.get('date_prescription'):
+            try:
+                vals['date_prescription'] = datetime.date.fromisoformat(
+                    data['date_prescription'])
+            except Exception:
+                pass
+        if data.get('patient_nom'):
+            vals['patient_nom'] = data['patient_nom']
+        actes = data.get('actes', [])
+        if actes:
+            vals['actes_detectes'] = self._format_actes(actes)
+        return vals
+
+    # ── Claude Haiku 4.5 – mode texte (urllib, sans dépendance SDK) ───────────
+
+    def _run_claude_texte(self, texte, prenom):
+        """
+        Anonymise le prénom du patient puis envoie le texte à Claude Haiku 4.5.
+        Utilise urllib (aucune dépendance Python externe).
+        Retourne un dict de vals à merger dans write().
         """
         api_key = self._get_api_key()
         if not api_key:
@@ -282,7 +366,7 @@ class WizardOcrOrdonnance(models.TransientModel):
         texte_anon = self._anonymize_prenom(texte, prenom)
 
         payload = json.dumps({
-            'model': 'claude-haiku-4-5-20251001',
+            'model': self._get_model(),
             'max_tokens': 1000,
             'system': CLAUDE_SYSTEM_PROMPT,
             'messages': [{'role': 'user', 'content': texte_anon}],
@@ -309,37 +393,89 @@ class WizardOcrOrdonnance(models.TransientModel):
             _logger.error('Claude API error: %s', e)
             return {'claude_status': _('❌ Erreur réseau : %s') % str(e)}
 
-        # Extraire le texte de la réponse
-        try:
-            raw = ''
-            for block in body.get('content', []):
-                if block.get('type') == 'text':
-                    raw += block.get('text', '')
-            # Nettoyer éventuels blocs markdown
-            raw = re.sub(r'```(?:json)?', '', raw).strip()
-            data = json.loads(raw)
-        except (json.JSONDecodeError, KeyError) as e:
-            _logger.warning('Claude JSON parse error: %s – raw: %s', e, raw[:500])
-            return {'claude_status': _('⚠ Réponse Claude non parseable.')}
+        raw = ''.join(
+            block.get('text', '')
+            for block in body.get('content', [])
+            if block.get('type') == 'text'
+        )
+        data, err = self._parse_claude_json(raw)
+        if err:
+            return {'claude_status': err}
+        return self._vals_from_claude_data(data)
 
-        # Mettre à jour les champs avec les données Claude
-        vals = {'claude_status': _('✅ Analyse Claude réussie.')}
-        if data.get('prescripteur_nom'):
-            vals['prescripteur_nom'] = data['prescripteur_nom']
-        if data.get('prescripteur_code'):
-            vals['prescripteur_code'] = data['prescripteur_code']
-        if data.get('date_prescription'):
-            try:
-                vals['date_prescription'] = datetime.date.fromisoformat(data['date_prescription'])
-            except Exception:
-                pass
-        if data.get('patient_nom'):
-            vals['patient_nom'] = data['patient_nom']
-        # Reconstruire le résumé des actes depuis Claude
-        actes = data.get('actes', [])
-        if actes:
-            vals['actes_detectes'] = self._format_actes(actes)
-        return vals
+    # ── Claude Haiku 4.5 – mode vision (SDK anthropic) ───────────────────────
+
+    def _run_claude_vision(self, file_data, fichier_nom):
+        """
+        Envoie l'image (ou la première page du PDF converti) directement à
+        Claude Haiku 4.5 en mode vision via le SDK 'anthropic'.
+        Retourne un dict de vals à merger dans write().
+        """
+        api_key = self._get_api_key()
+        if not api_key:
+            return {'claude_status': _('⚠ Clé API Anthropic non configurée.')}
+
+        try:
+            import anthropic as anthropic_sdk
+        except ImportError:
+            return {'claude_status': _(
+                "❌ Le paquet Python 'anthropic' n'est pas installé. "
+                "Lancez : pip install anthropic"
+            )}
+
+        # Détecter le media type ; pour les PDF on convertit la 1re page en image
+        nom = fichier_nom.lower()
+        if nom.endswith('.pdf'):
+            images = _pdf_to_images(file_data)
+            if not images:
+                return {'claude_status': _(
+                    '❌ Impossible de convertir le PDF en image pour la vision. '
+                    'Installez pdf2image et poppler, ou utilisez le mode texte.'
+                )}
+            buf = io.BytesIO()
+            images[0].save(buf, format='PNG')
+            image_bytes = buf.getvalue()
+            media_type = 'image/png'
+        else:
+            image_bytes = file_data
+            if nom.endswith('.png'):
+                media_type = 'image/png'
+            elif nom.endswith('.webp'):
+                media_type = 'image/webp'
+            else:
+                media_type = 'image/jpeg'
+
+        image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+
+        client = anthropic_sdk.Anthropic(api_key=api_key)
+        try:
+            response = client.messages.create(
+                model=self._get_model(),
+                max_tokens=1024,
+                messages=[{
+                    'role': 'user',
+                    'content': [
+                        {
+                            'type': 'image',
+                            'source': {
+                                'type': 'base64',
+                                'media_type': media_type,
+                                'data': image_b64,
+                            },
+                        },
+                        {'type': 'text', 'text': CLAUDE_VISION_PROMPT},
+                    ],
+                }],
+            )
+            raw = response.content[0].text if response.content else ''
+        except Exception as exc:
+            _logger.error('Claude vision error: %s', exc)
+            return {'claude_status': _('❌ Erreur Claude vision : %s') % str(exc)}
+
+        data, err = self._parse_claude_json(raw)
+        if err:
+            return {'claude_status': err}
+        return self._vals_from_claude_data(data)
 
     # ── Application ───────────────────────────────────────────────────────────
 
@@ -361,7 +497,7 @@ class WizardOcrOrdonnance(models.TransientModel):
                 vals['patient_id'] = patient.id
         ord_.write(vals)
 
-        # Créer les lignes depuis le texte parsé
+        # Créer les lignes depuis le texte parsé (si OCR local disponible)
         parsed = parse_ordonnance_text(self.texte_extrait or '')
         for a in parsed['actes']:
             at = self.env['cps.acte.type'].search([

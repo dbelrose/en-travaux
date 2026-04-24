@@ -123,7 +123,7 @@ class CpsActeType(models.Model):
                 ctx = {}
         else:
             ctx = dict(ctx_raw)
-        ctx['default_profession'] = profession
+        ctx['cps_user_profession'] = profession
         ctx['search_default_ma_profession'] = 1 if profession else 0
         action['context'] = ctx
         return action

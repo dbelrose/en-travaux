@@ -1,5 +1,6 @@
 import datetime
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class CpsOrdonnance(models.Model):
@@ -13,7 +14,7 @@ class CpsOrdonnance(models.Model):
 
     # Patient → res.partner catégorie Patient CPS
     patient_id = fields.Many2one(
-        'res.partner', string='Patient', required=True,
+        'res.partner', string='Patient',
         domain="[('category_id.name', '=', 'Patient CPS')]",
         ondelete='restrict', tracking=True,
     )
@@ -24,7 +25,7 @@ class CpsOrdonnance(models.Model):
         domain="[('category_id.name', '=', 'Praticien CPS')]",
         ondelete='restrict',
         default=lambda self: self.env['res.partner'].search(
-            [('user_id', '=', self.env.uid), ('category_id.name', '=', 'Praticien CPS')], limit=1,
+            [('user_ids', 'in', self.env.uid), ('category_id.name', '=', 'Praticien CPS')], limit=1,
         ),
     )
     # Profession : calculée depuis category_id du praticien (pas de champ sur res.partner)
@@ -127,6 +128,23 @@ class CpsOrdonnance(models.Model):
                     self.env['ir.sequence'].next_by_code('cps.ordonnance') or _('Nouvelle')
                 )
         return super().create(vals_list)
+
+    @api.constrains('patient_id', 'ligne_ids')
+    def _check_patient_for_lines(self):
+        for rec in self:
+            if rec.ligne_ids and not rec.patient_id:
+                raise ValidationError(
+                    _("Le patient est obligatoire pour ajouter des actes.")
+                )
+
+    @api.constrains('ligne_ids')
+    def _check_unique_acte_type_per_ligne(self):
+        for rec in self:
+            acte_ids = [l.acte_type_id.id for l in rec.ligne_ids if l.acte_type_id]
+            if len(acte_ids) != len(set(acte_ids)):
+                raise ValidationError(
+                    _("Chaque type d'acte ne peut être présent qu'une seule fois.")
+                )
 
     def action_annuler(self):   self.state = 'annulee'
     def action_reactiver(self): self.state = 'active'
