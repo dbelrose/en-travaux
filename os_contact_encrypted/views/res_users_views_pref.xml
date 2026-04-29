@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Préférences de chiffrement dans les préférences utilisateur -->
+    <record id="view_users_form_crypto_prefs" model="ir.ui.view">
+        <field name="name">res.users.form.crypto.prefs</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
+        <field name="arch" type="xml">
+            <!-- group[@name='preference_contact'] est prévu pour les extensions -->
+            <xpath expr="//group[@name='preference_contact']" position="inside">
+                <group string="🔐 Chiffrement des contacts" invisible="not has_crypto_keys">
+                    <field name="encrypted_field_pref_ids" nolabel="1" colspan="2">
+                        <tree editable="bottom">
+                            <field name="field_name" readonly="1"/>
+                            <field name="enabled" widget="boolean_toggle"/>
+                        </tree>
+                    </field>
+                    <p class="text-muted small" colspan="2">
+                        Activez ou désactivez le chiffrement par champ.
+                        Les champs "obligatoires" définis par l'administrateur ne peuvent pas être désactivés.
+                    </p>
+                </group>
+                <group string="🔐 Chiffrement des contacts" invisible="has_crypto_keys">
+                    <p colspan="2">Le chiffrement n'est pas encore initialisé pour ce compte.</p>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_users_preferences_crypto" model="ir.ui.view">
+        <field name="name">res.users.preferences.crypto</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//group[@name='preference_contact']" position="after">
+
+                <field name="has_crypto_keys" invisible="1"/>
+
+                <!-- Bandeau : chiffrement non initialisé -->
+                <div class="alert alert-warning d-flex align-items-center gap-3 p-3 mt-2"
+                     role="alert"
+                     invisible="has_crypto_keys">
+                    <i class="fa fa-lock fa-2x text-warning flex-shrink-0"/>
+                    <div class="flex-grow-1">
+                        <strong>Chiffrement patient non configuré.</strong><br/>
+                        Vos données de contact ne sont pas encore protégées par chiffrement RSA.
+                    </div>
+                    <button name="%(os_contact_encrypted.action_init_keypair_wizard)d"
+                            type="action"
+                            string="Initialiser maintenant"
+                            class="btn btn-warning btn-sm flex-shrink-0"/>
+                </div>
+
+                <!-- Bandeau : chiffrement actif -->
+                <div class="alert alert-success d-flex align-items-center gap-3 p-3 mt-2"
+                     role="alert"
+                     invisible="not has_crypto_keys">
+                    <i class="fa fa-shield fa-2x text-success flex-shrink-0"/>
+                    <div class="flex-grow-1">
+                        <strong>Chiffrement actif.</strong>
+                        Vos données de contact sont protégées par votre clé RSA personnelle.
+                    </div>
+                    <button name="%(os_contact_encrypted.action_change_password_wizard)d"
+                            type="action"
+                            string="Changer le mot de passe"
+                            class="btn btn-outline-success btn-sm flex-shrink-0"/>
+                    <button name="%(os_contact_encrypted.action_init_keypair_wizard)d"
+                            type="action"
+                            string="Gérer les clés"
+                            class="btn btn-outline-secondary btn-sm flex-shrink-0"/>
+                </div>
+
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

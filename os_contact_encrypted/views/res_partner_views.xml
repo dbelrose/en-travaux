@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Héritage du formulaire contact -->
+    <record id="view_partner_form_crypto" model="ir.ui.view">
+        <field name="name">res.partner.form.crypto</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Champs techniques invisibles (store=False, pas de colonne SQL) -->
+            <xpath expr="//sheet" position="inside">
+                <field name="has_encrypted_data" invisible="1"/>
+            </xpath>
+
+            <!-- Bandeaux de déverrouillage -->
+            <xpath expr="//sheet/div[@name='button_box']" position="after">
+                <!-- Propriétaire : saisie du mot de passe -->
+                <div class="alert alert-warning d-flex align-items-center gap-2"
+                     role="alert"
+                     invisible="not has_encrypted_data">
+                    <i class="fa fa-lock fa-lg"/>
+                    <div class="flex-grow-1">
+                        <strong>Ce contact contient des données chiffrées.</strong>
+                        Saisissez votre mot de passe pour les déchiffrer.
+                    </div>
+                    <field name="session_password" widget="password"
+                           placeholder="Mot de passe Odoo…"
+                           nolabel="1"
+                           style="max-width:220px"/>
+                </div>
+            </xpath>
+
+            <!-- Remplacement des champs natifs par les versions display -->
+            <!-- On masque le champ natif et on ajoute le display juste après -->
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='phone']" position="after">
+                <field name="phone_display" string="Téléphone" readonly="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='mobile']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='mobile']" position="after">
+                <field name="mobile_display" string="Mobile" readonly="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='email']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='email']" position="after">
+                <field name="email_display" string="Email" readonly="1"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Liste des contacts -->
+    <record id="view_partner_tree_crypto" model="ir.ui.view">
+        <field name="name">res.partner.tree.crypto</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='phone']" position="after">
+                <field name="phone_display" string="Téléphone" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='email']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='email']" position="after">
+                <field name="email_display" string="Email" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

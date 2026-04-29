@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vue liste des champs configurés (admin) -->
+    <record id="view_encrypted_field_config_tree" model="ir.ui.view">
+        <field name="name">encrypted.field.config.tree</field>
+        <field name="model">encrypted.field.config</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="field_name"/>
+                <field name="label"/>
+                <field name="mandatory"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="note"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue formulaire (admin) -->
+    <record id="view_encrypted_field_config_form" model="ir.ui.view">
+        <field name="name">encrypted.field.config.form</field>
+        <field name="model">encrypted.field.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="field_name"/>
+                        <field name="label"/>
+                        <field name="active"/>
+                        <field name="mandatory"
+                               help="Si coché, les utilisateurs ne peuvent pas désactiver ce champ dans leurs préférences."/>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_encrypted_field_config" model="ir.actions.act_window">
+        <field name="name">Champs à chiffrer</field>
+        <field name="res_model">encrypted.field.config</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu principal -->
+    <menuitem
+        id="menu_crypto_root"
+        name="Chiffrement contacts"
+        groups="os_contact_encrypted.group_crypto_admin"
+        sequence="90"/>
+
+    <menuitem
+        id="menu_encrypted_field_config"
+        name="Champs à chiffrer"
+        parent="menu_crypto_root"
+        action="action_encrypted_field_config"
+        sequence="10"/>
+
+</odoo>
