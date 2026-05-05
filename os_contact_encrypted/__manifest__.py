@@ -1,30 +1,23 @@
 {
     'name': 'OS Contact Encrypted',
-    'version': '17.0.3.0.0',
-    'summary': 'Chiffrement RSA des contacts — architecture satellite, zéro colonne sur res.partner',
+    'version': '17.0.4.0.0',
+    'summary': 'Chiffrement RSA des contacts — ZK-friendly, recherche multi-mots, aperçu partiel configurable',
     'description': """
         Chiffrement asymétrique RSA des champs d'identification des contacts (res.partner).
 
-        v3 — Architecture satellite (partner.crypto.data) :
-        - Zéro colonne ajoutée sur res.partner → aucune migration SQL lors des mises à jour
-        - Multi-société natif (company_id sur chaque enregistrement chiffré)
-        - Index ciblés sur partner_id et token (performance)
-        - Compatible ir.rule pour cloisonnement par société
-
-        Fonctionnalités :
-        - Recherche semi-aveugle (ZK) via tokens HMAC-SHA256 sur le nom
-        - Choix des champs à chiffrer par utilisateur (préférences)
-        - Champs "obligatoires" non désactivables (config admin)
-        - Notification d'initialisation discrète (info, non sticky, une fois/session)
-        - Wizard d'initialisation des clés RSA
-        - Wizard de changement de mot de passe avec re-chiffrement automatique
-        - Récupération d'urgence via clé administrateur RSA-4096
-        - Journal d'audit des accès d'urgence
+        v4 — Recherche ZK améliorée + UX :
+        - Recherche multi-mots : intersection de tokens HMAC (ex. "Dupo J" trouve "Dupont Jean")
+        - Longueur minimale de préfixe configurable dans Paramètres généraux
+        - Aperçu du nom configurable : N premiers caractères + initiales (ex. "Dupo. J.")
+        - Champs d'affichage éditables (inverse functions) : pas de double saisie
+        - phone_display et mobile_display correctement affichés en vue liste
+        - Menu Récupération d'urgence accessible depuis le menu principal
+        - Architecture satellite inchangée (zéro colonne sur res.partner)
     """,
     'category': 'Tools/Security',
     'author': 'OpalSea',
     'website': 'https://opalsea.site',
-    'depends': ['base', 'mail', 'contacts', 'web'],
+    'depends': ['base', 'mail', 'contacts', 'web', 'base_setup'],
     'data': [
         'security/security_groups.xml',
         'security/ir.model.access.csv',
@@ -35,6 +28,7 @@
         'views/res_partner_views.xml',
         'views/res_users_views.xml',
         'views/res_users_views_pref.xml',
+        'views/res_config_settings_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

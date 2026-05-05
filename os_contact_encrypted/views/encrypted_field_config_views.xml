@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Vue liste des champs configurés (admin) -->
+    <!-- ── Vue liste des champs configurés (admin) ──────────────────────── -->
     <record id="view_encrypted_field_config_tree" model="ir.ui.view">
         <field name="name">encrypted.field.config.tree</field>
         <field name="model">encrypted.field.config</field>
@@ -16,7 +16,7 @@
         </field>
     </record>
 
-    <!-- Vue formulaire (admin) -->
+    <!-- ── Vue formulaire (admin) ────────────────────────────────────────── -->
     <record id="view_encrypted_field_config_form" model="ir.ui.view">
         <field name="name">encrypted.field.config.form</field>
         <field name="model">encrypted.field.config</field>
@@ -28,7 +28,7 @@
                         <field name="label"/>
                         <field name="active"/>
                         <field name="mandatory"
-                               help="Si coché, les utilisateurs ne peuvent pas désactiver ce champ dans leurs préférences."/>
+                               help="Si coché, les utilisateurs ne peuvent pas désactiver ce champ."/>
                         <field name="note"/>
                     </group>
                 </sheet>
@@ -36,18 +36,19 @@
         </field>
     </record>
 
-    <!-- Action -->
+    <!-- ── Actions ───────────────────────────────────────────────────────── -->
     <record id="action_encrypted_field_config" model="ir.actions.act_window">
         <field name="name">Champs à chiffrer</field>
         <field name="res_model">encrypted.field.config</field>
         <field name="view_mode">tree,form</field>
     </record>
 
-    <!-- Menu principal -->
+    <!-- ── Menu principal Chiffrement contacts (admin) ───────────────────── -->
     <menuitem
         id="menu_crypto_root"
         name="Chiffrement contacts"
         groups="os_contact_encrypted.group_crypto_admin"
+        web_icon="static/description/icon.png"
         sequence="90"/>
 
     <menuitem
@@ -56,5 +57,13 @@
         parent="menu_crypto_root"
         action="action_encrypted_field_config"
         sequence="10"/>
+
+    <!-- Récupération d'urgence — pointe vers le wizard défini dans emergency_export_wizard_views.xml -->
+    <menuitem
+        id="menu_emergency_export"
+        name="Récupération d'urgence"
+        parent="menu_crypto_root"
+        action="os_contact_encrypted.action_emergency_export_wizard"
+        sequence="20"/>
 
 </odoo>

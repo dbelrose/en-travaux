@@ -37,8 +37,10 @@
                             </div>
                         </div>
                         <group string="Mot de passe de la clé privée admin">
-                            <field name="admin_password"         widget="password" placeholder="Mot de passe fort pour protéger la clé privée"/>
-                            <field name="admin_password_confirm" widget="password" placeholder="Confirmer"/>
+                            <field name="admin_password"         widget="password" password="True"
+                                   placeholder="Mot de passe fort pour protéger la clé privée"/>
+                            <field name="admin_password_confirm" widget="password" password="True"
+                                   placeholder="Confirmer"/>
                         </group>
                     </group>
 
@@ -58,11 +60,14 @@
                         <group string="Clé privée administrateur">
                             <field name="admin_private_key_input" widget="text"
                                    placeholder="Collez ici le contenu du fichier emergency_admin_private.pem"/>
-                            <field name="admin_key_password" widget="password" placeholder="Mot de passe de la clé privée admin"/>
+                            <field name="admin_key_password" widget="password" password="True"
+                                   placeholder="Mot de passe de la clé privée admin"/>
                         </group>
                         <group string="Nouveau mot de passe pour l'utilisateur récupéré">
-                            <field name="new_user_password"         widget="password" placeholder="Nouveau mot de passe Odoo"/>
-                            <field name="new_user_password_confirm" widget="password" placeholder="Confirmer"/>
+                            <field name="new_user_password"         widget="password" password="True"
+                                   placeholder="Nouveau mot de passe Odoo"/>
+                            <field name="new_user_password_confirm" widget="password" password="True"
+                                   placeholder="Confirmer"/>
                         </group>
                     </group>
 

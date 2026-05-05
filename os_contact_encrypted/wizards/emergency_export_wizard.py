@@ -40,8 +40,8 @@ class EmergencyExportWizard(models.TransientModel):
     ], default='form')
 
     # ── Setup ────────────────────────────────────────────────────────────────
-    admin_password           = fields.Char(string='Mot de passe admin (pour protéger la clé privée)', password=True)
-    admin_password_confirm   = fields.Char(string='Confirmer', password=True)
+    admin_password           = fields.Char(string='Mot de passe admin (pour protéger la clé privée)')
+    admin_password_confirm   = fields.Char(string='Confirmer')
     admin_private_key_export = fields.Binary(
         string='Clé privée admin (fichier PEM — à conserver hors-ligne)',
         readonly=True,
@@ -69,7 +69,7 @@ class EmergencyExportWizard(models.TransientModel):
         password=True,
         help='La clé privée de l\'utilisateur sera re-chiffrée avec ce mot de passe.',
     )
-    new_user_password_confirm = fields.Char(string='Confirmer', password=True)
+    new_user_password_confirm = fields.Char(string='Confirmer')
     error_message           = fields.Char(readonly=True)
     recovery_info           = fields.Char(readonly=True)
 

@@ -14,9 +14,9 @@ class ChangePasswordWizard(models.TransientModel):
         ('error', 'Erreur'),
     ], default='form')
 
-    old_password         = fields.Char(string='Mot de passe actuel',         password=True)
-    new_password         = fields.Char(string='Nouveau mot de passe',         password=True)
-    new_password_confirm = fields.Char(string='Confirmer le nouveau mot de passe', password=True)
+    old_password         = fields.Char(string='Mot de passe actuel')
+    new_password         = fields.Char(string='Nouveau mot de passe')
+    new_password_confirm = fields.Char(string='Confirmer le nouveau mot de passe')
     error_message        = fields.Char(readonly=True)
 
     def action_change(self):

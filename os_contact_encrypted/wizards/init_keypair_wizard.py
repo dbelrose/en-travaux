@@ -15,8 +15,8 @@ class InitKeypairWizard(models.TransientModel):
         ('error',   'Erreur'),
     ], default='form')
 
-    password         = fields.Char(string='Votre mot de passe Odoo', password=True)
-    password_confirm = fields.Char(string='Confirmer le mot de passe', password=True)
+    password         = fields.Char(string='Votre mot de passe Odoo')
+    password_confirm = fields.Char(string='Confirmer le mot de passe')
     force_regenerate = fields.Boolean(
         string='Régénérer les clés (attention : les données existantes deviendront illisibles)',
         default=False,
