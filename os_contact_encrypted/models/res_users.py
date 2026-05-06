@@ -2,7 +2,10 @@ from odoo import models, fields, api, exceptions
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.backends import default_backend
-from odoo.addons.os_contact_encrypted.models.encrypted_field_config import ENCRYPTABLE_FIELDS
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from typing import Optional
+
+import os, struct
 import base64
 import logging
 
@@ -97,7 +100,15 @@ class ResUsers(models.Model):
 
         _logger.info('[os_contact_encrypted] Paire RSA générée pour %s (id=%s)', self.login, self.id)
 
-    def _build_emergency_key(self, encrypted_private_pem: bytes) -> str | None:
+    def _build_emergency_key(self, encrypted_private_pem: bytes) -> Optional[str]:
+        """
+        Chiffrement hybride :
+        1. Génère une clé AES-256 éphémère
+        2. Chiffre le PEM avec AES-256-CBC
+        3. Chiffre la clé AES avec RSA-4096/OAEP (≤ 446 octets → OK)
+        4. Stocke : [len_rsa_blob(4)][rsa_blob][iv(16)][aes_ciphertext]
+        """
+
         ICP = self.env['ir.config_parameter'].sudo()
         admin_pub_pem = ICP.get_param('os_contact_encrypted.emergency_admin_public_key')
         if not admin_pub_pem:
@@ -107,15 +118,31 @@ class ResUsers(models.Model):
                 admin_pub_pem.encode('utf-8'),
                 backend=default_backend(),
             )
-            ciphertext = admin_pub_key.encrypt(
-                encrypted_private_pem,
+            # 1. Clé AES éphémère
+            aes_key = os.urandom(32)  # AES-256
+            iv = os.urandom(16)
+
+            # 2. Chiffrement AES du PEM (padding PKCS7 manuel)
+            pad_len = 16 - (len(encrypted_private_pem) % 16)
+            padded = encrypted_private_pem + bytes([pad_len] * pad_len)
+            cipher = Cipher(algorithms.AES(aes_key), modes.CBC(iv), backend=default_backend())
+            enc = cipher.encryptor()
+            aes_ciphertext = enc.update(padded) + enc.finalize()
+
+            # 3. Chiffrement RSA de la clé AES (32 octets << 446 → OK)
+            rsa_blob = admin_pub_key.encrypt(
+                aes_key,
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
                     label=None,
                 ),
             )
-            return base64.b64encode(ciphertext).decode('utf-8')
+
+            # 4. Assemblage : 4 octets longueur RSA | blob RSA | IV | ciphertext AES
+            payload = struct.pack('>I', len(rsa_blob)) + rsa_blob + iv + aes_ciphertext
+            return base64.b64encode(payload).decode('utf-8')
+
         except Exception as e:
             _logger.warning('[os_contact_encrypted] Impossible de créer la clé d\'urgence : %s', e)
             return None

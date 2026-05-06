@@ -88,28 +88,22 @@ class PartnerCryptoData(models.Model):
         return {r.field_name: r for r in records}
 
     @api.model
-    def upsert(self, partner_id, field_name, value_enc, token, owner_id):
-        """
-        Crée ou met à jour l'enregistrement pour (partner, field, company).
-        Retourne le record.
-        """
+    def upsert(self, partner_id, field_name, value_enc, token, owner_id, company_id=None):
+        if company_id is None:
+            company_id = self.env.company.id
         existing = self.search([
             ('partner_id', '=', partner_id),
             ('field_name', '=', field_name),
-            ('company_id', '=', self.env.company.id),
+            ('company_id', '=', company_id),
         ], limit=1)
-        vals = {
-            'value_enc': value_enc,
-            'token': token,
-            'owner_id': owner_id,
-        }
+        vals = {'value_enc': value_enc, 'token': token, 'owner_id': owner_id}
         if existing:
             existing.write(vals)
             return existing
         vals.update({
             'partner_id': partner_id,
             'field_name': field_name,
-            'company_id': self.env.company.id,
+            'company_id': company_id,
         })
         return self.create(vals)
 

@@ -1,5 +1,6 @@
 from odoo import models, fields, api, exceptions
 from odoo.addons.os_contact_encrypted.models.encrypted_field_config import ENCRYPTABLE_FIELDS
+
 import hashlib
 import hmac
 import logging
@@ -133,23 +134,29 @@ class ResPartner(models.Model):
     # ── Computed fields ───────────────────────────────────────────────────────
     def _compute_has_encrypted_data(self):
         CryptoData = self.env['partner.crypto.data']
+        company_id = self.env.company.id  # ← filtre cohérent avec _get_crypto_map
         for rec in self:
             rec.has_encrypted_data = bool(
-                CryptoData.search([('partner_id', '=', rec.id)], limit=1))
+                CryptoData.search([
+                    ('partner_id', '=', rec.id),
+                    ('company_id', '=', company_id),  # ← ajout
+                ], limit=1)
+            )
 
-    @api.depends('session_password', *FIELD_NAMES)
+    # ─── _compute_display_fields : gère UNIQUEMENT les masques/aperçus ────────────
+    # session_password est retiré des depends (il n'est plus lu ici)
+    @api.depends(*FIELD_NAMES)
     def _compute_display_fields(self):
         for rec in self:
             crypto_map = rec._get_crypto_map()
             owner = rec._get_owner(crypto_map)
 
             for field in FIELD_NAMES:
-                native_val   = getattr(rec, field, False) or ''
-                crypto_rec   = crypto_map.get(field)
+                native_val = getattr(rec, field, False) or ''
+                crypto_rec = crypto_map.get(field)
                 display_attr = f'{field}_display'
 
                 if not crypto_rec:
-                    # Pas de données chiffrées → valeur native
                     setattr(rec, display_attr, native_val)
                     continue
 
@@ -167,36 +174,55 @@ class ResPartner(models.Model):
                         setattr(rec, display_attr, '🔒')
                     continue
 
-                # Propriétaire du chiffrement
+                # Propriétaire sans mot de passe → aperçu/masque
+                if field == 'name':
+                    setattr(rec, display_attr, native_val or '🔒')
+                else:
+                    setattr(rec, display_attr, _MASK_OWNER.get(field, '🔒'))
+
+    # ─── _onchange_session_password : déchiffrement via cache direct ──────────────
+    @api.onchange('session_password')
+    def _onchange_session_password(self):
+        """
+        Écrit les valeurs déchiffrées DIRECTEMENT dans le cache ORM
+        (env.cache.set) sans passer par le mécanisme @api.depends ni par
+        les fonctions inverses — les deux sources du bug précédent.
+        """
+        for rec in self:
+            crypto_map = rec._get_crypto_map()
+            owner = rec._get_owner(crypto_map)
+
+            if not owner or owner != self.env.user:
+                continue
+
+            for field in FIELD_NAMES:
+                crypto_rec = crypto_map.get(field)
+                display_field = self._fields.get(f'{field}_display')
+
+                if not crypto_rec or not display_field:
+                    continue
+
+                native_val = getattr(rec, field, False) or ''
+
                 if rec.session_password:
                     try:
                         decrypted = owner.decrypt_with_password(
                             crypto_rec.value_enc, rec.session_password)
-                        setattr(rec, display_attr, decrypted)
+                        # ← Mise à jour directe du cache :
+                        #   - contourne le mécanisme @api.depends (pas de recompute ORM)
+                        #   - n'appelle pas la fonction inverse (_inv_phone, etc.)
+                        #   - la valeur est détectée comme "modifiée" par le framework
+                        #     onchange et renvoyée au client
+                        rec.env.cache.set(rec, display_field, decrypted)
                     except Exception:
-                        setattr(rec, display_attr, '⚠️ Mot de passe incorrect')
+                        rec.env.cache.set(rec, display_field, '⚠️ Mot de passe incorrect')
                 else:
+                    # Pas de mot de passe → remettre le masque/aperçu
                     if field == 'name':
-                        # L'aperçu (hint) est stocké dans rec.name
-                        setattr(rec, display_attr, native_val or '🔒')
+                        rec.env.cache.set(rec, display_field, native_val or '🔒')
                     else:
-                        setattr(rec, display_attr, _MASK_OWNER.get(field, '🔒'))
-
-    @api.onchange('session_password')
-    def _onchange_session_password(self):
-        """
-        Force le recalcul ET l'envoi des champs display dans la réponse onchange.
-
-        Odoo 17 : un onchange avec corps vide déclenche le RPC côté client mais
-        n'inclut dans sa réponse que les champs EXPLICITEMENT modifiés dans la
-        méthode. Les @api.depends ne sont pas réévalués automatiquement dans ce
-        contexte. L'appel explicite ci-dessous force :
-          1. L'évaluation de _compute_display_fields avec le mot de passe disponible.
-          2. L'inclusion de tous les *_display dans la réponse onchange → mise à jour
-             immédiate du formulaire avec les valeurs déchiffrées.
-        Le mot de passe reste purement transient (store=False, jamais sauvegardé).
-        """
-        self._compute_display_fields()
+                        rec.env.cache.set(
+                            rec, display_field, _MASK_OWNER.get(field, '🔒'))
 
     # ── Inverse functions ─────────────────────────────────────────────────────
     def _inv(self, field_name):
@@ -211,14 +237,117 @@ class ResPartner(models.Model):
                 continue
             rec.write({field_name: val})
 
-    def _inv_phone(self):    self._inv('phone')
-    def _inv_mobile(self):   self._inv('mobile')
-    def _inv_email(self):    self._inv('email')
-    def _inv_name(self):     self._inv('name')
-    def _inv_street(self):   self._inv('street')
-    def _inv_vat(self):      self._inv('vat')
-    def _inv_website(self):  self._inv('website')
-    def _inv_comment(self):  self._inv('comment')
+    def _inv_phone(self):
+        for rec in self:
+            val = getattr(rec, 'phone_display', '') or ''
+            # Ignorer : vide, masque 🔒 / ⚠️
+            if not val.strip() or any(val.startswith(p) for p in _MASK_PREFIXES):
+                continue
+            # ← CORRECTION CRITIQUE
+            # Ignorer si la valeur affichée == aperçu natif stocké :
+            # cela signifie que l'utilisateur n'a pas déchiffré, on ne doit
+            # surtout pas réécrire l'aperçu comme s'il était le vrai nom.
+            if rec.has_encrypted_data and val == rec.phone:
+                continue
+            rec.write({'phone': val})
+
+    def _inv_mobile(self):
+        for rec in self:
+            val = getattr(rec, 'mobile_display', '') or ''
+            # Ignorer : vide, masque 🔒 / ⚠️
+            if not val.strip() or any(val.startswith(p) for p in _MASK_PREFIXES):
+                continue
+            # ← CORRECTION CRITIQUE
+            # Ignorer si la valeur affichée == aperçu natif stocké :
+            # cela signifie que l'utilisateur n'a pas déchiffré, on ne doit
+            # surtout pas réécrire l'aperçu comme s'il était le vrai nom.
+            if rec.has_encrypted_data and val == rec.mobile:
+                continue
+            rec.write({'mobile': val})
+
+    def _inv_email(self):
+        for rec in self:
+            val = getattr(rec, 'email_display', '') or ''
+            # Ignorer : vide, masque 🔒 / ⚠️
+            if not val.strip() or any(val.startswith(p) for p in _MASK_PREFIXES):
+                continue
+            # ← CORRECTION CRITIQUE
+            # Ignorer si la valeur affichée == aperçu natif stocké :
+            # cela signifie que l'utilisateur n'a pas déchiffré, on ne doit
+            # surtout pas réécrire l'aperçu comme s'il était le vrai nom.
+            if rec.has_encrypted_data and val == rec.email:
+                continue
+            rec.write({'email': val})    
+
+    def _inv_name(self):
+        for rec in self:
+            val = getattr(rec, 'name_display', '') or ''
+            # Ignorer : vide, masque 🔒 / ⚠️
+            if not val.strip() or any(val.startswith(p) for p in _MASK_PREFIXES):
+                continue
+            # ← CORRECTION CRITIQUE
+            # Ignorer si la valeur affichée == aperçu natif stocké :
+            # cela signifie que l'utilisateur n'a pas déchiffré, on ne doit
+            # surtout pas réécrire l'aperçu comme s'il était le vrai nom.
+            if rec.has_encrypted_data and val == rec.name:
+                continue
+            rec.write({'name': val})
+
+    def _inv_street(self):
+        for rec in self:
+            val = getattr(rec, 'street_display', '') or ''
+            # Ignorer : vide, masque 🔒 / ⚠️
+            if not val.strip() or any(val.startswith(p) for p in _MASK_PREFIXES):
+                continue
+            # ← CORRECTION CRITIQUE
+            # Ignorer si la valeur affichée == aperçu natif stocké :
+            # cela signifie que l'utilisateur n'a pas déchiffré, on ne doit
+            # surtout pas réécrire l'aperçu comme s'il était le vrai nom.
+            if rec.has_encrypted_data and val == rec.street:
+                continue
+            rec.write({'street': val})
+
+    def _inv_vat(self):
+        for rec in self:
+            val = getattr(rec, 'vat_display', '') or ''
+            # Ignorer : vide, masque 🔒 / ⚠️
+            if not val.strip() or any(val.startswith(p) for p in _MASK_PREFIXES):
+                continue
+            # ← CORRECTION CRITIQUE
+            # Ignorer si la valeur affichée == aperçu natif stocké :
+            # cela signifie que l'utilisateur n'a pas déchiffré, on ne doit
+            # surtout pas réécrire l'aperçu comme s'il était le vrai nom.
+            if rec.has_encrypted_data and val == rec.vat:
+                continue
+            rec.write({'vat': val})
+
+    def _inv_website(self):
+        for rec in self:
+            val = getattr(rec, 'website_display', '') or ''
+            # Ignorer : vide, masque 🔒 / ⚠️
+            if not val.strip() or any(val.startswith(p) for p in _MASK_PREFIXES):
+                continue
+            # ← CORRECTION CRITIQUE
+            # Ignorer si la valeur affichée == aperçu natif stocké :
+            # cela signifie que l'utilisateur n'a pas déchiffré, on ne doit
+            # surtout pas réécrire l'aperçu comme s'il était le vrai nom.
+            if rec.has_encrypted_data and val == rec.website:
+                continue
+            rec.write({'website': val})
+
+    def _inv_comment(self):
+        for rec in self:
+            val = getattr(rec, 'comment_display', '') or ''
+            # Ignorer : vide, masque 🔒 / ⚠️
+            if not val.strip() or any(val.startswith(p) for p in _MASK_PREFIXES):
+                continue
+            # ← CORRECTION CRITIQUE
+            # Ignorer si la valeur affichée == aperçu natif stocké :
+            # cela signifie que l'utilisateur n'a pas déchiffré, on ne doit
+            # surtout pas réécrire l'aperçu comme s'il était le vrai nom.
+            if rec.has_encrypted_data and val == rec.comment:
+                continue
+            rec.write({'comment': val})    
 
     # ── Clé HMAC + tokens ────────────────────────────────────────────────────
     def _search_key(self):
@@ -291,11 +420,8 @@ class ResPartner(models.Model):
 
     # ── Chiffrement d'un enregistrement ──────────────────────────────────────
     def _do_encrypt(self, rec, sensitive: dict, user):
-        """
-        Chiffre chaque champ de `sensitive`, upsert dans partner.crypto.data,
-        puis écrit le hint (nom) ou False (autres) dans la colonne native
-        via un write() portant _CTX_CLEAR — qui ne repasse PAS dans cette méthode.
-        """
+        # Conserver la société courante avant le sudo()
+        company_id = self.env.company.id
         CryptoData = self.env['partner.crypto.data'].sudo()
 
         for field, value in sensitive.items():
@@ -312,14 +438,15 @@ class ResPartner(models.Model):
                     token = self._tok(value_str)
                     native_write = {field: False}
 
+                # Passer company_id explicitement pour éviter la dérive via sudo()
                 CryptoData.upsert(
                     partner_id=rec.id,
                     field_name=field,
                     value_enc=value_enc,
                     token=token,
                     owner_id=user.id,
+                    company_id=company_id,  # ← ajout
                 )
-                # Effacement/remplacement de la colonne native — bypass chiffrement
                 rec.with_context(**{_CTX_CLEAR: True}).sudo().write(native_write)
 
             except Exception as e:

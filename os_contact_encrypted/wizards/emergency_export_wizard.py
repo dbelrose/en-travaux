@@ -1,7 +1,11 @@
-from odoo import models, fields, api, exceptions
+from odoo import models, fields, exceptions
+
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+import struct
 import base64
 import logging
 
@@ -197,37 +201,66 @@ class EmergencyExportWizard(models.TransientModel):
             return self._reopen_wizard()
 
         # ── Déchiffrer la couche d'urgence → obtenir la clé privée utilisateur ──
+        # try:
+        #     emergency_ciphertext = base64.b64decode(target.emergency_key_enc)
+        #     user_private_key_pem = admin_private_key.decrypt(
+        #         emergency_ciphertext,
+        #         padding.OAEP(
+        #             mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        #             algorithm=hashes.SHA256(),
+        #             label=None,
+        #         ),
+        #     )
+        #     # user_private_key_pem est le PEM chiffré avec l'ANCIEN MDP utilisateur
+        #     # On doit le re-chiffrer avec le NOUVEAU MDP
+        #     user_private_key = serialization.load_pem_private_key(
+        #         user_private_key_pem,
+        #         password=None,     # La couche urgence ne contient pas le MDP user
+        #         backend=default_backend(),
+        #     )
+        # except Exception:
+        #     # Cas où user_private_key_pem est encore chiffré par l'ancien MDP user
+        #     # (double chiffrement : MDP user + clé admin)
+        #     # On re-chiffre directement avec le nouveau MDP sans déchiffrer la couche user
+        #     try:
+        #         new_encrypted = self._reencrypt_recovered_key(
+        #             user_private_key_pem, self.new_user_password
+        #         )
+        #     except Exception as e:
+        #         self.write({
+        #             'state': 'error',
+        #             'error_message': f'Échec du déchiffrement de la clé d\'urgence : {e}',
+        #         })
+        #         return self._reopen_wizard()
+        emergency_payload = base64.b64decode(target.emergency_key_enc)
+
+        # Lire la longueur du blob RSA
+        rsa_len = struct.unpack('>I', emergency_payload[:4])[0]
+        rsa_blob = emergency_payload[4: 4 + rsa_len]
+        iv = emergency_payload[4 + rsa_len: 4 + rsa_len + 16]
+        aes_ciphertext = emergency_payload[4 + rsa_len + 16:]
+
         try:
-            emergency_ciphertext = base64.b64decode(target.emergency_key_enc)
-            user_private_key_pem = admin_private_key.decrypt(
-                emergency_ciphertext,
+            # Déchiffrer la clé AES avec la clé privée admin
+            aes_key = admin_private_key.decrypt(
+                rsa_blob,
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
                     label=None,
                 ),
             )
-            # user_private_key_pem est le PEM chiffré avec l'ANCIEN MDP utilisateur
-            # On doit le re-chiffrer avec le NOUVEAU MDP
-            user_private_key = serialization.load_pem_private_key(
-                user_private_key_pem,
-                password=None,     # La couche urgence ne contient pas le MDP user
-                backend=default_backend(),
-            )
-        except Exception:
-            # Cas où user_private_key_pem est encore chiffré par l'ancien MDP user
-            # (double chiffrement : MDP user + clé admin)
-            # On re-chiffre directement avec le nouveau MDP sans déchiffrer la couche user
-            try:
-                new_encrypted = self._reencrypt_recovered_key(
-                    user_private_key_pem, self.new_user_password
-                )
-            except Exception as e:
-                self.write({
-                    'state': 'error',
-                    'error_message': f'Échec du déchiffrement de la clé d\'urgence : {e}',
-                })
-                return self._reopen_wizard()
+            # Déchiffrer le PEM avec AES
+            cipher = Cipher(algorithms.AES(aes_key), modes.CBC(iv), backend=default_backend())
+            dec = cipher.decryptor()
+            padded = dec.update(aes_ciphertext) + dec.finalize()
+            pad_len = padded[-1]
+            user_private_key_pem = padded[:-pad_len]  # PEM chiffré avec l'ancien MDP user
+
+        except Exception as e:
+            self.write({'state': 'error',
+                        'error_message': f'Échec du déchiffrement de la clé d\'urgence : {e}'})
+            return self._reopen_wizard()
         else:
             # Clé privée déchiffrée avec succès (non chiffrée par MDP user dans l'urgence)
             new_encrypted = user_private_key.private_bytes(
