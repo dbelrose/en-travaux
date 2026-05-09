@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+  <!-- Vue liste types d'actes -->
+  <record id="view_acte_type_list" model="ir.ui.view">
+    <field name="name">cps.acte.type.list</field>
+    <field name="model">cps.acte.type</field>
+    <field name="arch" type="xml">
+      <tree string="Types d'actes" default_order="sequence,profession,lettre_cle"
+            decoration-info="not company_id"
+            decoration-success="is_company_override">
+        <field name="sequence" widget="handle"/>
+        <field name="lettre_cle"          string="Lettre clé"/>
+        <field name="coefficient_defaut"  string="Coefficient"  digits="[6,2]"/>
+        <field name="name"                string="Libellé"/>
+        <field name="profession"          string="Profession"/>
+        <field name="tarif_unitaire"      string="Tarif unitaire (F)" optional="show"/>
+        <field name="montant_indicatif"   string="Montant indicatif (F)" optional="show"/>
+        <field name="nb_seances_defaut"   string="Séances défaut"   optional="show"/>
+        <!--
+          company_id : vide = partagé (bleu), rempli+is_company_override = personnalisé (vert)
+        -->
+        <field name="company_id"          string="Société" optional="show"/>
+        <field name="is_company_override" string="Personnalisé" widget="boolean" optional="show"/>
+        <field name="active"              invisible="1"/>
+      </tree>
+    </field>
+  </record>
+
+  <!-- Vue formulaire types d'actes -->
+  <record id="view_acte_type_form" model="ir.ui.view">
+    <field name="name">cps.acte.type.form</field>
+    <field name="model">cps.acte.type</field>
+    <field name="arch" type="xml">
+      <form string="Type d'acte">
+        <header>
+          <!--
+            Bouton visible uniquement sur les actes partagés (company_id vide).
+            Crée ou ouvre la copie propre à la société de l'utilisateur.
+          -->
+          <button name="action_create_company_copy"
+                  string="★ Personnaliser pour ma société"
+                  type="object"
+                  class="btn-secondary"
+                  invisible="company_id != False"
+                  help="Crée une copie de cet acte partagé, modifiable uniquement par votre société."/>
+        </header>
+        <sheet>
+          <!-- Bandeau informatif pour les actes partagés -->
+          <div class="alert alert-info" invisible="company_id != False or is_company_override">
+            <i class="fa fa-info-circle me-1"/>
+            Cet acte est <strong>partagé</strong> entre toutes les sociétés.
+            Toute modification créera automatiquement une copie propre à votre société
+            sans altérer l'original.
+          </div>
+          <!-- Bandeau pour les copies société -->
+          <div class="alert alert-success" invisible="not is_company_override">
+            <i class="fa fa-star me-1"/>
+            Cet acte est une <strong>personnalisation</strong> propre à
+            <field name="company_id" readonly="1" nolabel="1" class="d-inline"/>.
+          </div>
+
+          <group>
+            <group string="Identification">
+              <field name="lettre_cle"/>
+              <field name="coefficient_defaut" digits="[6,2]"/>
+              <field name="name"/>
+              <field name="profession"/>
+            </group>
+            <group string="Tarification">
+              <field name="tarif_unitaire"/>
+              <field name="montant_indicatif"/>
+              <field name="type_supplement"/>
+            </group>
+          </group>
+          <group string="Paramètres de séance">
+            <field name="duree_seance"/>
+            <field name="nb_seances_defaut"/>
+            <field name="nb_seances_max"/>
+            <field name="delai_min_jours"/>
+          </group>
+          <group>
+            <field name="sequence"/>
+            <field name="active"/>
+            <field name="company_id" />
+            <field name="is_company_override" invisible="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Barre de recherche -->
+  <record id="view_acte_type_search" model="ir.ui.view">
+    <field name="name">cps.acte.type.search</field>
+    <field name="model">cps.acte.type</field>
+    <field name="arch" type="xml">
+      <search string="Rechercher un type d'acte">
+        <field name="name"        string="Libellé"/>
+        <field name="lettre_cle"  string="Lettre clé"/>
+        <field name="profession"/>
+
+        <!--
+          FIX : le domaine lit cps_user_profession depuis le contexte injecté
+          par action_open_acte_type() — maintenant correctement renseigné
+          depuis env.user.partner_id ou user_ids.
+        -->
+        <filter name="ma_profession"
+                string="Ma profession"
+                domain="[('profession', '=', context.get('cps_user_profession', False))]"/>
+
+        <separator/>
+        <filter name="partages" string="Partagés (toutes sociétés)"
+                domain="[('company_id', '=', False)]"/>
+        <filter name="ma_societe" string="Ma société uniquement"
+                domain="[('company_id', '=', allowed_company_ids[0])]"/>
+        <filter name="personnalises" string="Personnalisations"
+                domain="[('is_company_override', '=', True)]"/>
+
+        <separator/>
+        <filter name="kinesitherapeute" string="Kiné"
+                domain="[('profession', '=', 'kinesitherapeute')]"/>
+        <filter name="orthophoniste"    string="Orthophoniste"
+                domain="[('profession', '=', 'orthophoniste')]"/>
+        <filter name="infirmier"        string="Infirmier"
+                domain="[('profession', '=', 'infirmier')]"/>
+
+        <separator/>
+        <filter name="inactive" string="Archivés" domain="[('active', '=', False)]"/>
+
+        <group expand="0" string="Grouper par">
+          <filter name="group_profession" string="Profession"
+                  context="{'group_by': 'profession'}"/>
+          <filter name="group_lettre_cle" string="Lettre clé"
+                  context="{'group_by': 'lettre_cle'}"/>
+          <filter name="group_company" string="Société"
+                  context="{'group_by': 'company_id'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <!-- Action fenêtre -->
+  <record id="action_acte_type" model="ir.actions.act_window">
+    <field name="name">Types d'actes</field>
+    <field name="res_model">cps.acte.type</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_acte_type_search"/>
+    <!--
+      Affiche actes partagés ET actes propres à la société courante.
+      Le filtre "Ma profession" est activé par défaut si la profession est connue.
+    -->
+    <field name="domain">['|', ('company_id', '=', False), ('company_id', 'in', allowed_company_ids)]</field>
+    <field name="context">{'cps_user_profession': False}</field>
+  </record>
+
+</odoo>

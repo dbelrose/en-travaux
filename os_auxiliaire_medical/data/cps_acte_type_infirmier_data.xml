@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="acte_type_ami_prelevement_veineux" model="cps.acte.type">
+            <field name="name">Prélèvement par ponction veineuse directe</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">1.5</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_injection_im" model="cps.acte.type">
+            <field name="name">Injection intramusculaire</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_injection_sc" model="cps.acte.type">
+            <field name="name">Injection sous-cutanée</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_injection_iv_isolee" model="cps.acte.type">
+            <field name="name">Injection intraveineuse directe isolée</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_pansement_stomie" model="cps.acte.type">
+            <field name="name">Pansement de stomie</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_pansement_autre" model="cps.acte.type">
+            <field name="name">Autre pansement</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">2</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_pansement_brulure" model="cps.acte.type">
+            <field name="name">Pansement de brûlure étendue (surface supérieure à 5 % de la surface corporelle)</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_pansement_escarre" model="cps.acte.type">
+            <field name="name">Pansement d'escarre profonde et étendue atteignant les muscles ou les tendons</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_aerosol" model="cps.acte.type">
+            <field name="name">Séance d'aérosol</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">1.5</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_catheterisme_femme" model="cps.acte.type">
+            <field name="name">Cathétérisme urétral chez la femme</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_catheterisme_homme" model="cps.acte.type">
+            <field name="name">Cathétérisme urétral chez l'homme</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">4</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_lavement" model="cps.acte.type">
+            <field name="name">Lavement évacuateur ou médicamenteux</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_injection_insuline" model="cps.acte.type">
+            <field name="name">Injection sous-cutanée d'insuline</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_surveillance_diabetique" model="cps.acte.type">
+            <field name="name">Surveillance patient diabétique insulino-traité avec adaptation des doses – séance</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">1</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ais_seance_soins" model="cps.acte.type">
+            <field name="name">Séance de soins infirmiers pour patient dépendant – séance de 30 min (AP)</field>
+            <field name="lettre_cle">AIS</field><field name="coefficient_defaut">3</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_perfusion_courte_continue" model="cps.acte.type">
+            <field name="name">Forfait perfusion courte (≤ 30 min) avec surveillance continue</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">9</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+        <record id="acte_type_ami_pose_dispositif_iv" model="cps.acte.type">
+            <field name="name">Pose d'un dispositif de perfusion veineuse</field>
+            <field name="lettre_cle">AMI</field><field name="coefficient_defaut">3.5</field>
+            <field name="tarif_unitaire">366</field><field name="profession">infirmier</field>
+        </record>
+    </data>
+</odoo>

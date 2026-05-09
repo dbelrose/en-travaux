@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+        ══════════════════════════════════════════════════════════════════
+        RÈGLES MULTI-SOCIÉTÉ CPS
+        ══════════════════════════════════════════════════════════════════
+
+        Principe :
+          • Les modèles CPS avec company_id sont filtrés par société active.
+          • cps.acte.type et cps.bordereau.modele : les enregistrements
+            partagés (company_id = False) restent visibles par toutes les
+            sociétés ; seuls ceux avec company_id sont filtrés.
+          • Les wizards n'ont pas de company_id → pas de règle multi-société.
+        ══════════════════════════════════════════════════════════════════
+        -->
+
+        <!-- ── cps.acte.type ──────────────────────────────────────────── -->
+        <!--
+          Règle spéciale : actes partagés (company_id=False) visibles par tous +
+          actes propres à la société visible par la société concernée.
+        -->
+        <record id="rule_cps_acte_type_company" model="ir.rule">
+            <field name="name">Type d'acte CPS – Multi-société</field>
+            <field name="model_id" ref="model_cps_acte_type"/>
+            <field name="domain_force">
+                ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+            </field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read"   eval="True"/>
+            <field name="perm_write"  eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ── cps.api.usage ──────────────────────────────────────────── -->
+        <record id="rule_cps_api_usage_company" model="ir.rule">
+            <field name="name">Usage API CPS – Multi-société</field>
+            <field name="model_id" ref="model_cps_api_usage"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read"   eval="True"/>
+            <field name="perm_write"  eval="False"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ── cps.bordereau ──────────────────────────────────────────── -->
+        <record id="rule_cps_bordereau_company" model="ir.rule">
+            <field name="name">Bordereau CPS – Multi-société</field>
+            <field name="model_id" ref="model_cps_bordereau"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read"   eval="True"/>
+            <field name="perm_write"  eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ── cps.bordereau.modele ───────────────────────────────────── -->
+        <record id="rule_cps_bordereau_modele_company" model="ir.rule">
+            <field name="name">Modèle bordereau CPS – Multi-société</field>
+            <field name="model_id" ref="model_cps_bordereau_modele"/>
+            <field name="domain_force">
+                ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+            </field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read"   eval="True"/>
+            <field name="perm_write"  eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ── cps.feuille.soins.modele ───────────────────────────────────── -->
+        <record id="rule_cps_feuille_soins_modele_company" model="ir.rule">
+            <field name="name">Modèle feuille soins CPS – Multi-société</field>
+            <field name="model_id" ref="model_cps_feuille_soins_modele"/>
+            <field name="domain_force">
+                ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+            </field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read"   eval="True"/>
+            <field name="perm_write"  eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ── cps.ordonnance ─────────────────────────────────────────── -->
+        <record id="rule_cps_ordonnance_company" model="ir.rule">
+            <field name="name">Ordonnance CPS – Multi-société</field>
+            <field name="model_id" ref="model_cps_ordonnance"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read"   eval="True"/>
+            <field name="perm_write"  eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ── cps.tarif.historique ───────────────────────────────────── -->
+        <record id="rule_tarif_historique_multi_company" model="ir.rule">
+            <field name="name">Historique des tarifs – multi-company</field>
+            <field name="model_id" ref="model_cps_tarif_historique"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read"   eval="True"/>
+            <field name="perm_write"  eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+
+    </data>
+</odoo>

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       VUE FORMULAIRE – Ordonnance
+  ══════════════════════════════════════════════════════════════════════ -->
+  <record id="view_ordonnance_form" model="ir.ui.view">
+    <field name="name">cps.ordonnance.form</field>
+    <field name="model">cps.ordonnance</field>
+    <field name="arch" type="xml">
+      <form string="Ordonnance">
+        <header>
+          <!-- Wizard d'import OCR : visible dès le brouillon, même sans image -->
+          <button name="action_open_ocr_wizard"
+                  string="📷 Importer par OCR"
+                  type="object"
+                  class="btn-secondary"
+                  invisible="state not in ('brouillon',)"/>
+          <!-- Analyse directe de l'image déjà uploadée -->
+          <button name="action_ocr_ordonnance"
+                  string="Analyser l'image (OCR IA)"
+                  type="object"
+                  class="btn-secondary"
+                  invisible="not ordonnance_image or state not in ('brouillon',)"
+                  help="Extrait automatiquement les informations de l'ordonnance via Claude."/>
+          <field name="state" widget="statusbar"
+                 statusbar_visible="brouillon,en_cours,terminee"/>
+        </header>
+        <sheet>
+          <div class="oe_title">
+            <label for="name"/>
+            <h1><field name="name" readonly="1"/></h1>
+          </div>
+
+          <group>
+            <group string="Parties">
+              <field name="praticien_id"    options="{'no_create': True}"/>
+              <field name="patient_id"      options="{'no_create': False}"/>
+              <field name="prescripteur_id" options="{'no_create': False}"/>
+              <!-- Champ plat nécessaire pour le context de acte_type_id dans les lignes -->
+              <field name="praticien_profession" invisible="1"/>
+            </group>
+            <group string="Validité">
+              <field name="date_prescription"/>
+              <field name="date_fin_validite"/>
+              <field name="company_id"/>
+            </group>
+          </group>
+
+          <notebook>
+            <page string="Actes prescrits">
+              <field name="ligne_ids">
+                <tree string="Lignes"
+                      editable="bottom"
+                      optional_columns="nb_seances_max,nb_seances_realises,nb_seances_restantes,montant_unitaire,notes">
+                  <field name="sequence" widget="handle"/>
+                  <!--
+                    Sélection du type d'acte.
+                    L'onchange _onchange_acte_type_id pré-remplit
+                    automatiquement nb_seances depuis nb_seances_defaut.
+                  -->
+                  <field name="acte_type_id"
+                         string="Type d'acte"
+                         options="{'no_create': False}"
+                         context="{'cps_user_profession': parent.praticien_profession}"/>
+                  <field name="lettre_cle"   optional="show"/>
+                  <field name="coefficient"  optional="show" digits="[6,2]"/>
+                  <field name="tarif_unitaire" optional="show"/>
+                  <!--
+                    FEATURE : nb_seances pré-rempli depuis
+                    acte_type_id.nb_seances_defaut via onchange.
+                  -->
+                  <field name="nb_seances"
+                         string="Séances prescrites"
+                         attrs="{'class': [('nb_seances_max', '>', 0),
+                                ('nb_seances', '>', 'nb_seances_max'),
+                                'text-danger']}"/>
+                  <field name="nb_seances_max"       optional="hide"/>
+                  <field name="nb_seances_realises"  optional="show"/>
+                  <field name="nb_seances_restantes" optional="show" readonly="1"/>
+                  <field name="montant_unitaire"     optional="show" readonly="1"/>
+                  <field name="montant_total"        sum="Total" readonly="1"/>
+                  <field name="notes"                optional="hide"/>
+                </tree>
+              </field>
+            </page>
+            <page string="Photo ordonnance">
+              <group>
+                <field name="ordonnance_image"
+                       widget="image"
+                       options="{'size': [800, 1000]}"
+                       string="Photo"/>
+                <field name="ordonnance_filename" invisible="1"/>
+              </group>
+            </page>
+            <page string="Notes">
+              <field name="notes"/>
+            </page>
+          </notebook>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       VUE LISTE
+  ══════════════════════════════════════════════════════════════════════ -->
+  <record id="view_ordonnance_list" model="ir.ui.view">
+    <field name="name">cps.ordonnance.list</field>
+    <field name="model">cps.ordonnance</field>
+    <field name="arch" type="xml">
+      <tree string="Ordonnances"
+            decoration-danger="date_fin_validite and date_fin_validite &lt; context_today()"
+            decoration-warning="state == 'en_cours'">
+        <field name="name"/>
+        <field name="patient_id"/>
+        <field name="praticien_id" optional="show"/>
+        <field name="date_prescription"/>
+        <field name="date_fin_validite"/>
+        <field name="state" widget="badge"
+               decoration-success="state == 'terminee'"
+               decoration-warning="state == 'en_cours'"
+               decoration-danger="state == 'expiree'"/>
+        <field name="company_id" optional="show"/>
+      </tree>
+    </field>
+  </record>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       VUE RECHERCHE
+  ══════════════════════════════════════════════════════════════════════ -->
+  <record id="view_ordonnance_search" model="ir.ui.view">
+    <field name="name">cps.ordonnance.search</field>
+    <field name="model">cps.ordonnance</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name"/>
+        <field name="patient_id"/>
+        <field name="praticien_id"/>
+        <filter name="en_cours"   string="En cours"   domain="[('state', '=', 'en_cours')]"/>
+        <filter name="expirees"   string="Expirées"   domain="[('state', '=', 'expiree')]"/>
+        <filter name="brouillons" string="Brouillons" domain="[('state', '=', 'brouillon')]"/>
+        <separator/>
+        <group expand="0" string="Grouper par">
+          <filter name="g_patient"   string="Patient"   context="{'group_by': 'patient_id'}"/>
+          <filter name="g_praticien" string="Praticien" context="{'group_by': 'praticien_id'}"/>
+          <filter name="g_mois"      string="Mois"      context="{'group_by': 'date_prescription:month'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <record id="action_ordonnance" model="ir.actions.act_window">
+    <field name="name">Ordonnances</field>
+    <field name="res_model">cps.ordonnance</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_ordonnance_search"/>
+  </record>
+
+</odoo>

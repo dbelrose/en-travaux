@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_wizard_date_selection_form" model="ir.ui.view">
+        <field name="name">cps.wizard.date.selection.form</field>
+        <field name="model">cps.wizard.date.selection</field>
+        <field name="arch" type="xml">
+            <form string="Ajouter des séances par sélection de dates">
+                <sheet>
+
+                    <!-- ── Acte et paramètres communs ── -->
+                    <group string="Acte et paramètres communs">
+                        <group>
+                            <field name="acte_type_ids_disponibles" invisible="1"/>
+                            <field name="ordonnance_id" invisible="1"/>
+                            <field name="acte_type_id"
+                                   domain="[('id', 'in', acte_type_ids_disponibles)]"
+                                   options="{'no_create': False}"
+                                   placeholder="Laisser vide pour auto-distribuer…"/>
+                            <field name="praticien_profession" invisible="1"/>
+                            <field name="delai_min_jours"/>
+                        </group>
+                        <group>
+                            <field name="ifd"/>
+                            <field name="dimanche_ferie"/>
+                            <field name="nuit"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Plage de dates ── -->
+                    <group string="Plage de dates">
+                        <group>
+                            <field name="date_debut"/>
+                            <field name="date_fin"/>
+                            <field name="nb_seances"/>
+                        </group>
+                        <group string="Jours à inclure" col="7">
+                            <field name="lundi"         string="Lun"/>
+                            <field name="mardi"         string="Mar"/>
+                            <field name="mercredi"      string="Mer"/>
+                            <field name="jeudi"         string="Jeu"/>
+                            <field name="vendredi"      string="Ven"/>
+                            <field name="samedi"        string="Sam"/>
+                            <field name="dimanche_jour" string="Dim"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info mt4 mb4">
+                        <i class="fa fa-info-circle me-1"/>
+                        Renseignez <strong>soit</strong> la date de fin,
+                        <strong>soit</strong> le nombre de séances.
+                        Si <strong>aucun</strong> n'est indiqué, les séances restantes
+                        de l'ordonnance seront utilisées (max 16 — lignes FSA25).
+                    </div>
+
+                    <div class="text-center mb16">
+                        <button name="action_generer_dates"
+                                string="🗓  Générer les dates"
+                                type="object"
+                                class="btn btn-primary btn-lg"/>
+                    </div>
+
+                    <!-- ── Barre de résumé pleine largeur ── -->
+                    <div class="w-100" invisible="not ligne_ids">
+                        <div class="d-flex align-items-center justify-content-between
+                                    border-top border-bottom py-2 px-3 bg-light mb4">
+                            <!-- Boutons tout cocher / décocher -->
+                            <div class="d-flex gap-3">
+                                <button name="action_tout_selectionner"
+                                        string="☑ Tout cocher"
+                                        type="object"
+                                        class="btn btn-link btn-sm p-0"/>
+                                <button name="action_tout_deselectionner"
+                                        string="☐ Tout décocher"
+                                        type="object"
+                                        class="btn btn-link btn-sm p-0"/>
+                            </div>
+
+                            <!-- Résumé centré -->
+                            <div class="text-center fw-bold">
+                                <field name="nb_selectionnees" readonly="1" nolabel="1"
+                                       class="d-inline"/> séance(s) sélectionnée(s)
+                                <span class="mx-2 text-muted">·</span>
+                                <field name="montant_total_estime" readonly="1" nolabel="1"
+                                       class="d-inline"/> F XPF
+                            </div>
+
+                            <!-- Alerte non-assignées à droite -->
+                            <div>
+                                <span invisible="nb_non_assignees == 0"
+                                      class="badge text-bg-danger">
+                                    ⚠
+                                    <field name="nb_non_assignees" readonly="1"
+                                           nolabel="1" class="d-inline"/>
+                                    non assignée(s)
+                                </span>
+                                <span invisible="nb_non_assignees != 0"
+                                      class="text-success">
+                                    <i class="fa fa-check-circle"/> Tous les actes assignés
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Liste des dates générées ── -->
+                    <separator string="Dates générées – cochez les séances à créer"
+                               invisible="not ligne_ids"/>
+                    <field name="ligne_ids" nolabel="1">
+                        <tree editable="bottom">
+                            <field name="selected" string="✓"/>
+                            <field name="date"/>
+                            <field name="jour_semaine" readonly="1"/>
+                            <field name="acte_type_id" string="Acte"
+                                   options="{'no_create': False}"/>
+                            <field name="ordonnance_ligne_id" string="Ligne ord."
+                                   readonly="1" optional="show"/>
+                            <field name="montant" string="Montant (F)" sum="Total"/>
+                            <field name="warning" readonly="1" string="⚠"
+                                   decoration-danger="warning != ''"
+                                   optional="show"/>
+                        </tree>
+                    </field>
+
+                </sheet>
+                <footer>
+                    <button name="action_appliquer"
+                            string="✅  Créer les séances"
+                            type="object"
+                            class="btn-primary"
+                            invisible="nb_selectionnees == 0"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_api_usage_list" model="ir.ui.view">
+        <field name="name">cps.api.usage.list</field>
+        <field name="model">cps.api.usage</field>
+        <field name="arch" type="xml">
+            <tree string="Consommation API Claude"
+                  decoration-danger="not success">
+                <field name="date"/>
+                <field name="user_id"/>
+                <field name="company_id" />
+                <field name="model" string="Modèle"/>
+                <field name="operation"/>
+                <field name="ordonnance_id" optional="show"/>
+                <field name="input_tokens"  sum="Total entrée"/>
+                <field name="output_tokens" sum="Total sortie"/>
+                <field name="total_tokens"  sum="Total"/>
+                <field name="success" widget="boolean"/>
+                <field name="error_message" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_api_usage_pivot" model="ir.ui.view">
+        <field name="name">cps.api.usage.pivot</field>
+        <field name="model">cps.api.usage</field>
+        <field name="arch" type="xml">
+            <pivot string="Consommation API">
+                <field name="date"      type="row" interval="month"/>
+                <field name="user_id"   type="row"/>
+                <field name="model"     type="col"/>
+                <field name="total_tokens" type="measure"/>
+                <field name="input_tokens" type="measure"/>
+                <field name="output_tokens" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_api_usage_graph" model="ir.ui.view">
+        <field name="name">cps.api.usage.graph</field>
+        <field name="model">cps.api.usage</field>
+        <field name="arch" type="xml">
+            <graph string="Consommation API" type="bar">
+                <field name="date" interval="month"/>
+                <field name="total_tokens" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_api_usage_search" model="ir.ui.view">
+        <field name="name">cps.api.usage.search</field>
+        <field name="model">cps.api.usage</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="user_id"/>
+                <field name="model" string="Modèle Claude"/>
+                <field name="ordonnance_id"/>
+                <filter name="ce_mois" string="Ce mois"
+                        domain="[('date', '>=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="succes" string="Succès" domain="[('success', '=', True)]"/>
+                <filter name="erreurs" string="Erreurs"  domain="[('success', '=', False)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="g_user"    string="Utilisateur" context="{'group_by': 'user_id'}"/>
+                    <filter name="g_company" string="Société"     context="{'group_by': 'company_id'}"/>
+                    <filter name="g_mois"    string="Mois"        context="{'group_by': 'date:month'}"/>
+                    <filter name="g_model"   string="Modèle"      context="{'group_by': 'model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_api_usage" model="ir.actions.act_window">
+        <field name="name">Consommation API Claude</field>
+        <field name="res_model">cps.api.usage</field>
+        <field name="view_mode">list,pivot,graph</field>
+        <field name="search_view_id" ref="view_api_usage_search"/>
+    </record>
+
+</odoo>

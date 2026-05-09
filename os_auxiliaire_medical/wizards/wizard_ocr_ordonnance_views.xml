@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_wizard_ocr_ordonnance_form" model="ir.ui.view">
+        <field name="name">cps.wizard.ocr.ordonnance.form</field>
+        <field name="model">cps.wizard.ocr.ordonnance</field>
+        <field name="arch" type="xml">
+            <form string="Import OCR d'une ordonnance">
+                <sheet>
+
+                    <!-- Étape 1 -->
+                    <group string="1 – Charger le fichier" invisible="etat != 'attente'">
+                        <field name="ordonnance_id" invisible="1"/>
+                        <field name="fichier" filename="fichier_nom" widget="binary"/>
+                        <field name="fichier_nom"/>
+                        <group string="Option Claude Haiku 4.5 (analyse IA)">
+                            <field name="use_claude_ai"/>
+                            <field name="use_claude_vision"/>
+                            <field name="claude_api_key"
+                                   invisible="not use_claude_ai and not use_claude_vision"
+                                   placeholder="Laisser vide pour utiliser la clé des Paramètres CPS"
+                                   password="True"/>
+                        </group>
+                        <div class="alert alert-info mt8">
+                            <strong>OCR local :</strong>
+                            <code>pip install pdfminer.six pytesseract Pillow</code>
+                            + <code>tesseract-ocr-fra</code><br/>
+                            <strong>Claude texte :</strong> clé API Anthropic requise
+                            (Paramètres CPS → Clé API Anthropic).<br/>
+                            <strong>Claude vision :</strong>
+                            <code>pip install anthropic</code>
+                            + clé API Anthropic. Recommandé pour les ordonnances
+                            manuscrites ou peu lisibles.
+                        </div>
+                        <div class="mt8">
+                            <button name="action_extraire" string="🔍 Extraire le texte"
+                                    type="object" class="btn btn-primary"
+                                    invisible="not fichier"/>
+                        </div>
+                    </group>
+
+                    <!-- Étape 2 -->
+                    <div invisible="etat == 'attente'">
+
+                        <!-- Statut Claude -->
+                        <div class="alert alert-success mb8"
+                             invisible="not claude_status or 'Erreur' in claude_status or '⚠' in claude_status or '❌' in claude_status">
+                            <field name="claude_status" readonly="1" nolabel="1"/>
+                        </div>
+                        <div class="alert alert-warning mb8"
+                             invisible="not claude_status or '✅' in claude_status">
+                            <field name="claude_status" readonly="1" nolabel="1"/>
+                        </div>
+
+                        <!-- 2 – Texte extrait : pleine largeur -->
+                        <group string="2 – Texte extrait (éditable)" col="1">
+                            <field name="texte_extrait" nolabel="1" colspan="2"
+                                   placeholder="Texte extrait par OCR…"
+                                   style="font-family:monospace;font-size:11px;min-height:150px;width:100%;"/>
+                            <div class="mt4 d-flex gap-2">
+                                <button name="action_reanalyser"
+                                        string="🔄 Ré-analyser (regex)"
+                                        type="object" class="btn btn-secondary btn-sm"/>
+                                <button name="action_reanalyser"
+                                        string="🤖 Ré-analyser avec Claude"
+                                        type="object" class="btn btn-info btn-sm"
+                                        invisible="not use_claude_ai"/>
+                            </div>
+                        </group>
+
+                        <!-- 3 – Champs identifiés : deux colonnes -->
+                        <group string="3 – Champs identifiés (éditables)">
+                            <group>
+                                <field name="prescripteur_nom"/>
+                                <field name="prescripteur_code"/>
+                                <field name="date_prescription"/>
+                            </group>
+                            <group>
+                                <field name="patient_nom"/>
+                                <field name="patient_prenom"
+                                       help="Ce prénom sera masqué avant envoi à Claude (mode texte)."/>
+                                <div class="text-muted small" invisible="not use_claude_ai">
+                                    <i class="fa fa-shield"/> Le prénom du patient est remplacé
+                                    par [PRÉNOM] avant toute transmission à Claude (mode texte).
+                                </div>
+                            </group>
+                        </group>
+
+                        <!-- 4 – Actes détectés : pleine largeur -->
+                        <group string="4 – Actes détectés" col="1">
+                            <field name="actes_detectes" nolabel="1" readonly="1" colspan="2"
+                                   style="font-family:monospace;font-size:12px;background:#f5f5f5;min-height:80px;width:100%;"/>
+                        </group>
+
+                    </div>
+
+                    <!-- Champs techniques invisibles -->
+                    <field name="etat" invisible="1"/>
+                    <field name="actes_json" invisible="1"/>
+                    <field name="use_claude_ai" invisible="1"/>
+                    <field name="use_claude_vision" invisible="1"/>
+                    <field name="claude_status" invisible="1"/>
+
+                </sheet>
+                <footer>
+                    <!--
+                        IMPORTANT : pas de confirm= sur ce bouton.
+                        Un confirm empêche Odoo de sauvegarder le formulaire avant
+                        l'appel RPC, ce qui fait que les corrections saisies par
+                        l'utilisateur dans les champs éditables sont ignorées.
+                        La confirmation est gérée côté Python dans action_appliquer.
+                    -->
+                    <button name="action_appliquer"
+                            string="✅ Appliquer à l'ordonnance"
+                            type="object"
+                            class="btn-primary"
+                            invisible="etat == 'attente'"/>
+                    <button string="Fermer" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_res_config_settings_cps_inherit" model="ir.ui.view">
+        <field name="name">res.config.settings.cps</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Auxiliaire médical"
+                     string="Auxiliaire médical"
+                     name="os_auxiliaire_medical"
+                     groups="base.group_erp_manager">
+
+                    <div class="app_settings_block"
+                         data-string="CPS"
+                         string="CPS"
+                         data-key="os_auxiliaire_medical">
+
+                        <!-- ════════════════════════════════════════════════════ -->
+                        <!--  API Anthropic Claude                                -->
+                        <!-- ════════════════════════════════════════════════════ -->
+                        <h2>Intelligence Artificielle (Anthropic Claude)</h2>
+
+                        <div class="row mt16 o_settings_container">
+
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Clé API Anthropic</span>
+                                    <div class="text-muted">
+                                        Clé secrète pour l'OCR des ordonnances.
+                                        Format : <code>sk-ant-api03-…</code>
+                                    </div>
+                                    <div class="content-group mt8">
+                                        <field name="cps_anthropic_api_key"
+                                               string="Clé API"
+                                               password="True"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <!--
+                                      FEATURE : sélection du modèle Claude
+                                      Haiku = rapide/économique, Sonnet = équilibré,
+                                      Opus = le plus puissant
+                                    -->
+                                    <span class="o_form_label">Modèle Claude</span>
+                                    <div class="text-muted">
+                                        Modèle utilisé pour l'analyse des ordonnances.
+                                        Haiku est recommandé (rapide et économique).
+                                    </div>
+                                    <div class="content-group mt8">
+                                        <field name="cps_claude_model" string="Modèle"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <!--
+                                      FEATURE : lien vers la vue de consommation des tokens
+                                    -->
+                                    <span class="o_form_label">Consommation des tokens</span>
+                                    <div class="text-muted">
+                                        Consultez le détail des tokens consommés par
+                                        utilisateur et par société.
+                                    </div>
+                                    <div class="content-group mt8">
+                                        <button name="action_view_api_usage"
+                                                string="Voir la consommation API"
+                                                type="object"
+                                                class="btn btn-secondary"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- ════════════════════════════════════════════════════ -->
+                        <!--  Ordonnances                                         -->
+                        <!-- ════════════════════════════════════════════════════ -->
+                        <h2>Ordonnances</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Durée de validité (jours)</span>
+                                    <div class="text-muted">
+                                        Ajoutée à la date de prescription pour calculer la date
+                                        de fin de validité. Valeur par défaut : 90 jours.
+                                    </div>
+                                    <div class="content-group mt8">
+                                        <field name="cps_ordonnance_validite_jours"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ════════════════════════════════════════════════════ -->
+                        <!--  Tarifs                                              -->
+                        <!-- ════════════════════════════════════════════════════ -->
+                        <h2>Tarifs CPS (F XPF)</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Valeurs de lettres clés</span>
+                                    <div class="text-muted">
+                                        Utilisées pour calculer les montants indicatifs.
+                                        Cliquez sur « Appliquer » pour mettre à jour tous les actes.
+                                    </div>
+                                    <div class="content-group mt8">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label class="o_form_label" for="cps_tarif_amo">AMO / AMK</label>
+                                                <field name="cps_tarif_amo"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="o_form_label" for="cps_tarif_ami">AMI / AIS / DI</label>
+                                                <field name="cps_tarif_ami"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="o_form_label" for="cps_tarif_ams">AMS / AMP</label>
+                                                <field name="cps_tarif_ams"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="o_form_label" for="cps_tarif_amy">AMY</label>
+                                                <field name="cps_tarif_amy"/>
+                                            </div>
+                                        </div>
+                                        <button name="action_update_all_actes_tarifs"
+                                                string="Appliquer les tarifs aux actes"
+                                                type="object"
+                                                class="btn btn-secondary mt8"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Suppléments</span>
+                                    <div class="content-group mt8">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label class="o_form_label" for="cps_supplement_ifd">IFD / unité</label>
+                                                <field name="cps_supplement_ifd"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="o_form_label" for="cps_supplement_ifn">IFN fixe</label>
+                                                <field name="cps_supplement_ifn"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="o_form_label" for="cps_taux_remboursement_defaut">Taux remboursement (%)</label>
+                                                <field name="cps_taux_remboursement_defaut"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
