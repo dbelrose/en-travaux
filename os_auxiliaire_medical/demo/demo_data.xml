@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         DÉMO – Auxiliaire Médical CPS – Polynésie française
+         Scénario : cabinet de kinésithérapie à Papeete
+                    + 1 infirmière à Moorea
+         Couvre : praticiens, prescripteurs, patients, ordonnances,
+                  feuilles de soins avec actes, bordereau
+    ══════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- ──────────────────────────────────────────────────────────────────────
+         1. PRATICIENS
+    ────────────────────────────────────────────────────────────────────────── -->
+
+    <!-- Kinésithérapeute principal -->
+    <record id="demo_praticien_kine" model="res.partner">
+        <field name="lastname">TERIITEHAU</field>
+        <field name="firstname">Hina</field>
+        <field name="name">TERIITEHAU Hina</field>
+        <field name="is_company">False</field>
+        <field name="vat">K12345</field>
+        <field name="phone">+689 40 43 21 00</field>
+        <field name="mobile">+689 87 72 10 45</field>
+        <field name="street">Immeuble Te Fare Ora, Av. du Maréchal Foch</field>
+        <field name="city">Papeete</field>
+        <field name="zip">98714</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="email">h.teriitehau@kine-papeete.pf</field>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_praticien')),
+                                         (4, ref('os_auxiliaire_medical.partner_category_kinesitherapeute'))]"/>
+    </record>
+
+    <!-- Infirmière (Moorea) -->
+    <record id="demo_praticien_infirmiere" model="res.partner">
+        <field name="lastname">MAONO</field>
+        <field name="firstname">Teura</field>
+        <field name="name">MAONO Teura</field>
+        <field name="is_company">False</field>
+        <field name="vat">I98765</field>
+        <field name="phone">+689 40 56 12 34</field>
+        <field name="mobile">+689 87 23 88 01</field>
+        <field name="street">PK 8 – Route de l'Ananas</field>
+        <field name="city">Moorea</field>
+        <field name="zip">98728</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="email">t.maono@infirmiere-moorea.pf</field>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_praticien')),
+                                         (4, ref('os_auxiliaire_medical.partner_category_infirmier'))]"/>
+    </record>
+
+    <!-- ──────────────────────────────────────────────────────────────────────
+         2. PRESCRIPTEURS (médecins)
+    ────────────────────────────────────────────────────────────────────────── -->
+
+    <record id="demo_prescripteur_1" model="res.partner">
+        <field name="lastname">SALMON</field>
+        <field name="firstname">Pierre</field>
+        <field name="name">Dr SALMON Pierre</field>
+        <field name="is_company">False</field>
+        <field name="vat">AM001234</field>
+        <field name="phone">+689 40 42 55 00</field>
+        <field name="street">15 Rue du Commandant Destremeau</field>
+        <field name="city">Papeete</field>
+        <field name="zip">98714</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_prescripteur'))]"/>
+    </record>
+
+    <record id="demo_prescripteur_2" model="res.partner">
+        <field name="lastname">VIENOT</field>
+        <field name="firstname">Claire</field>
+        <field name="name">Dr VIENOT Claire</field>
+        <field name="is_company">False</field>
+        <field name="vat">AM005678</field>
+        <field name="phone">+689 40 56 30 10</field>
+        <field name="street">Cabinet Médical Fare Ute</field>
+        <field name="city">Pirae</field>
+        <field name="zip">98716</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_prescripteur'))]"/>
+    </record>
+
+    <!-- ──────────────────────────────────────────────────────────────────────
+         3. PATIENTS
+    ────────────────────────────────────────────────────────────────────────── -->
+
+    <record id="demo_patient_1" model="res.partner">
+        <field name="lastname">TEHEIURA</field>
+        <field name="firstname">Moana</field>
+        <field name="name">TEHEIURA Moana</field>
+        <field name="is_company">False</field>
+        <field name="vat">8501234567890</field>
+        <field name="birthdate_date">1985-03-14</field>
+        <field name="phone">+689 87 11 22 33</field>
+        <field name="street">12 Rue des Poilus Tahitiens</field>
+        <field name="city">Papeete</field>
+        <field name="zip">98714</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_patient'))]"/>
+    </record>
+
+    <record id="demo_patient_2" model="res.partner">
+        <field name="lastname">TEFAAFANA</field>
+        <field name="firstname">Reva</field>
+        <field name="name">TEFAAFANA Reva</field>
+        <field name="is_company">False</field>
+        <field name="vat">7209876543210</field>
+        <field name="birthdate_date">1972-11-28</field>
+        <field name="phone">+689 87 44 55 66</field>
+        <field name="street">PK 4.5 – Faa'a</field>
+        <field name="city">Faa'a</field>
+        <field name="zip">98703</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_patient'))]"/>
+    </record>
+
+    <record id="demo_patient_3" model="res.partner">
+        <field name="lastname">MANOA</field>
+        <field name="firstname">Teva</field>
+        <field name="name">MANOA Teva</field>
+        <field name="is_company">False</field>
+        <field name="vat">6812345098765</field>
+        <field name="birthdate_date">1968-07-02</field>
+        <field name="phone">+689 87 88 99 00</field>
+        <field name="street">Cité Atimaono – Bât. B</field>
+        <field name="city">Papara</field>
+        <field name="zip">98711</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_patient'))]"/>
+    </record>
+
+    <record id="demo_patient_4" model="res.partner">
+        <field name="lastname">TETUANUI</field>
+        <field name="firstname">Heimana</field>
+        <field name="name">TETUANUI Heimana</field>
+        <field name="is_company">False</field>
+        <field name="vat">9503456789012</field>
+        <field name="birthdate_date">1995-09-19</field>
+        <field name="mobile">+689 87 33 12 56</field>
+        <field name="street">Lotissement Taravao</field>
+        <field name="city">Taravao</field>
+        <field name="zip">98719</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_patient'))]"/>
+    </record>
+
+    <record id="demo_patient_5" model="res.partner">
+        <field name="lastname">ARIIOEHAU</field>
+        <field name="firstname">Narii</field>
+        <field name="name">ARIIOEHAU Narii</field>
+        <field name="is_company">False</field>
+        <field name="vat">5506781234560</field>
+        <field name="birthdate_date">1955-01-30</field>
+        <field name="phone">+689 40 56 78 90</field>
+        <field name="mobile">+689 87 65 43 21</field>
+        <field name="street">PK 2 – Moorea côté montagne</field>
+        <field name="city">Moorea</field>
+        <field name="zip">98728</field>
+        <field name="country_id" ref="base.pf"/>
+        <field name="category_id" eval="[(4, ref('os_auxiliaire_medical.partner_category_patient'))]"/>
+    </record>
+
+    <!-- ──────────────────────────────────────────────────────────────────────
+         4. ORDONNANCES
+    ────────────────────────────────────────────────────────────────────────── -->
+
+    <!-- Ordonnance 1 : Moana – entorse genou – kiné -->
+    <record id="demo_ordonnance_1" model="cps.ordonnance">
+        <field name="name">ORD-DEMO-001</field>
+        <field name="state">en_cours</field>
+        <field name="praticien_id" ref="demo_praticien_kine"/>
+        <field name="patient_id" ref="demo_patient_1"/>
+        <field name="prescripteur_id" ref="demo_prescripteur_1"/>
+        <field name="date_prescription">2025-03-10</field>
+        <field name="date_fin_validite">2025-06-10</field>
+        <field name="notes">Rééducation genou droit post-entorse – 15 séances AMK</field>
+        <field name="ligne_ids" eval="[
+            (0, 0, {
+                'acte_type_id': ref('os_auxiliaire_medical.acte_type_amk_bilan_osteo_1membre'),
+                'lettre_cle': 'AMK',
+                'coefficient': 5.0,
+                'tarif_unitaire': 490,
+                'nb_seances': 1,
+            }),
+            (0, 0, {
+                'acte_type_id': ref('os_auxiliaire_medical.acte_type_ams_reeducation_1membre'),
+                'lettre_cle': 'AMS',
+                'coefficient': 7.5,
+                'tarif_unitaire': 283,
+                'nb_seances': 15,
+            }),
+        ]"/>
+    </record>
+
+    <!-- Ordonnance 2 : Reva – lombalgie – kiné -->
+    <record id="demo_ordonnance_2" model="cps.ordonnance">
+        <field name="name">ORD-DEMO-002</field>
+        <field name="state">en_cours</field>
+        <field name="praticien_id" ref="demo_praticien_kine"/>
+        <field name="patient_id" ref="demo_patient_2"/>
+        <field name="prescripteur_id" ref="demo_prescripteur_2"/>
+        <field name="date_prescription">2025-03-15</field>
+        <field name="date_fin_validite">2025-06-15</field>
+        <field name="notes">Lombalgies chroniques – rééducation rachis</field>
+        <field name="ligne_ids" eval="[
+            (0, 0, {
+                'acte_type_id': ref('os_auxiliaire_medical.acte_type_ams_reeducation_rachis'),
+                'lettre_cle': 'AMS',
+                'coefficient': 9.5,
+                'tarif_unitaire': 283,
+                'nb_seances': 10,
+            }),
+        ]"/>
+    </record>
+
+    <!-- Ordonnance 3 : Teva – soins infirmiers -->
+    <record id="demo_ordonnance_3" model="cps.ordonnance">
+        <field name="name">ORD-DEMO-003</field>
+        <field name="state">en_cours</field>
+        <field name="praticien_id" ref="demo_praticien_infirmiere"/>
+        <field name="patient_id" ref="demo_patient_3"/>
+        <field name="prescripteur_id" ref="demo_prescripteur_1"/>
+        <field name="date_prescription">2025-03-20</field>
+        <field name="date_fin_validite">2025-04-20</field>
+        <field name="notes">Pansements complexes diabète – 30 jours</field>
+        <field name="ligne_ids" eval="[
+            (0, 0, {
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'tarif_unitaire': 366,
+                'nb_seances': 30,
+            }),
+        ]"/>
+    </record>
+
+    <!-- ──────────────────────────────────────────────────────────────────────
+         5. FEUILLES DE SOINS
+    ────────────────────────────────────────────────────────────────────────── -->
+
+    <!-- Feuille 1 : Moana / kiné – remboursée (dans bordereau) -->
+    <record id="demo_feuille_1" model="cps.feuille.soins">
+        <field name="name">FSA25-DEMO-001</field>
+        <field name="fsa_numero">DEMO-001</field>
+        <field name="state">paid</field>
+        <field name="ordonnance_id" ref="demo_ordonnance_1"/>
+        <field name="patient_id" ref="demo_patient_1"/>
+        <field name="praticien_id" ref="demo_praticien_kine"/>
+        <field name="date_prescription">2025-03-10</field>
+        <field name="condition">maladie</field>
+        <field name="taux_remboursement">70.0</field>
+        <field name="acte_ids" eval="[
+            (0, 0, {
+                'date_acte': '2025-03-12',
+                'heure_acte': 9.0,
+                'lettre_cle': 'AMK',
+                'coefficient': 5.0,
+                'montant': 2450,
+            }),
+            (0, 0, {
+                'date_acte': '2025-03-14',
+                'heure_acte': 9.0,
+                'lettre_cle': 'AMS',
+                'coefficient': 7.5,
+                'montant': 2123,
+            }),
+            (0, 0, {
+                'date_acte': '2025-03-17',
+                'heure_acte': 9.5,
+                'lettre_cle': 'AMS',
+                'coefficient': 7.5,
+                'montant': 2123,
+            }),
+            (0, 0, {
+                'date_acte': '2025-03-19',
+                'heure_acte': 9.5,
+                'lettre_cle': 'AMS',
+                'coefficient': 7.5,
+                'montant': 2123,
+            }),
+            (0, 0, {
+                'date_acte': '2025-03-21',
+                'heure_acte': 10.0,
+                'lettre_cle': 'AMS',
+                'coefficient': 7.5,
+                'montant': 2123,
+            }),
+        ]"/>
+    </record>
+
+    <!-- Feuille 2 : Reva / kiné – soumise CPS -->
+    <record id="demo_feuille_2" model="cps.feuille.soins">
+        <field name="name">FSA25-DEMO-002</field>
+        <field name="fsa_numero">DEMO-002</field>
+        <field name="state">submitted</field>
+        <field name="ordonnance_id" ref="demo_ordonnance_2"/>
+        <field name="patient_id" ref="demo_patient_2"/>
+        <field name="praticien_id" ref="demo_praticien_kine"/>
+        <field name="date_prescription">2025-03-15</field>
+        <field name="condition">longue_maladie</field>
+        <field name="taux_remboursement">100.0</field>
+        <field name="acte_ids" eval="[
+            (0, 0, {
+                'date_acte': '2025-03-18',
+                'heure_acte': 11.0,
+                'lettre_cle': 'AMS',
+                'coefficient': 9.5,
+                'montant': 2689,
+            }),
+            (0, 0, {
+                'date_acte': '2025-03-20',
+                'heure_acte': 11.0,
+                'lettre_cle': 'AMS',
+                'coefficient': 9.5,
+                'montant': 2689,
+            }),
+            (0, 0, {
+                'date_acte': '2025-03-25',
+                'heure_acte': 11.5,
+                'lettre_cle': 'AMS',
+                'coefficient': 9.5,
+                'montant': 2689,
+            }),
+            (0, 0, {
+                'date_acte': '2025-03-27',
+                'heure_acte': 11.5,
+                'lettre_cle': 'AMS',
+                'coefficient': 9.5,
+                'montant': 2689,
+            }),
+        ]"/>
+    </record>
+
+    <!-- Feuille 3 : Heimana / kiné – confirmée -->
+    <record id="demo_feuille_3" model="cps.feuille.soins">
+        <field name="name">FSA25-DEMO-003</field>
+        <field name="fsa_numero">DEMO-003</field>
+        <field name="state">confirmed</field>
+        <field name="patient_id" ref="demo_patient_4"/>
+        <field name="praticien_id" ref="demo_praticien_kine"/>
+        <field name="prescripteur_id" ref="demo_prescripteur_2"/>
+        <field name="date_prescription">2025-04-01</field>
+        <field name="condition">maternite</field>
+        <field name="taux_remboursement">70.0</field>
+        <field name="acte_ids" eval="[
+            (0, 0, {
+                'date_acte': '2025-04-03',
+                'heure_acte': 14.0,
+                'lettre_cle': 'AMS',
+                'coefficient': 7.5,
+                'montant': 2123,
+            }),
+            (0, 0, {
+                'date_acte': '2025-04-05',
+                'heure_acte': 14.0,
+                'lettre_cle': 'AMS',
+                'coefficient': 7.5,
+                'montant': 2123,
+            }),
+            (0, 0, {
+                'date_acte': '2025-04-08',
+                'heure_acte': 14.5,
+                'lettre_cle': 'AMS',
+                'coefficient': 9.5,
+                'montant': 2689,
+            }),
+        ]"/>
+    </record>
+
+    <!-- Feuille 4 : Teva / infirmière – brouillon -->
+    <record id="demo_feuille_4" model="cps.feuille.soins">
+        <field name="name">FSA25-DEMO-004</field>
+        <field name="fsa_numero">DEMO-004</field>
+        <field name="state">draft</field>
+        <field name="ordonnance_id" ref="demo_ordonnance_3"/>
+        <field name="patient_id" ref="demo_patient_3"/>
+        <field name="praticien_id" ref="demo_praticien_infirmiere"/>
+        <field name="date_prescription">2025-03-20</field>
+        <field name="condition">maladie</field>
+        <field name="taux_remboursement">70.0</field>
+        <field name="acte_ids" eval="[
+            (0, 0, {
+                'date_acte': '2025-04-02',
+                'heure_acte': 8.0,
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'montant': 1098,
+            }),
+            (0, 0, {
+                'date_acte': '2025-04-03',
+                'heure_acte': 8.0,
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'montant': 1098,
+            }),
+            (0, 0, {
+                'date_acte': '2025-04-04',
+                'heure_acte': 8.0,
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'montant': 1098,
+            }),
+            (0, 0, {
+                'date_acte': '2025-04-05',
+                'heure_acte': 8.0,
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'montant': 1098,
+            }),
+            (0, 0, {
+                'date_acte': '2025-04-06',
+                'heure_acte': 8.0,
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'montant': 1098,
+            }),
+        ]"/>
+    </record>
+
+    <!-- Feuille 5 : Narii / infirmière – remboursée -->
+    <record id="demo_feuille_5" model="cps.feuille.soins">
+        <field name="name">FSA25-DEMO-005</field>
+        <field name="fsa_numero">DEMO-005</field>
+        <field name="state">paid</field>
+        <field name="patient_id" ref="demo_patient_5"/>
+        <field name="praticien_id" ref="demo_praticien_infirmiere"/>
+        <field name="prescripteur_id" ref="demo_prescripteur_1"/>
+        <field name="date_prescription">2025-02-15</field>
+        <field name="condition">maladie</field>
+        <field name="taux_remboursement">70.0</field>
+        <field name="acte_ids" eval="[
+            (0, 0, {
+                'date_acte': '2025-02-17',
+                'heure_acte': 8.5,
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'montant': 1098,
+            }),
+            (0, 0, {
+                'date_acte': '2025-02-19',
+                'heure_acte': 8.5,
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'montant': 1098,
+            }),
+            (0, 0, {
+                'date_acte': '2025-02-21',
+                'heure_acte': 8.5,
+                'lettre_cle': 'AMI',
+                'coefficient': 3.0,
+                'montant': 1098,
+            }),
+        ]"/>
+    </record>
+
+    <!-- ──────────────────────────────────────────────────────────────────────
+         6. BORDEREAU (mars 2025 – kiné – clôturé)
+         Contient les feuilles 1 et 2 (paid + submitted)
+    ────────────────────────────────────────────────────────────────────────── -->
+
+    <record id="demo_bordereau_1" model="cps.bordereau">
+        <field name="name">BRD-DEMO-2025-03</field>
+        <field name="praticien_id" ref="demo_praticien_kine"/>
+        <field name="date_bordereau">2025-04-01</field>
+        <field name="mois">Mars 2025</field>
+        <field name="state">closed</field>
+        <field name="notes">Bordereau de démonstration – mars 2025 – Hina TERIITEHAU</field>
+        <field name="feuille_ids" eval="[(4, ref('demo_feuille_1')),
+                                         (4, ref('demo_feuille_2'))]"/>
+    </record>
+
+</data>
+</odoo>

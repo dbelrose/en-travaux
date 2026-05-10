@@ -41,6 +41,7 @@ class CpsFeuillesSoins(models.Model):
         ('submitted', 'Soumise CPS'), ('paid', 'Remboursée'), ('cancelled', 'Annulée'),
     ], default='draft', tracking=True, required=True)
 
+    # FIX : domaine corrigé — 'active' n'existe pas dans cps.ordonnance
     ordonnance_id = fields.Many2one(
         'cps.ordonnance', string='Ordonnance',
         domain="[('state', 'in', ['en_cours', 'brouillon'])]",
@@ -126,29 +127,11 @@ class CpsFeuillesSoins(models.Model):
     date_debut_soins = fields.Date(compute='_compute_dates_soins', store=True)
     date_fin_soins = fields.Date(compute='_compute_dates_soins', store=True)
 
-    # ── Date de la feuille ────────────────────────────────────────────────────
-    # Initialisée à max(today, date de la dernière séance).
-    # Modifiable manuellement si besoin.
-    date_feuille = fields.Date(
-        string='Date de la feuille',
-        compute='_compute_date_feuille',
-        store=True,
-        readonly=False,
-        tracking=True,
-        help='Date du formulaire FSA25 : au maximum entre la date du jour '
-             'et la date de la dernière séance. Modifiable manuellement.',
-    )
+    photo_feuille = fields.Binary(string='Photo / scan')
+    photo_filename = fields.Char()
+    company_id = fields.Many2one('res.company', required=True,
+                                 default=lambda self: self.env.company, index=True)
 
-    @api.depends('date_fin_soins')
-    def _compute_date_feuille(self):
-        today = fields.Date.today()
-        for rec in self:
-            if rec.date_fin_soins:
-                rec.date_feuille = max(today, rec.date_fin_soins)
-            elif not rec.date_feuille:
-                rec.date_feuille = today
-
-    # ── Mutuelle ─────────────────────────────────────────────────────────────
     has_mutuelle = fields.Boolean(
         string='Mutuelle',
         compute='_compute_has_mutuelle',
@@ -165,28 +148,6 @@ class CpsFeuillesSoins(models.Model):
         config_map = {c.partner_id.id: c.has_mutuelle for c in configs}
         for rec in self:
             rec.has_mutuelle = config_map.get(rec.patient_id.id, False) if rec.patient_id else False
-
-    # ── Indicateur séances futures ────────────────────────────────────────────
-    has_future_seances = fields.Boolean(
-        compute='_compute_has_future_seances',
-        store=True,
-        string='Séances futures',
-        help='Vrai si la feuille contient au moins une séance planifiée dans le futur.',
-    )
-
-    @api.depends('acte_ids.date_acte', 'acte_ids.state_seance')
-    def _compute_has_future_seances(self):
-        today = fields.Date.today()
-        for rec in self:
-            rec.has_future_seances = any(
-                a.date_acte and a.date_acte > today
-                for a in rec.acte_ids
-            )
-
-    photo_feuille = fields.Binary(string='Photo / scan')
-    photo_filename = fields.Char()
-    company_id = fields.Many2one('res.company', required=True,
-                                 default=lambda self: self.env.company, index=True)
 
     # ── Champs texte PDF ──────────────────────────────────────────────────────
     state_texte = fields.Char(compute='_compute_champs_texte', store=True)
@@ -424,6 +385,8 @@ class CpsFeuillesSoins(models.Model):
             self.praticien_id = o.praticien_id
         self.date_prescription = o.date_prescription
         self.code_prescripteur = o.prescripteur_id.vat if o.prescripteur_id else ''
+        # condition, motif_derogation, accord_prealable, num_rsr, num_panier
+        # n'existent pas sur cps.ordonnance — saisis manuellement sur la feuille.
 
     @api.onchange('modele_id')
     def _onchange_modele_id(self):
@@ -579,30 +542,7 @@ class CpsFeuillesSoins(models.Model):
         return float(ir_param.get_param(key, acte_type.tarif_unitaire or 490)) if key else (
                     acte_type.tarif_unitaire or 490)
 
-    # ── Actions workflow ──────────────────────────────────────────────────────
-
     def action_confirm(self):
-        """Confirme la feuille.
-
-        Règle métier : impossible de confirmer si la feuille contient encore
-        des séances planifiées dans le futur (date_acte > aujourd'hui).
-        La feuille doit rester en brouillon jusqu'à ce que toutes les séances
-        soient passées ou marquées Effectuées / Annulées / Non présentation.
-        """
-        today = fields.Date.today()
-        for rec in self:
-            future = rec.acte_ids.filtered(
-                lambda a: a.date_acte and a.date_acte > today
-                and a.state_seance == 'planifiee'
-            )
-            if future:
-                last_future = max(future.mapped('date_acte'))
-                raise UserError(_(
-                    "La feuille « %s » contient des séances planifiées dans le futur "
-                    "(dernière séance le %s).\n\n"
-                    "La feuille ne peut pas être confirmée avant que toutes les séances "
-                    "soient passées, effectuées, annulées ou marquées non-présentation."
-                ) % (rec.name, last_future.strftime('%d/%m/%Y')))
         self.write({'state': 'confirmed'})
 
     def action_submit(self):
@@ -612,11 +552,6 @@ class CpsFeuillesSoins(models.Model):
         self.write({'state': 'paid'})
 
     def action_cancel(self):
-        """Annule la feuille et passe toutes les séances planifiées en 'Annulée'."""
-        for rec in self:
-            rec.acte_ids.filtered(
-                lambda a: a.state_seance == 'planifiee'
-            ).write({'state_seance': 'annulee'})
         self.write({'state': 'cancelled'})
 
     def action_reset_draft(self):
@@ -670,20 +605,6 @@ class CpsActe(models.Model):
 
     date_acte = fields.Date(string='Date', required=True)
 
-    # ── Statut de la séance ───────────────────────────────────────────────────
-    state_seance = fields.Selection([
-        ('planifiee',        'Planifiée'),
-        ('effectuee',        'Effectuée'),
-        ('annulee',          'Annulée'),
-        ('non_presentation', 'Non présentation'),
-    ], string='Statut',
-       default='planifiee',
-       tracking=True,
-       help="Planifiée : séance future.\n"
-            "Effectuée : séance passée réalisée.\n"
-            "Annulée : séance supprimée.\n"
-            "Non présentation : patient absent.")
-
     # ── Heure de la séance ────────────────────────────────────────────────────
     heure_acte = fields.Float(
         string='Heure',
@@ -694,6 +615,7 @@ class CpsActe(models.Model):
     )
 
     # ── Datetime calculé (store=True) pour la vue calendrier ─────────────────
+    # Converti en UTC depuis le fuseau Tahiti (UTC-10).
     datetime_acte = fields.Datetime(
         string='Date/heure séance',
         compute='_compute_datetime_acte',
@@ -753,31 +675,6 @@ class CpsActe(models.Model):
                 name += ' - ' + rec.coefficient.__str__()
             rec.name = name
 
-    # ── create : initialise le statut selon la date ───────────────────────────
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        today = fields.Date.today()
-        for vals in vals_list:
-            if 'state_seance' not in vals and vals.get('date_acte'):
-                date_acte = vals['date_acte']
-                if isinstance(date_acte, str):
-                    import datetime as _dt
-                    date_acte = _dt.date.fromisoformat(date_acte)
-                vals['state_seance'] = 'planifiee' if date_acte > today else 'effectuee'
-        return super().create(vals_list)
-
-    # ── Onchange : met à jour le statut quand la date change ──────────────────
-
-    @api.onchange('date_acte')
-    def _onchange_date_acte_state(self):
-        """Suggère le statut approprié selon la date, sauf si déjà fixé manuellement."""
-        if self.state_seance in ('annulee', 'non_presentation'):
-            return
-        today = fields.Date.today()
-        if self.date_acte:
-            self.state_seance = 'planifiee' if self.date_acte > today else 'effectuee'
-
     @api.onchange('acte_type_id')
     def _onchange_acte_type_id(self):
         if not self.acte_type_id:
@@ -809,10 +706,10 @@ class CpsActe(models.Model):
         if self.acte_type_id:
             at = self.acte_type_id
             if at.type_supplement == 'ifn':
-                self.montant = float(IrParam.get_param('cps.supplement.ifn', 250))
+                self.montant = float(IrParam.get_param('cps.supplement.ifn', 250));
                 return
             elif at.type_supplement == 'ifd':
-                self.montant = round(self.ifd * float(IrParam.get_param('cps.supplement.ifd', 250)), 0)
+                self.montant = round(self.ifd * float(IrParam.get_param('cps.supplement.ifd', 250)), 0);
                 return
             tarif = CpsFeuillesSoins._get_tarif_unitaire(at, IrParam)
         else:

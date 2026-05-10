@@ -1,12 +1,13 @@
 {
     'name': 'Auxiliaire Médical CPS – Polynésie française',
-    'version': '17.0.2.1.0',
+    'version': '17.0.2.2.0',
     'author': 'OpalSea',
     'website': 'https://opalsea.site',
     'category': 'Healthcare',
     'summary': 'Gestion des feuilles de soins, ordonnances et bordereaux CPS (Polynésie fr.)',
     'depends': [
         'base',
+        'l10n_pf',
         'mail',
         'account',
         'base_setup',
@@ -50,6 +51,7 @@
         # ── Rapports ────────────────────────────────────────────────
         'report/report_bordereau.xml',
         'report/report_feuille_soins.xml',
+        'report/report_facture_mutuelle.xml',
 
         # ── Menus ───────────────────────────────────────────────────
         'views/menu_views.xml',

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_facture_mutuelle_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-size:11px; font-family:Arial, sans-serif;">
+
+                        <!-- En-tête praticien -->
+                        <table width="100%" style="margin-bottom:16px;">
+                            <tr>
+                                <td style="width:50%; vertical-align:top;">
+                                    <strong>
+                                        <t t-out="doc.praticien_id.name or ''"/>
+                                    </strong><br/>
+                                    <t t-if="doc.praticien_id.vat">
+                                        Code praticien : <t t-out="doc.praticien_id.vat"/><br/>
+                                    </t>
+                                    <t t-if="doc.praticien_id.street">
+                                        <t t-out="doc.praticien_id.street"/><br/>
+                                    </t>
+                                    <t t-if="doc.praticien_id.phone">
+                                        Tél : <t t-out="doc.praticien_id.phone"/>
+                                    </t>
+                                </td>
+                                <td style="width:50%; vertical-align:top; text-align:right;">
+                                    <strong>Facture N° <t t-out="doc.name"/></strong><br/>
+                                    Date :
+                                    <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y')"/>
+                                    <br/><br/>
+                                    <strong>Patient :</strong><br/>
+                                    <t t-out="(doc.patient_id.lastname or '').upper()"/>&#160;
+                                    <t t-out="doc.patient_id.firstname or ''"/><br/>
+                                    <t t-if="doc.patient_dn">
+                                        DN : <t t-out="doc.patient_dn"/>
+                                    </t>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <h3 style="text-align:center; margin-bottom:12px; font-size:13px;">
+                            FACTURE DESTINÉE À LA MUTUELLE COMPLÉMENTAIRE
+                        </h3>
+
+                        <!-- Tableau des actes -->
+                        <table width="100%"
+                               style="border-collapse:collapse; font-size:10px; margin-bottom:10px;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="padding:5px; text-align:left;  border:1px solid #ccc; width:30%;">Acte</th>
+                                    <th style="padding:5px; text-align:center; border:1px solid #ccc; width:16%;">Date</th>
+                                    <th style="padding:5px; text-align:right;  border:1px solid #ccc; width:20%;">Montant (XPF)</th>
+                                    <th style="padding:5px; text-align:right;  border:1px solid #ccc; width:20%;">Part CPS (XPF)</th>
+                                    <th style="padding:5px; text-align:right;  border:1px solid #ccc; width:14%;">Votre part (XPF)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.acte_ids" t-as="acte">
+                                    <tr>
+                                        <td style="padding:4px; border:1px solid #ccc;">
+                                            <t t-out="acte.lettre_cle or ''"/>
+                                            <t t-if="acte.coefficient">
+                                                &#160;<t t-out="'{:g}'.format(acte.coefficient)"/>
+                                            </t>
+                                            <t t-if="acte.acte_type_id.name">
+                                                &#160;– <t t-out="acte.acte_type_id.name"/>
+                                            </t>
+                                        </td>
+                                        <td style="padding:4px; text-align:center; border:1px solid #ccc;">
+                                            <t t-out="acte.date_acte.strftime('%d/%m/%Y') if acte.date_acte else ''"/>
+                                        </td>
+                                        <td style="padding:4px; text-align:right; border:1px solid #ccc;">
+                                            <t t-out="'{:,.0f}'.format(acte.montant).replace(',', ' ')"/>
+                                        </td>
+                                        <td style="padding:4px; text-align:right; border:1px solid #ccc;">
+                                            <t t-out="'{:,.0f}'.format(round(acte.montant * doc.taux_remboursement / 100, 0)).replace(',', ' ')"/>
+                                        </td>
+                                        <td style="padding:4px; text-align:right; border:1px solid #ccc;">
+                                            <t t-out="'{:,.0f}'.format(round(acte.montant - round(acte.montant * doc.taux_remboursement / 100, 0), 0)).replace(',', ' ')"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <tfoot>
+                                <tr style="font-weight:bold; background:#f8f8f8;">
+                                    <td colspan="2" style="padding:5px; border:1px solid #ccc; text-align:center;">TOTAL</td>
+                                    <td style="padding:5px; text-align:right; border:1px solid #ccc;">
+                                        <t t-out="'{:,.0f}'.format(doc.montant_total).replace(',', ' ')"/>
+                                    </td>
+                                    <td style="padding:5px; text-align:right; border:1px solid #ccc;">
+                                        <t t-out="'{:,.0f}'.format(doc.montant_tiers_payant).replace(',', ' ')"/>
+                                    </td>
+                                    <td style="padding:5px; text-align:right; border:1px solid #ccc;">
+                                        <t t-out="'{:,.0f}'.format(doc.montant_patient).replace(',', ' ')"/>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <!-- Récapitulatif montant à rembourser -->
+                        <table width="100%" style="margin-top:8px; font-size:11px;">
+                            <tr>
+                                <td style="width:60%;"/>
+                                <td style="width:40%; border:1px solid #888; padding:8px;">
+                                    <table width="100%">
+                                        <tr>
+                                            <td>Taux CPS :</td>
+                                            <td style="text-align:right;">
+                                                <t t-out="'{:g}'.format(doc.taux_remboursement)"/>&#160;%
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Prise en charge CPS :</td>
+                                            <td style="text-align:right;">
+                                                <t t-out="'{:,.0f}'.format(doc.montant_tiers_payant).replace(',', ' ')"/>&#160;XPF
+                                            </td>
+                                        </tr>
+                                        <tr style="font-weight:bold; border-top:1px solid #aaa;">
+                                            <td style="padding-top:4px;">
+                                                Montant à rembourser par la mutuelle :
+                                            </td>
+                                            <td style="text-align:right; padding-top:4px;">
+                                                <t t-out="'{:,.0f}'.format(doc.montant_patient).replace(',', ' ')"/>&#160;XPF
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Pied de page -->
+                        <div style="margin-top:24px; font-size:8px; text-align:center;
+                                    border-top:1px solid #ddd; padding-top:8px; color:#555;">
+                            Facture établie par
+                            <t t-out="doc.praticien_id.name or ''"/>
+                            · <t t-out="doc.praticien_id.get_cps_profession_label() or ''"/>
+                            · Réf. feuille de soins : <t t-out="doc.name"/>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_facture_mutuelle" model="ir.actions.report">
+        <field name="name">Facture mutuelle complémentaire</field>
+        <field name="model">cps.feuille.soins</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">os_auxiliaire_medical.report_facture_mutuelle_document</field>
+        <field name="report_file">os_auxiliaire_medical.report_facture_mutuelle_document</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <!-- Pas de binding_model_id : impression déclenchée uniquement via le bouton Python -->
+    </record>
+
+</odoo>

@@ -25,3 +25,5 @@ access_cps_wizard_bordereau,cps.wizard.bordereau,model_cps_wizard_bordereau,os_a
 access_cps_wizard_date_selection,cps.wizard.date.selection,model_cps_wizard_date_selection,os_auxiliaire_medical.group_cps_user,1,1,1,1
 access_cps_wizard_date_selection_ligne,cps.wizard.date.selection.ligne,model_cps_wizard_date_selection_ligne,os_auxiliaire_medical.group_cps_user,1,1,1,1
 access_cps_wizard_ocr_ordonnance,cps.wizard.ocr.ordonnance,model_cps_wizard_ocr_ordonnance,os_auxiliaire_medical.group_cps_user,1,1,1,1
+access_cps_patient_config_user,cps.patient.config user,model_cps_patient_config,os_auxiliaire_medical.group_cps_user,1,1,1,0
+access_cps_patient_config_manager,cps.patient.config manager,model_cps_patient_config,os_auxiliaire_medical.group_cps_manager,1,1,1,1

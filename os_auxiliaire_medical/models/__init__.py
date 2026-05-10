@@ -8,3 +8,4 @@ from . import feuille_soins
 from . import bordereau
 from . import bordereau_modele
 from . import api_usage
+from . import patient_config

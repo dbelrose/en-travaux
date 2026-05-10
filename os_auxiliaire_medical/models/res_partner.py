@@ -9,31 +9,31 @@ from odoo import models, fields, api, _
 
 PROFESSION_CAT_TO_KEY = {
     'Masseur-kinésithérapeute': 'kinesitherapeute',
-    'Orthophoniste':            'orthophoniste',
-    'Orthoptiste':              'orthoptiste',
-    'Pédicure-Podologue':       'pedicure',
-    'Infirmier(e)':             'infirmier',
+    'Orthophoniste': 'orthophoniste',
+    'Orthoptiste': 'orthoptiste',
+    'Pédicure-Podologue': 'pedicure',
+    'Infirmier(e)': 'infirmier',
     'Autre auxiliaire médical': 'autre',
 }
 PROFESSION_KEY_TO_LABEL = {
     'kinesitherapeute': 'Masseur-kinésithérapeute',
-    'orthophoniste':    'Orthophoniste',
-    'orthoptiste':      'Orthoptiste',
-    'pedicure':         'Pédicure-Podologue',
-    'infirmier':        'Infirmier(e)',
-    'autre':            'Autre',
+    'orthophoniste': 'Orthophoniste',
+    'orthoptiste': 'Orthoptiste',
+    'pedicure': 'Pédicure-Podologue',
+    'infirmier': 'Infirmier(e)',
+    'autre': 'Autre',
 }
 PROFESSION_XMLIDS = {
     'kinesitherapeute': 'os_auxiliaire_medical.partner_category_kinesitherapeute',
-    'orthophoniste':    'os_auxiliaire_medical.partner_category_orthophoniste',
-    'orthoptiste':      'os_auxiliaire_medical.partner_category_orthoptiste',
-    'pedicure':         'os_auxiliaire_medical.partner_category_pedicure',
-    'infirmier':        'os_auxiliaire_medical.partner_category_infirmier',
-    'autre':            'os_auxiliaire_medical.partner_category_autre_praticien',
+    'orthophoniste': 'os_auxiliaire_medical.partner_category_orthophoniste',
+    'orthoptiste': 'os_auxiliaire_medical.partner_category_orthoptiste',
+    'pedicure': 'os_auxiliaire_medical.partner_category_pedicure',
+    'infirmier': 'os_auxiliaire_medical.partner_category_infirmier',
+    'autre': 'os_auxiliaire_medical.partner_category_autre_praticien',
 }
 
-_XMLID_PRATICIEN    = 'os_auxiliaire_medical.partner_category_praticien'
-_XMLID_PATIENT      = 'os_auxiliaire_medical.partner_category_patient'
+_XMLID_PRATICIEN = 'os_auxiliaire_medical.partner_category_praticien'
+_XMLID_PATIENT = 'os_auxiliaire_medical.partner_category_patient'
 _XMLID_PRESCRIPTEUR = 'os_auxiliaire_medical.partner_category_prescripteur'
 
 
@@ -42,24 +42,56 @@ class ResPartner(models.Model):
 
     # ── Booléens de rôle ──────────────────────────────────────────────────────
     is_praticien_cps = fields.Boolean(compute='_compute_cps_flags')
-    is_patient_cps   = fields.Boolean(compute='_compute_cps_flags')
-    is_prescripteur  = fields.Boolean(compute='_compute_cps_flags')
-    is_cps           = fields.Boolean(compute='_compute_cps_flags')
+    is_patient_cps = fields.Boolean(compute='_compute_cps_flags')
+    is_prescripteur = fields.Boolean(compute='_compute_cps_flags')
+    is_cps = fields.Boolean(compute='_compute_cps_flags')
+
+    # ── Mutuelle — portée par cps.patient.config, exposée ici en compute ────
+    cps_patient_config_id = fields.One2many(
+        'cps.patient.config', 'partner_id',
+        string='Config patient CPS',
+    )
+
+    has_mutuelle = fields.Boolean(
+        string='Mutuelle complémentaire',
+        compute='_compute_has_mutuelle',
+        inverse='_inverse_has_mutuelle',
+        store=False,
+        help="Cocher si le patient dispose d'une mutuelle prenant en charge "
+             "la part restante après remboursement CPS.",
+    )
+
+    def _compute_has_mutuelle(self):
+        configs = self.env['cps.patient.config'].search(
+            [('partner_id', 'in', self.ids)]
+        )
+        config_map = {c.partner_id.id: c for c in configs}
+        for rec in self:
+            rec.has_mutuelle = config_map[rec.id].has_mutuelle if rec.id in config_map else False
+
+    def _inverse_has_mutuelle(self):
+        PatientConfig = self.env['cps.patient.config']
+        for rec in self:
+            config = PatientConfig.search([('partner_id', '=', rec.id)], limit=1)
+            if config:
+                config.has_mutuelle = rec.has_mutuelle
+            elif rec.has_mutuelle:
+                PatientConfig.create({'partner_id': rec.id, 'has_mutuelle': True})
 
     @api.depends('category_id', 'category_id.parent_id')
     def _compute_cps_flags(self):
         Ref = self.env.ref
-        cat_praticien    = Ref(_XMLID_PRATICIEN,    raise_if_not_found=False)
-        cat_patient      = Ref(_XMLID_PATIENT,      raise_if_not_found=False)
+        cat_praticien = Ref(_XMLID_PRATICIEN, raise_if_not_found=False)
+        cat_patient = Ref(_XMLID_PATIENT, raise_if_not_found=False)
         cat_prescripteur = Ref(_XMLID_PRESCRIPTEUR, raise_if_not_found=False)
         for rec in self:
-            cats        = rec.category_id
+            cats = rec.category_id
             parent_cats = cats.mapped('parent_id')
             rec.is_praticien_cps = bool(
                 cat_praticien and (cat_praticien in cats or cat_praticien in parent_cats)
             )
-            rec.is_patient_cps   = bool(cat_patient      and cat_patient      in cats)
-            rec.is_prescripteur  = bool(cat_prescripteur and cat_prescripteur in cats)
+            rec.is_patient_cps = bool(cat_patient and cat_patient in cats)
+            rec.is_prescripteur = bool(cat_prescripteur and cat_prescripteur in cats)
             rec.is_cps = rec.is_praticien_cps or rec.is_patient_cps or rec.is_prescripteur
 
     # ── Champs related « vat » ────────────────────────────────────────────────
@@ -85,10 +117,10 @@ class ResPartner(models.Model):
     cps_ordonnance_patient_ids = fields.One2many(
         'cps.ordonnance', 'patient_id', string='Ordonnances (patient)',
     )
-    cps_ordonnance_count        = fields.Integer(compute='_compute_cps_patient_stats', string='Nb ordonnances')
+    cps_ordonnance_count = fields.Integer(compute='_compute_cps_patient_stats', string='Nb ordonnances')
     cps_bordereau_patient_count = fields.Integer(compute='_compute_cps_patient_stats', string='Nb bordereaux')
-    cps_prescripteur_count      = fields.Integer(compute='_compute_cps_patient_stats', string='Nb prescripteurs')
-    cps_praticien_count         = fields.Integer(compute='_compute_cps_patient_stats', string='Nb praticiens')
+    cps_prescripteur_count = fields.Integer(compute='_compute_cps_patient_stats', string='Nb prescripteurs')
+    cps_praticien_count = fields.Integer(compute='_compute_cps_patient_stats', string='Nb praticiens')
 
     # ── Relations praticien ───────────────────────────────────────────────────
     cps_feuille_praticien_ids = fields.One2many(
@@ -96,7 +128,7 @@ class ResPartner(models.Model):
     )
     cps_feuille_praticien_count = fields.Integer(compute='_compute_cps_counts')
 
-    cps_bordereau_ids   = fields.One2many('cps.bordereau', 'praticien_id', string='Bordereaux')
+    cps_bordereau_ids = fields.One2many('cps.bordereau', 'praticien_id', string='Bordereaux')
     cps_bordereau_count = fields.Integer(compute='_compute_cps_counts')
 
     # ── Compute compteurs ─────────────────────────────────────────────────────
@@ -107,9 +139,9 @@ class ResPartner(models.Model):
     )
     def _compute_cps_counts(self):
         for rec in self:
-            rec.cps_feuille_patient_count   = len(rec.cps_feuille_patient_ids)
+            rec.cps_feuille_patient_count = len(rec.cps_feuille_patient_ids)
             rec.cps_feuille_praticien_count = len(rec.cps_feuille_praticien_ids)
-            rec.cps_bordereau_count         = len(rec.cps_bordereau_ids)
+            rec.cps_bordereau_count = len(rec.cps_bordereau_ids)
 
     @api.depends(
         'cps_ordonnance_patient_ids',
@@ -121,11 +153,11 @@ class ResPartner(models.Model):
     def _compute_cps_patient_stats(self):
         for rec in self:
             ordonnances = rec.cps_ordonnance_patient_ids
-            rec.cps_ordonnance_count        = len(ordonnances)
+            rec.cps_ordonnance_count = len(ordonnances)
             feuilles = rec.cps_feuille_patient_ids
             rec.cps_bordereau_patient_count = len(feuilles.mapped('bordereau_id').filtered('id'))
-            rec.cps_prescripteur_count      = len(ordonnances.mapped('prescripteur_id').filtered('id'))
-            rec.cps_praticien_count         = len(feuilles.mapped('praticien_id').filtered('id'))
+            rec.cps_prescripteur_count = len(ordonnances.mapped('prescripteur_id').filtered('id'))
+            rec.cps_praticien_count = len(feuilles.mapped('praticien_id').filtered('id'))
 
     # ── Profession ────────────────────────────────────────────────────────────
     cps_profession = fields.Char(

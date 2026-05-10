@@ -31,7 +31,8 @@
                         <group>
                             <field name="date_debut"/>
                             <field name="date_fin"/>
-                            <field name="nb_seances"/>
+                            <field name="nb_seances"
+                                   help="Initialisé depuis les séances restantes de l'ordonnance. Le wizard créera autant de feuilles FSA25 que nécessaire (16 actes / feuille)."/>
                             <!-- Heure commune : propagée sur toutes les lignes générées -->
                             <field name="heure_debut"
                                    widget="float_time"
@@ -53,10 +54,11 @@
                         <i class="fa fa-info-circle me-1"/>
                         Renseignez <strong>soit</strong> la date de fin,
                         <strong>soit</strong> le nombre de séances.
-                        Si <strong>aucun</strong> n'est indiqué, les séances restantes
-                        de l'ordonnance seront utilisées (max 16 — lignes FSA25).
-                        L'heure de début est commune à toutes les séances mais peut être
-                        ajustée individuellement dans le tableau ci-dessous.
+                        Si <strong>aucun</strong> n'est indiqué, toutes les séances restantes
+                        de l'ordonnance seront planifiées.
+                        Le wizard créera automatiquement autant de feuilles FSA25 que nécessaire
+                        <strong>(16 actes maximum par feuille)</strong>.
+                        L'heure de début est commune mais peut être ajustée ligne par ligne.
                     </div>
 
                     <div class="text-center mb16">
@@ -80,6 +82,7 @@
                                         type="object"
                                         class="btn btn-link btn-sm p-0"/>
                             </div>
+
                             <div class="text-center fw-bold">
                                 <field name="nb_selectionnees" readonly="1" nolabel="1"
                                        class="d-inline"/> séance(s) sélectionnée(s)
@@ -87,13 +90,20 @@
                                 <field name="montant_total_estime" readonly="1" nolabel="1"
                                        class="d-inline"/> F XPF
                             </div>
-                            <div>
+
+                            <!-- Compteur feuilles FSA25 nécessaires -->
+                            <div class="d-flex align-items-center gap-3">
+                                <span invisible="nb_feuilles_necessaires == 0"
+                                      class="badge text-bg-primary fs-6"
+                                      title="Nombre de feuilles FSA25 qui seront créées (16 actes / feuille)">
+                                    <i class="fa fa-files-o me-1"/>
+                                    <field name="nb_feuilles_necessaires" readonly="1"
+                                           nolabel="1" class="d-inline"/> feuille(s) FSA25
+                                </span>
                                 <span invisible="nb_non_assignees == 0"
                                       class="badge text-bg-danger">
-                                    ⚠
-                                    <field name="nb_non_assignees" readonly="1"
-                                           nolabel="1" class="d-inline"/>
-                                    non assignée(s)
+                                    ⚠ <field name="nb_non_assignees" readonly="1"
+                                              nolabel="1" class="d-inline"/> non assignée(s)
                                 </span>
                                 <span invisible="nb_non_assignees != 0"
                                       class="text-success">
@@ -103,22 +113,26 @@
                         </div>
                     </div>
 
-                    <!-- ── Liste des dates générées (avec colonne Heure) ── -->
+                    <!-- ── Liste des dates générées ── -->
                     <separator string="Dates générées – cochez les séances à créer"
                                invisible="not ligne_ids"/>
                     <field name="ligne_ids" nolabel="1">
                         <tree editable="bottom">
-                            <field name="selected"     string="✓"/>
+                            <field name="selected"      string="✓"/>
+                            <field name="num_feuille"   string="Feuille n°" readonly="1"
+                                   optional="show"
+                                   decoration-info="num_feuille > 0"
+                                   help="Numéro prévisionnel de la feuille FSA25 (16 séances / feuille)"/>
                             <field name="date"/>
-                            <field name="jour_semaine" readonly="1"/>
+                            <field name="jour_semaine"  readonly="1"/>
                             <!-- Heure ajustable par ligne -->
-                            <field name="heure_acte"   string="Heure" widget="float_time"/>
-                            <field name="acte_type_id" string="Acte"
+                            <field name="heure_acte"    string="Heure" widget="float_time"/>
+                            <field name="acte_type_id"  string="Acte"
                                    options="{'no_create': False}"/>
                             <field name="ordonnance_ligne_id" string="Ligne ord."
                                    readonly="1" optional="show"/>
-                            <field name="montant"      string="Montant (F)" sum="Total"/>
-                            <field name="warning"      readonly="1" string="⚠"
+                            <field name="montant"       string="Montant (F)" sum="Total"/>
+                            <field name="warning"       readonly="1" string="⚠"
                                    decoration-danger="warning != ''"
                                    optional="show"/>
                         </tree>
