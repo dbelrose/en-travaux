@@ -27,7 +27,7 @@ class CpsOrdonnance(models.Model):
     patient_id = fields.Many2one(
         'res.partner', string='Patient',
         domain="[('category_id.name', '=', 'Patient CPS')]",
-        required=False, index=True,
+        required=True, index=True,
     )
     prescripteur_id = fields.Many2one(
         'res.partner', string='Prescripteur',
@@ -37,13 +37,13 @@ class CpsOrdonnance(models.Model):
         'res.company', string='Société',
         required=True, default=lambda self: self.env.company,
     )
-    date_prescription = fields.Date(string='Date de prescription', required=False)
-    date_fin_validite = fields.Date(string='Fin de validité')
+    date_prescription = fields.Date(string='Date de prescription', required=True)
+    date_fin_validite = fields.Date(string='Fin de validité', required=False)
     ordonnance_image = fields.Binary(string="Photo de l'ordonnance", attachment=True)
     ordonnance_filename = fields.Char()
 
     ligne_ids = fields.One2many(
-        'cps.ordonnance.ligne', 'ordonnance_id', string='Lignes',
+        'cps.ordonnance.ligne', 'ordonnance_id', string='Lignes', required=True,
     )
 
     notes = fields.Text()

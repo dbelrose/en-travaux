@@ -5,6 +5,15 @@
 
     <!-- ── Saisie ── -->
     <menuitem id="menu_cps_main" name="Saisie" parent="menu_cps_root" sequence="10"/>
+
+    <!-- Patients en premier : point d'entrée principal (kanban) -->
+    <menuitem id="menu_patient_saisie" name="Patients"
+              parent="menu_cps_main" action="action_patient_partner" sequence="5"/>
+
+    <!-- Agenda : vue calendrier des feuilles de soins -->
+    <menuitem id="menu_agenda" name="Agenda des soins"
+              parent="menu_cps_main" action="action_feuille_soins_calendar" sequence="8"/>
+
     <menuitem id="menu_feuille_soins" name="Feuilles de soins"
               parent="menu_cps_main" action="action_feuille_soins" sequence="10"/>
     <menuitem id="menu_ordonnance" name="Ordonnances"

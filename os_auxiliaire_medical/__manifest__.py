@@ -1,6 +1,6 @@
 {
     'name': 'Auxiliaire Médical CPS – Polynésie française',
-    'version': '17.0.2.0.0',
+    'version': '17.0.2.1.0',
     'author': 'OpalSea',
     'website': 'https://opalsea.site',
     'category': 'Healthcare',
@@ -10,7 +10,7 @@
         'mail',
         'account',
         'base_setup',
-        # 'partner_firstname',  # Décommentez si le module est installé
+        'partner_firstname',  # Décommentez si le module est installé
     ],
     'data': [
         # ── Sécurité ────────────────────────────────────────────────
@@ -54,7 +54,9 @@
         # ── Menus ───────────────────────────────────────────────────
         'views/menu_views.xml',
     ],
-    'demo': [],
+    'demo': [
+        'demo/demo_data.xml',
+    ],
     'installable': True,
     'application': True,
     'auto_install': False,

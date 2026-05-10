@@ -4,10 +4,6 @@ Extension de res.partner pour le module CPS.
 Principe strict : AUCUN champ custom créant une colonne sur res_partner.
 Seuls des champs compute sans store=True et des One2many (FK portée par
 l'autre table) sont ajoutés.
-
-Libellé du champ vat selon le rôle :
-  Trois champs related (cps_vat_praticien / cps_vat_patient / cps_vat_prescripteur)
-  portent chacun le bon libellé. La vue CPS affiche le bon champ selon is_* flags.
 """
 from odoo import models, fields, api, _
 
@@ -36,12 +32,6 @@ PROFESSION_XMLIDS = {
     'autre':            'os_auxiliaire_medical.partner_category_autre_praticien',
 }
 
-# Libellés domaine (vues XML) — conservés pour les champs domain/search
-CAT_PRATICIEN    = 'Praticien CPS'
-CAT_PATIENT      = 'Patient CPS'
-CAT_PRESCRIPTEUR = 'Prescripteur'
-
-# XML IDs des catégories racines (utilisés dans le code Python)
 _XMLID_PRATICIEN    = 'os_auxiliaire_medical.partner_category_praticien'
 _XMLID_PATIENT      = 'os_auxiliaire_medical.partner_category_patient'
 _XMLID_PRESCRIPTEUR = 'os_auxiliaire_medical.partner_category_prescripteur'
@@ -50,7 +40,7 @@ _XMLID_PRESCRIPTEUR = 'os_auxiliaire_medical.partner_category_prescripteur'
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    # ── Booléens de rôle (compute, store=False → pas de colonne DB) ──────────
+    # ── Booléens de rôle ──────────────────────────────────────────────────────
     is_praticien_cps = fields.Boolean(compute='_compute_cps_flags')
     is_patient_cps   = fields.Boolean(compute='_compute_cps_flags')
     is_prescripteur  = fields.Boolean(compute='_compute_cps_flags')
@@ -58,7 +48,6 @@ class ResPartner(models.Model):
 
     @api.depends('category_id', 'category_id.parent_id')
     def _compute_cps_flags(self):
-        """Utilise les IDs externes — aucune dépendance sur les libellés."""
         Ref = self.env.ref
         cat_praticien    = Ref(_XMLID_PRATICIEN,    raise_if_not_found=False)
         cat_patient      = Ref(_XMLID_PATIENT,      raise_if_not_found=False)
@@ -73,44 +62,48 @@ class ResPartner(models.Model):
             rec.is_prescripteur  = bool(cat_prescripteur and cat_prescripteur in cats)
             rec.is_cps = rec.is_praticien_cps or rec.is_patient_cps or rec.is_prescripteur
 
-    # ── Champs related « vat » avec libellé spécifique par rôle ──────────────
-    # Chaque champ porte le bon libellé ; la vue CPS affiche le bon selon is_* flags.
-    # readonly=False permet l'édition directe depuis le formulaire général.
+    # ── Champs related « vat » ────────────────────────────────────────────────
     cps_vat_praticien = fields.Char(
-        related='vat',
-        string='Code auxiliaire médical (CPS)',
-        store=False,
-        readonly=False,
+        related='vat', string='Code auxiliaire médical (CPS)',
+        store=False, readonly=False,
     )
     cps_vat_patient = fields.Char(
-        related='vat',
-        string='N° DN (matricule CPS)',
-        store=False,
-        readonly=False,
+        related='vat', string='N° DN (matricule CPS)',
+        store=False, readonly=False,
     )
     cps_vat_prescripteur = fields.Char(
-        related='vat',
-        string='Code prescripteur (AM/RPPS)',
-        store=False,
-        readonly=False,
+        related='vat', string='Code prescripteur (AM/RPPS)',
+        store=False, readonly=False,
     )
 
-    # ── Statistiques ─────────────────────────────────────────────────────────
+    # ── Relations patient ─────────────────────────────────────────────────────
     cps_feuille_patient_ids = fields.One2many(
         'cps.feuille.soins', 'patient_id', string='Feuilles (patient)',
     )
     cps_feuille_patient_count = fields.Integer(compute='_compute_cps_counts')
 
+    cps_ordonnance_patient_ids = fields.One2many(
+        'cps.ordonnance', 'patient_id', string='Ordonnances (patient)',
+    )
+    cps_ordonnance_count        = fields.Integer(compute='_compute_cps_patient_stats', string='Nb ordonnances')
+    cps_bordereau_patient_count = fields.Integer(compute='_compute_cps_patient_stats', string='Nb bordereaux')
+    cps_prescripteur_count      = fields.Integer(compute='_compute_cps_patient_stats', string='Nb prescripteurs')
+    cps_praticien_count         = fields.Integer(compute='_compute_cps_patient_stats', string='Nb praticiens')
+
+    # ── Relations praticien ───────────────────────────────────────────────────
     cps_feuille_praticien_ids = fields.One2many(
         'cps.feuille.soins', 'praticien_id', string='Feuilles (praticien)',
     )
     cps_feuille_praticien_count = fields.Integer(compute='_compute_cps_counts')
 
-    cps_bordereau_ids = fields.One2many('cps.bordereau', 'praticien_id', string='Bordereaux')
+    cps_bordereau_ids   = fields.One2many('cps.bordereau', 'praticien_id', string='Bordereaux')
     cps_bordereau_count = fields.Integer(compute='_compute_cps_counts')
 
+    # ── Compute compteurs ─────────────────────────────────────────────────────
     @api.depends(
-        'cps_feuille_patient_ids', 'cps_feuille_praticien_ids', 'cps_bordereau_ids',
+        'cps_feuille_patient_ids',
+        'cps_feuille_praticien_ids',
+        'cps_bordereau_ids',
     )
     def _compute_cps_counts(self):
         for rec in self:
@@ -118,11 +111,25 @@ class ResPartner(models.Model):
             rec.cps_feuille_praticien_count = len(rec.cps_feuille_praticien_ids)
             rec.cps_bordereau_count         = len(rec.cps_bordereau_ids)
 
+    @api.depends(
+        'cps_ordonnance_patient_ids',
+        'cps_ordonnance_patient_ids.prescripteur_id',
+        'cps_feuille_patient_ids',
+        'cps_feuille_patient_ids.praticien_id',
+        'cps_feuille_patient_ids.bordereau_id',
+    )
+    def _compute_cps_patient_stats(self):
+        for rec in self:
+            ordonnances = rec.cps_ordonnance_patient_ids
+            rec.cps_ordonnance_count        = len(ordonnances)
+            feuilles = rec.cps_feuille_patient_ids
+            rec.cps_bordereau_patient_count = len(feuilles.mapped('bordereau_id').filtered('id'))
+            rec.cps_prescripteur_count      = len(ordonnances.mapped('prescripteur_id').filtered('id'))
+            rec.cps_praticien_count         = len(feuilles.mapped('praticien_id').filtered('id'))
+
     # ── Profession ────────────────────────────────────────────────────────────
     cps_profession = fields.Char(
-        compute='_compute_cps_profession',
-        string='Profession',
-        store=False,
+        compute='_compute_cps_profession', string='Profession', store=False,
     )
 
     @api.depends('category_id', 'category_id.parent_id')
@@ -131,7 +138,6 @@ class ResPartner(models.Model):
             rec.cps_profession = rec.get_cps_profession_label()
 
     def get_cps_profession_key(self):
-        """Retourne la clé de sélection de profession (ex : 'orthophoniste'), ou None."""
         self.ensure_one()
         cat_praticien = self.env.ref(_XMLID_PRATICIEN, raise_if_not_found=False)
         if not cat_praticien:
@@ -142,13 +148,11 @@ class ResPartner(models.Model):
         return None
 
     def get_cps_profession_label(self):
-        """Retourne le libellé lisible de la profession, ou ''."""
         self.ensure_one()
         key = self.get_cps_profession_key()
         return PROFESSION_KEY_TO_LABEL.get(key, '') if key else ''
 
     def set_cps_profession(self, profession_key):
-        """Pose la sous-catégorie profession (retire les anciennes)."""
         self.ensure_one()
         cat_praticien = self.env.ref(_XMLID_PRATICIEN, raise_if_not_found=False)
         all_prof_cats = self.env['res.partner.category'].search([
@@ -164,8 +168,6 @@ class ResPartner(models.Model):
                 if cat:
                     self.write({'category_id': [(4, cat.id)]})
 
-    # ── Actions surchargées ──────────────────────────────────────────────────
-
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -173,19 +175,51 @@ class ResPartner(models.Model):
             res['company_id'] = self.env.company.id
         return res
 
-    # ── Actions stat buttons ──────────────────────────────────────────────────
-
-    def action_view_feuilles_patient(self):
-        return {'type': 'ir.actions.act_window', 'name': _('Feuilles de soins (patient)'),
-                'res_model': 'cps.feuille.soins', 'view_mode': 'list,form',
-                'domain': [('patient_id', '=', self.id)]}
-
+    # ── Actions praticien ─────────────────────────────────────────────────────
     def action_view_feuilles_praticien(self):
         return {'type': 'ir.actions.act_window', 'name': _('Feuilles de soins (praticien)'),
-                'res_model': 'cps.feuille.soins', 'view_mode': 'list,form',
+                'res_model': 'cps.feuille.soins', 'view_mode': 'tree,form',
                 'domain': [('praticien_id', '=', self.id)]}
 
     def action_view_bordereaux(self):
         return {'type': 'ir.actions.act_window', 'name': _('Bordereaux'),
-                'res_model': 'cps.bordereau', 'view_mode': 'list,form',
+                'res_model': 'cps.bordereau', 'view_mode': 'tree,form',
                 'domain': [('praticien_id', '=', self.id)]}
+
+    # ── Actions patient ───────────────────────────────────────────────────────
+    def action_view_feuilles_patient(self):
+        return {'type': 'ir.actions.act_window', 'name': _('Feuilles de soins'),
+                'res_model': 'cps.feuille.soins', 'view_mode': 'tree,form',
+                'domain': [('patient_id', '=', self.id)]}
+
+    def action_view_ordonnances_patient(self):
+        self.ensure_one()
+        return {'type': 'ir.actions.act_window', 'name': _('Ordonnances'),
+                'res_model': 'cps.ordonnance', 'view_mode': 'tree,form',
+                'domain': [('patient_id', '=', self.id)],
+                'context': {'default_patient_id': self.id}}
+
+    def action_view_bordereaux_patient(self):
+        self.ensure_one()
+        bordereau_ids = self.env['cps.bordereau'].search([
+            ('feuille_ids.patient_id', '=', self.id)
+        ]).ids
+        return {'type': 'ir.actions.act_window', 'name': _('Bordereaux'),
+                'res_model': 'cps.bordereau', 'view_mode': 'tree,form',
+                'domain': [('id', 'in', bordereau_ids)]}
+
+    def action_view_prescripteurs_patient(self):
+        self.ensure_one()
+        ids = self.cps_ordonnance_patient_ids.mapped('prescripteur_id').ids
+        return {'type': 'ir.actions.act_window', 'name': _('Prescripteurs'),
+                'res_model': 'res.partner', 'view_mode': 'tree,form',
+                'domain': [('id', 'in', ids)],
+                'context': {'search_default_customer_rank': 0}}
+
+    def action_view_praticiens_patient(self):
+        self.ensure_one()
+        ids = self.cps_feuille_patient_ids.mapped('praticien_id').ids
+        return {'type': 'ir.actions.act_window', 'name': _('Praticiens'),
+                'res_model': 'res.partner', 'view_mode': 'tree,form',
+                'domain': [('id', 'in', ids)],
+                'context': {'search_default_customer_rank': 0}}

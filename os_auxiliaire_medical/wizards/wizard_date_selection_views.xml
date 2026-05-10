@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <record id="view_wizard_date_selection_form" model="ir.ui.view">
         <field name="name">cps.wizard.date.selection.form</field>
         <field name="model">cps.wizard.date.selection</field>
@@ -27,12 +26,17 @@
                         </group>
                     </group>
 
-                    <!-- ── Plage de dates ── -->
-                    <group string="Plage de dates">
+                    <!-- ── Plage de dates et heure ── -->
+                    <group string="Plage de dates et heure">
                         <group>
                             <field name="date_debut"/>
                             <field name="date_fin"/>
                             <field name="nb_seances"/>
+                            <!-- Heure commune : propagée sur toutes les lignes générées -->
+                            <field name="heure_debut"
+                                   widget="float_time"
+                                   string="Heure de début (commune)"
+                                   help="Appliquée à toutes les séances. Modifiable ligne par ligne ensuite."/>
                         </group>
                         <group string="Jours à inclure" col="7">
                             <field name="lundi"         string="Lun"/>
@@ -51,6 +55,8 @@
                         <strong>soit</strong> le nombre de séances.
                         Si <strong>aucun</strong> n'est indiqué, les séances restantes
                         de l'ordonnance seront utilisées (max 16 — lignes FSA25).
+                        L'heure de début est commune à toutes les séances mais peut être
+                        ajustée individuellement dans le tableau ci-dessous.
                     </div>
 
                     <div class="text-center mb16">
@@ -60,11 +66,10 @@
                                 class="btn btn-primary btn-lg"/>
                     </div>
 
-                    <!-- ── Barre de résumé pleine largeur ── -->
+                    <!-- ── Barre de résumé ── -->
                     <div class="w-100" invisible="not ligne_ids">
                         <div class="d-flex align-items-center justify-content-between
                                     border-top border-bottom py-2 px-3 bg-light mb4">
-                            <!-- Boutons tout cocher / décocher -->
                             <div class="d-flex gap-3">
                                 <button name="action_tout_selectionner"
                                         string="☑ Tout cocher"
@@ -75,8 +80,6 @@
                                         type="object"
                                         class="btn btn-link btn-sm p-0"/>
                             </div>
-
-                            <!-- Résumé centré -->
                             <div class="text-center fw-bold">
                                 <field name="nb_selectionnees" readonly="1" nolabel="1"
                                        class="d-inline"/> séance(s) sélectionnée(s)
@@ -84,8 +87,6 @@
                                 <field name="montant_total_estime" readonly="1" nolabel="1"
                                        class="d-inline"/> F XPF
                             </div>
-
-                            <!-- Alerte non-assignées à droite -->
                             <div>
                                 <span invisible="nb_non_assignees == 0"
                                       class="badge text-bg-danger">
@@ -102,20 +103,22 @@
                         </div>
                     </div>
 
-                    <!-- ── Liste des dates générées ── -->
+                    <!-- ── Liste des dates générées (avec colonne Heure) ── -->
                     <separator string="Dates générées – cochez les séances à créer"
                                invisible="not ligne_ids"/>
                     <field name="ligne_ids" nolabel="1">
                         <tree editable="bottom">
-                            <field name="selected" string="✓"/>
+                            <field name="selected"     string="✓"/>
                             <field name="date"/>
                             <field name="jour_semaine" readonly="1"/>
+                            <!-- Heure ajustable par ligne -->
+                            <field name="heure_acte"   string="Heure" widget="float_time"/>
                             <field name="acte_type_id" string="Acte"
                                    options="{'no_create': False}"/>
                             <field name="ordonnance_ligne_id" string="Ligne ord."
                                    readonly="1" optional="show"/>
-                            <field name="montant" string="Montant (F)" sum="Total"/>
-                            <field name="warning" readonly="1" string="⚠"
+                            <field name="montant"      string="Montant (F)" sum="Total"/>
+                            <field name="warning"      readonly="1" string="⚠"
                                    decoration-danger="warning != ''"
                                    optional="show"/>
                         </tree>
