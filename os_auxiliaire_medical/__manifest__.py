@@ -7,7 +7,6 @@
     'summary': 'Gestion des feuilles de soins, ordonnances et bordereaux CPS (Polynésie fr.)',
     'depends': [
         'base',
-        'l10n_pf',
         'mail',
         'account',
         'base_setup',

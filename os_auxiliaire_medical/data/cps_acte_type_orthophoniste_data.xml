@@ -1,149 +1,353 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <odoo>
-    <data noupdate="1">
-        <!-- Bilans -->
-        <record id="acte_type_amo_bilan_deglutition" model="cps.acte.type">
-            <field name="name">Bilan de la déglutition et des fonctions vélo-tubo-tympaniques</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">24</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_bilan_phonation" model="cps.acte.type">
-            <field name="name">Bilan de la phonation</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">34</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_bilan_fonctions_oro" model="cps.acte.type">
-            <field name="name">Bilan des fonctions oro-myo-faciales et de l'oralité</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">34</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_bilan_communication_langage_oral" model="cps.acte.type">
-            <field name="name">Bilan de la communication et du langage oral</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">34</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_bilan_langage_ecrit" model="cps.acte.type">
-            <field name="name">Bilan de la communication et du langage écrit</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">34</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_bilan_cognition_math" model="cps.acte.type">
-            <field name="name">Bilan de la cognition mathématique (dyscalculie)</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">34</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_bilan_neurologique" model="cps.acte.type">
-            <field name="name">Bilan des troubles d'origine neurologique</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">40</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_bilan_begaiement" model="cps.acte.type">
-            <field name="name">Bilan des bégaiements et des autres troubles de la fluence</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">40</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_bilan_handicap" model="cps.acte.type">
-            <field name="name">Bilan de la communication et du langage – handicap (TSA, surdité…)</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">40</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <!-- Rééducations -->
-        <record id="acte_type_amo_reeducation_articulation" model="cps.acte.type">
-            <field name="name">Rééducation des troubles de l'articulation – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_deglutition_dysfonctionnelle" model="cps.acte.type">
-            <field name="name">Rééducation de la déglutition dysfonctionnelle – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">8</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_voix" model="cps.acte.type">
-            <field name="name">Rééducation des troubles de la voix d'origine organique ou fonctionnelle – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">11.4</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_dysphagie" model="cps.acte.type">
-            <field name="name">Rééducation des dysphagies – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">11</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_oro_myo" model="cps.acte.type">
-            <field name="name">Rééducation des anomalies des fonctions oro-myo-faciales et de l'oralité – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">13.5</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_langage_ecrit" model="cps.acte.type">
-            <field name="name">Rééducation des troubles de la communication et du langage écrit – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">10.1</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_cognition_math" model="cps.acte.type">
-            <field name="name">Rééducation des troubles de la cognition mathématique – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">10.2</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_graphisme" model="cps.acte.type">
-            <field name="name">Rééducation des troubles du graphisme et de l'écriture – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">10</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_retard_parole" model="cps.acte.type">
-            <field name="name">Rééducation des retards de parole et troubles du langage oral – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">12.1</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_begaiement" model="cps.acte.type">
-            <field name="name">Rééducation des bégaiements et troubles de la fluence – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">12.2</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_readaptation_surdite" model="cps.acte.type">
-            <field name="name">Réadaptation à la communication dans les surdités acquises appareillées – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">12</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_handicap" model="cps.acte.type">
-            <field name="name">Éducation ou rééducation communication et langage – handicap moteur/sensoriel/TSA – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">13.8</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_neuro_vasculaire" model="cps.acte.type">
-            <field name="name">Rééducation pathologies neurologiques d'origine vasculaire, tumorale ou post-traumatique – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">15.7</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_neuro_degenerative" model="cps.acte.type">
-            <field name="name">Rééducation pathologies neuro-dégénératives – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">15.6</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_dysphasie" model="cps.acte.type">
-            <field name="name">Rééducation des dysphasies – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">14</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_demutisation" model="cps.acte.type">
-            <field name="name">Démutisation, rééducation ou conservation de la communication (implant cochléaire inclus) – séance</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">15.4</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_reeducation_groupe" model="cps.acte.type">
-            <field name="name">Rééducation en groupe homogène – séance par patient (4 patients max)</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">9</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <!-- Majorations -->
-        <record id="acte_type_amo_majoration_meo" model="cps.acte.type">
-            <field name="name">Majoration MEO – prise en charge enfant de moins de 3 ans (TSA, syndromes génétiques)</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">0</field>
-            <field name="tarif_unitaire">490</field><field name="profession">orthophoniste</field>
-        </record>
-        <record id="acte_type_amo_majoration_ifn" model="cps.acte.type">
-            <field name="name">Indemnité forfaitaire neurologique IFN – pathologies neurologiques ou neuro-dégénératives</field>
-            <field name="lettre_cle">AMO</field><field name="coefficient_defaut">0</field>
-            <field name="tarif_unitaire">250</field><field name="profession">orthophoniste</field>
-            <field name="type_supplement">ifn</field>
-        </record>
-    </data>
+  <data noupdate="0">
+
+    <!-- ================================================================== -->
+    <!-- BILANS                                                               -->
+    <!-- Réf. : NPAP – Arrêté n° 447 CM du 27 mars 2019, annexe II, §4.1.1  -->
+    <!-- Prescription médicale obligatoire. Compte rendu écrit au            -->
+    <!-- prescripteur. Accord préalable si rééducation prescrite ensuite.    -->
+    <!-- En cas de bilan de renouvellement : coefficient minoré de 30 %.    -->
+    <!-- ================================================================== -->
+
+    <record id="acte_type_amo_bilan_deglutition" model="cps.acte.type">
+      <field name="name">Bilan de la déglutition et des fonctions vélo-tubo-tympaniques</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">24</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010101. Bilan avec compte rendu écrit obligatoire adressé au prescripteur. Acte unique (1 séance). Tarif : 24 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <record id="acte_type_amo_bilan_phonation" model="cps.acte.type">
+      <field name="name">Bilan de la phonation</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">34</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010102. Bilan avec compte rendu écrit obligatoire adressé au prescripteur. Acte unique (1 séance). Tarif : 34 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <record id="acte_type_amo_bilan_fonctions_oro" model="cps.acte.type">
+      <field name="name">Bilan des fonctions oro-myo-faciales et de l'oralité</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">34</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010103. Bilan avec compte rendu écrit obligatoire adressé au prescripteur. Acte unique (1 séance). Tarif : 34 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <record id="acte_type_amo_bilan_communication_langage_oral" model="cps.acte.type">
+      <field name="name">Bilan de la communication et du langage oral</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">34</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010104. Bilan de la communication et du langage oral et/ou bilan d'aptitudes à l'acquisition de la communication et du langage écrit. Compte rendu écrit obligatoire. Acte unique (1 séance). Tarif : 34 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <record id="acte_type_amo_bilan_langage_ecrit" model="cps.acte.type">
+      <field name="name">Bilan de la communication et du langage écrit</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">34</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010105. Bilan avec compte rendu écrit obligatoire adressé au prescripteur. Acte unique (1 séance). Tarif : 34 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <record id="acte_type_amo_bilan_cognition_math" model="cps.acte.type">
+      <field name="name">Bilan de la cognition mathématique (dyscalculie)</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">34</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010106. Troubles du calcul et du raisonnement logico-mathématique. Compte rendu écrit obligatoire. Acte unique (1 séance). Tarif : 34 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <record id="acte_type_amo_bilan_neurologique" model="cps.acte.type">
+      <field name="name">Bilan des troubles d'origine neurologique</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">40</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">45</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010107. Bilan avec compte rendu écrit obligatoire adressé au prescripteur. Acte unique (1 séance), durée ≥ 45 min. Tarif : 40 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <record id="acte_type_amo_bilan_begaiement" model="cps.acte.type">
+      <field name="name">Bilan des bégaiements et des autres troubles de la fluence</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">40</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010108. Bilan avec compte rendu écrit obligatoire adressé au prescripteur. Acte unique (1 séance). Tarif : 40 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <record id="acte_type_amo_bilan_handicap" model="cps.acte.type">
+      <field name="name">Bilan de la communication et du langage – handicap (TSA, surdité…)</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">40</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">45</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010109. Handicaps moteur, sensoriel et/ou déficiences intellectuelles, paralysies cérébrales, TSA, maladies génétiques, surdité. Compte rendu écrit obligatoire. Acte unique (1 séance), durée ≥ 45 min. Tarif : 40 AMO × 434 F. En cas de renouvellement, coefficient minoré de 30 %.</field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- RÉÉDUCATIONS INDIVIDUELLES – série initiale 30 séances             -->
+    <!-- Réf. : NPAP §4.1.1, codes 04010110 à 04010122                      -->
+    <!-- Accord préalable obligatoire (AP). Durée min. 30 min/séance.       -->
+    <!-- 1ère série : 30 séances. Renouvellement par séries de 20 séances. -->
+    <!-- À partir de la 51ème séance : bilan de renouvellement requis.      -->
+    <!-- Accord préalable valable 1 an, 100 séances maximum.                -->
+    <!-- ================================================================== -->
+
+    <record id="acte_type_amo_reeducation_articulation" model="cps.acte.type">
+      <field name="name">Rééducation des troubles de l'articulation – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">8</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010110. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 8 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_deglutition_dysfonctionnelle" model="cps.acte.type">
+      <field name="name">Rééducation de la déglutition dysfonctionnelle – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">8</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010111. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 8 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_voix" model="cps.acte.type">
+      <field name="name">Rééducation des troubles de la voix d'origine organique ou fonctionnelle – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">11.4</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010113. Inclut les dyskinésies laryngées. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 11,4 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_dysphagie" model="cps.acte.type">
+      <field name="name">Rééducation des dysphagies – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">11</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010114. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 11 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_oro_myo" model="cps.acte.type">
+      <field name="name">Rééducation des anomalies des fonctions oro-myo-faciales et de l'oralité – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">13.5</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010115. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 13,5 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_langage_ecrit" model="cps.acte.type">
+      <field name="name">Rééducation des troubles de la communication et du langage écrit – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">10.1</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010117. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 10,1 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_cognition_math" model="cps.acte.type">
+      <field name="name">Rééducation des troubles de la cognition mathématique – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">10.2</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010118. Dyscalculie, troubles du raisonnement logico-mathématique. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 10,2 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_graphisme" model="cps.acte.type">
+      <field name="name">Rééducation des troubles du graphisme et de l'écriture – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">10</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010119. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 10 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_retard_parole" model="cps.acte.type">
+      <field name="name">Rééducation des retards de parole et troubles du langage oral – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">12.1</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010120. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 12,1 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_begaiement" model="cps.acte.type">
+      <field name="name">Rééducation des bégaiements et troubles de la fluence – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">12.2</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010121. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 12,2 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_readaptation_surdite" model="cps.acte.type">
+      <field name="name">Réadaptation à la communication dans les surdités acquises appareillées – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">12</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">30</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010122. Inclut éducation à la lecture labiale. Accord préalable obligatoire (AP), valable 1 an, 100 séances max. 1ère série : 30 séances ; renouvellement par séries de 20. Bilan de renouvellement requis au-delà de 50 séances. Durée min. 30 min/séance. Tarif : 12 AMO × 434 F.</field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- RÉÉDUCATIONS – série initiale 50 séances                           -->
+    <!-- Réf. : NPAP §4.1.1, codes 04010123 à 04010127                      -->
+    <!-- Accord préalable obligatoire (AP). 1ère série : 50 séances.        -->
+    <!-- Renouvellement par séries de 50. Bilan de renouvellement requis    -->
+    <!-- au-delà de 100 séances. Note d'évolution au prescripteur à chaque  -->
+    <!-- renouvellement.                                                      -->
+    <!-- ================================================================== -->
+
+    <record id="acte_type_amo_reeducation_handicap" model="cps.acte.type">
+      <field name="name">Éducation ou rééducation communication et langage – handicap moteur/sensoriel/TSA – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">13.8</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">50</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010123. Handicaps moteur, sensoriel et/ou déficiences intellectuelles, paralysie cérébrale, TSA, maladies génétiques. Accord préalable obligatoire (AP). 1ère série : 50 séances ; renouvellement par séries de 50 avec note d'évolution au prescripteur. Bilan de renouvellement requis au-delà de 100 séances. Durée min. 30 min/séance. Tarif : 13,8 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_neuro_vasculaire" model="cps.acte.type">
+      <field name="name">Rééducation pathologies neurologiques d'origine vasculaire, tumorale ou post-traumatique – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">15.7</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">50</field>
+      <field name="duree_seance">45</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010124. Rééducation et/ou maintien et/ou adaptation des fonctions de communication, du langage, des troubles cognitivo-linguistiques et des fonctions oro-myo-faciales. Cumulable avec majoration IFN. Accord préalable obligatoire (AP). 1ère série : 50 séances ; renouvellement par séries de 50 avec note d'évolution. Bilan de renouvellement requis au-delà de 100 séances. Durée ≈ 45 min/séance (min. 30 min). Tarif : 15,7 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_neuro_degenerative" model="cps.acte.type">
+      <field name="name">Rééducation pathologies neuro-dégénératives – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">15.6</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">50</field>
+      <field name="duree_seance">45</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010125. Rééducation et/ou maintien et/ou adaptation des fonctions de communication, du langage, des troubles cognitivo-linguistiques et des fonctions oro-myo-faciales. Cumulable avec majoration IFN. Accord préalable obligatoire (AP). 1ère série : 50 séances ; renouvellement par séries de 50 avec note d'évolution. Bilan de renouvellement requis au-delà de 100 séances. Durée ≈ 45 min/séance (min. 30 min). Tarif : 15,6 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_reeducation_dysphasie" model="cps.acte.type">
+      <field name="name">Rééducation des dysphasies – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">14</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">50</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010126. Accord préalable obligatoire (AP). 1ère série : 50 séances ; renouvellement par séries de 50 avec note d'évolution. Bilan de renouvellement requis au-delà de 100 séances. Durée min. 30 min/séance. Tarif : 14 AMO × 434 F.</field>
+    </record>
+
+    <record id="acte_type_amo_demutisation" model="cps.acte.type">
+      <field name="name">Démutisation, rééducation ou conservation de la communication (implant cochléaire inclus) – séance</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">15.4</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">50</field>
+      <field name="duree_seance">45</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010127. Surdités appareillées ou non, y compris implantation cochléaire. Accord préalable obligatoire (AP). 1ère série : 50 séances ; renouvellement par séries de 50 avec note d'évolution. Bilan de renouvellement requis au-delà de 100 séances. Durée min. 45 min/séance. Tarif : 15,4 AMO × 434 F.</field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- RÉÉDUCATION EN GROUPE                                               -->
+    <!-- Réf. : NPAP §4.1.1, code acte 04010141                             -->
+    <!-- Hors acte en rééducation individuelle exclusive. 4 patients max.   -->
+    <!-- Accord préalable obligatoire (AP). Facturation par séance/patient. -->
+    <!-- ================================================================== -->
+
+    <record id="acte_type_amo_reeducation_groupe" model="cps.acte.type">
+      <field name="name">Rééducation en groupe homogène – séance par patient (4 patients max)</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">9</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">30</field>
+      <field name="note">Réf. NPAP §4.1.1 – code acte 04010141 (modifié arr. n°1239 CM du 31/07/2024). En présentiel, hors rééducation individuelle exclusive. Maximum 4 patients par séance. Accord préalable obligatoire (AP). Facturation à la séance par patient. Tarif : 9 AMO × 434 F.</field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- MAJORATIONS ORTHOPHONIE                                             -->
+    <!-- Réf. : NPAP – Arrêté n° 447 CM du 27 mars 2019, art. 14-IV        -->
+    <!-- ================================================================== -->
+
+    <record id="acte_type_amo_majoration_meo" model="cps.acte.type">
+      <field name="name">Majoration MEO – prise en charge enfant de moins de 3 ans (TSA, syndromes génétiques)</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">0</field>
+      <field name="tarif_unitaire">434</field>
+      <field name="profession">orthophoniste</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">45</field>
+      <field name="note">Réf. NPAP art. 14-IV. Majoration MEO applicable pour les enfants de moins de 3 ans avec diagnostic médical de : troubles sévères des interactions/communication (TSA), syndromes génétiques responsables de troubles du langage, pathologies neurologiques entraînant des troubles du langage. Facturable pour tous les actes de rééducation réalisés jusqu'à la date anniversaire des 3 ans. Supplément au tarif de l'acte de rééducation.</field>
+    </record>
+
+    <record id="acte_type_amo_majoration_ifn" model="cps.acte.type">
+      <field name="name">Indemnité forfaitaire neurologique IFN – pathologies neurologiques ou neuro-dégénératives</field>
+      <field name="lettre_cle">AMO</field>
+      <field name="coefficient_defaut">0</field>
+      <field name="tarif_unitaire">250</field>
+      <field name="profession">orthophoniste</field>
+      <field name="type_supplement">ifn</field>
+      <field name="nb_seances_defaut">1</field>
+      <field name="duree_seance">45</field>
+      <field name="note">Réf. NPAP art. 14-IV. Indemnité forfaitaire neurologique (IFN) facturable pour chaque acte de rééducation et/ou maintien et/ou adaptation des fonctions de communication chez les patients atteints de pathologies neurodégénératives ou neurologiques d'origine vasculaire, tumorale ou post-traumatique. À cumuler avec les actes 04010124 ou 04010125 uniquement. Tarif forfaitaire : 250 F par séance.</field>
+    </record>
+
+  </data>
 </odoo>

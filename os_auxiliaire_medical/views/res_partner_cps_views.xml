@@ -1,56 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ── Onglet CPS dans la fiche partner standard ─────────────────────── -->
-    <record id="view_partner_form_cps_inherit" model="ir.ui.view">
-        <field name="name">res.partner.form.cps</field>
+    <!-- ══════════════════════════════════════════════════════════════════
+         PATIENT — Formulaire standalone (pas d'héritage externe)
+    ══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_partner_patient_form" model="ir.ui.view">
+        <field name="name">res.partner.patient.cps.form</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="l10n_pf.pf_view_partner_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <button name="action_view_feuilles_patient" type="object"
-                        class="oe_stat_button" icon="fa-file-medical"
-                        invisible="not is_patient_cps">
-                    <field name="cps_feuille_patient_count" widget="statinfo" string="Feuilles"/>
-                </button>
-                <button name="action_view_feuilles_praticien" type="object"
-                        class="oe_stat_button" icon="fa-stethoscope"
-                        invisible="not is_praticien_cps">
-                    <field name="cps_feuille_praticien_count" widget="statinfo" string="Feuilles"/>
-                </button>
-                <button name="action_view_bordereaux" type="object"
-                        class="oe_stat_button" icon="fa-list-alt"
-                        invisible="not is_praticien_cps">
-                    <field name="cps_bordereau_count" widget="statinfo" string="Bordereaux"/>
-                </button>
-                <field name="is_praticien_cps" invisible="1"/>
-                <field name="is_patient_cps"   invisible="1"/>
-                <field name="is_prescripteur"  invisible="1"/>
-                <field name="is_cps"           invisible="1"/>
-            </xpath>
-            <xpath expr="//notebook" position="inside">
-                <page name="cps_tab" string="CPS" invisible="not is_cps">
-                    <group string="Identifiant CPS">
-                        <field name="cps_vat_praticien"    invisible="not is_praticien_cps"/>
-                        <field name="cps_vat_patient"      invisible="not is_patient_cps or is_praticien_cps"/>
-                        <field name="cps_vat_prescripteur" invisible="not is_prescripteur or is_praticien_cps or is_patient_cps"/>
+            <form string="Patient CPS">
+                <sheet>
+                    <!-- ── Boutons statistiques ── -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_ordonnances_patient" type="object"
+                                class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="cps_ordonnance_count" widget="statinfo"
+                                   string="Ordonnances"/>
+                        </button>
+                        <button name="action_view_feuilles_patient" type="object"
+                                class="oe_stat_button" icon="fa-file-medical">
+                            <field name="cps_feuille_patient_count" widget="statinfo"
+                                   string="Feuilles"/>
+                        </button>
+                        <button name="action_view_bordereaux_patient" type="object"
+                                class="oe_stat_button" icon="fa-list-alt">
+                            <field name="cps_bordereau_patient_count" widget="statinfo"
+                                   string="Bordereaux"/>
+                        </button>
+                        <button name="action_view_prescripteurs_patient" type="object"
+                                class="oe_stat_button" icon="fa-user-md">
+                            <field name="cps_prescripteur_count" widget="statinfo"
+                                   string="Prescripteurs"/>
+                        </button>
+                        <button name="action_view_praticiens_patient" type="object"
+                                class="oe_stat_button" icon="fa-stethoscope">
+                            <field name="cps_praticien_count" widget="statinfo"
+                                   string="Praticiens"/>
+                        </button>
+                    </div>
+
+                    <!-- ── Identité ── -->
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Identité CPS">
+                            <field name="lastname"       string="Nom"/>
+                            <field name="firstname"      string="Prénom"/>
+                            <field name="vat"            string="N° DN (matricule CPS)"/>
+                            <field name="birthdate_date" string="Date de naissance"/>
+                            <field name="has_mutuelle"   widget="boolean_toggle"
+                                   string="Mutuelle complémentaire"/>
+                        </group>
+                        <group string="Coordonnées">
+                            <field name="phone"/>
+                            <field name="mobile"/>
+                            <field name="email"/>
+                            <field name="street" string="Adresse"/>
+                            <field name="city"/>
+                        </group>
                     </group>
-                    <group string="Praticien CPS" invisible="not is_praticien_cps">
-                        <field name="cps_profession"/>
+
+                    <group string="Étiquettes">
+                        <field name="category_id" widget="many2many_tags"
+                               options="{'color_field': 'color'}" nolabel="1"/>
+                        <field name="company_id"/>
                     </group>
-                    <group string="Patient CPS" invisible="not is_patient_cps">
-                        <field name="birthdate_date" string="Date de naissance"/>
-                    </group>
-                </page>
-            </xpath>
+
+                    <!-- ── Onglets (miroir des boutons stat) ── -->
+                    <notebook>
+                        <page string="Ordonnances" name="ordonnances">
+                            <field name="cps_ordonnance_patient_ids" mode="tree" readonly="1">
+                                <tree string="Ordonnances"
+                                      decoration-danger="date_fin_validite and date_fin_validite &lt; context_today()"
+                                      decoration-warning="state == 'en_cours'">
+                                    <field name="name"              string="Référence"/>
+                                    <field name="praticien_id"      string="Praticien"/>
+                                    <field name="prescripteur_id"   string="Prescripteur"/>
+                                    <field name="date_prescription" string="Prescription"/>
+                                    <field name="date_fin_validite" string="Fin validité"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'terminee'"
+                                           decoration-warning="state == 'en_cours'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Feuilles de soins" name="feuilles">
+                            <field name="cps_feuille_patient_ids" mode="tree" readonly="1">
+                                <tree string="Feuilles de soins"
+                                      decoration-success="state == 'paid'"
+                                      decoration-info="state == 'submitted'"
+                                      decoration-muted="state == 'cancelled'">
+                                    <field name="name"                string="N° Facture"/>
+                                    <field name="praticien_id"        string="Praticien"/>
+                                    <field name="date_debut_soins"    string="Du"/>
+                                    <field name="date_fin_soins"      string="Au"/>
+                                    <field name="montant_total"       string="Total"
+                                           sum="Total général"/>
+                                    <field name="montant_tiers_payant" string="Part CPS"
+                                           sum="Total CPS"/>
+                                    <field name="montant_patient"     string="Part patient"
+                                           sum="Total patient"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'paid'"
+                                           decoration-info="state == 'submitted'"
+                                           decoration-warning="state == 'confirmed'"
+                                           decoration-muted="state == 'cancelled'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         VUE KANBAN – Patients (point d'entrée du module)
-    ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ── Liste patients ── -->
+    <record id="view_partner_patient_list" model="ir.ui.view">
+        <field name="name">res.partner.patient.cps.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree string="Patients CPS">
+                <field name="lastname"                    string="Nom"/>
+                <field name="firstname"                   string="Prénom"/>
+                <field name="vat"                         string="N° DN"/>
+                <field name="birthdate_date"              string="Naissance"/>
+                <field name="phone"/>
+                <field name="cps_ordonnance_count"        string="Ord."     optional="show"/>
+                <field name="cps_feuille_patient_count"   string="Feuilles" optional="show"/>
+                <field name="cps_bordereau_patient_count" string="Bdx"      optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ── Kanban patients ── -->
     <record id="view_partner_patient_kanban" model="ir.ui.view">
-        <field name="name">res.partner.patient.kanban</field>
+        <field name="name">res.partner.patient.cps.kanban</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <kanban>
@@ -66,21 +154,20 @@
                 <field name="cps_bordereau_patient_count"/>
                 <field name="cps_prescripteur_count"/>
                 <field name="cps_praticien_count"/>
-
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card o_kanban_record d-flex flex-column"
                              style="min-width:220px;">
-
-                            <div style="background:#1F6B3A; padding:10px 14px; border-radius:4px 4px 0 0;">
-                                <div class="fw-bold text-white" style="font-size:15px; line-height:1.3;">
+                            <div style="background:#1F6B3A; padding:10px 14px;
+                                        border-radius:4px 4px 0 0;">
+                                <div class="fw-bold text-white"
+                                     style="font-size:15px; line-height:1.3;">
                                     <t t-esc="record.lastname.value"/>&#160;<t t-esc="record.firstname.value"/>
                                 </div>
                                 <div class="text-white-50 small mt-1">
                                     DN&#160;: <t t-esc="record.vat.value or '—'"/>
                                 </div>
                             </div>
-
                             <div class="oe_kanban_global_click flex-grow-1 px-3 py-2">
                                 <div class="text-muted small" t-if="record.birthdate_date.value">
                                     <i class="fa fa-birthday-cake fa-fw me-1"/>
@@ -96,11 +183,12 @@
                                     <t t-esc="record.mobile.value"/>
                                 </div>
                             </div>
-
-                            <div class="border-top d-flex" style="border-radius:0 0 4px 4px; overflow:hidden;">
+                            <div class="border-top d-flex"
+                                 style="border-radius:0 0 4px 4px; overflow:hidden;">
                                 <button type="object" name="action_view_ordonnances_patient"
                                         class="btn btn-sm flex-fill text-center py-2 border-end"
-                                        style="border-radius:0; background:transparent;" title="Ordonnances">
+                                        style="border-radius:0; background:transparent;"
+                                        title="Ordonnances">
                                     <div class="fw-bold" style="color:#1F6B3A; font-size:16px;">
                                         <t t-esc="record.cps_ordonnance_count.value"/>
                                     </div>
@@ -108,7 +196,8 @@
                                 </button>
                                 <button type="object" name="action_view_feuilles_patient"
                                         class="btn btn-sm flex-fill text-center py-2 border-end"
-                                        style="border-radius:0; background:transparent;" title="Feuilles de soins">
+                                        style="border-radius:0; background:transparent;"
+                                        title="Feuilles de soins">
                                     <div class="fw-bold" style="color:#1F6B3A; font-size:16px;">
                                         <t t-esc="record.cps_feuille_patient_count.value"/>
                                     </div>
@@ -116,7 +205,8 @@
                                 </button>
                                 <button type="object" name="action_view_bordereaux_patient"
                                         class="btn btn-sm flex-fill text-center py-2 border-end"
-                                        style="border-radius:0; background:transparent;" title="Bordereaux">
+                                        style="border-radius:0; background:transparent;"
+                                        title="Bordereaux">
                                     <div class="fw-bold" style="color:#1F6B3A; font-size:16px;">
                                         <t t-esc="record.cps_bordereau_patient_count.value"/>
                                     </div>
@@ -124,7 +214,8 @@
                                 </button>
                                 <button type="object" name="action_view_prescripteurs_patient"
                                         class="btn btn-sm flex-fill text-center py-2 border-end"
-                                        style="border-radius:0; background:transparent;" title="Prescripteurs">
+                                        style="border-radius:0; background:transparent;"
+                                        title="Prescripteurs">
                                     <div class="fw-bold" style="color:#1F6B3A; font-size:16px;">
                                         <t t-esc="record.cps_prescripteur_count.value"/>
                                     </div>
@@ -132,7 +223,8 @@
                                 </button>
                                 <button type="object" name="action_view_praticiens_patient"
                                         class="btn btn-sm flex-fill text-center py-2"
-                                        style="border-radius:0; background:transparent;" title="Praticiens">
+                                        style="border-radius:0; background:transparent;"
+                                        title="Praticiens">
                                     <div class="fw-bold" style="color:#1F6B3A; font-size:16px;">
                                         <t t-esc="record.cps_praticien_count.value"/>
                                     </div>
@@ -146,193 +238,34 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         VUE RECHERCHE Patient (filtre 5 jours sur date_debut_soins)
-    ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ── Recherche patients ── -->
     <record id="view_partner_patient_search" model="ir.ui.view">
-        <field name="name">res.partner.patient.search</field>
+        <field name="name">res.partner.patient.cps.search</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <search string="Rechercher un patient">
-                <field name="name"            string="Nom / Prénom"/>
-                <field name="cps_vat_patient" string="N° DN"/>
-                <field name="phone"           string="Téléphone"/>
-
-                <!-- Filtre par défaut : patients avec séance dans les 5 prochains jours -->
-                <filter name="5_jours"
-                        string="5 prochains jours"
+                <field name="name"   string="Nom / Prénom"/>
+                <field name="vat"    string="N° DN"/>
+                <field name="phone"  string="Téléphone"/>
+                <filter name="5_jours" string="5 prochains jours"
                         domain="[
-                            ('cps_feuille_patient_ids.date_debut_soins', '&gt;=', context_today().strftime('%Y-%m-%d')),
-                            ('cps_feuille_patient_ids.date_debut_soins', '&lt;=', (context_today() + relativedelta(days=5)).strftime('%Y-%m-%d'))
+                            ('cps_feuille_patient_ids.date_debut_soins', '&gt;=',
+                              context_today().strftime('%Y-%m-%d')),
+                            ('cps_feuille_patient_ids.date_debut_soins', '&lt;=',
+                              (context_today() + relativedelta(days=5)).strftime('%Y-%m-%d'))
                         ]"/>
-
-                <filter name="avec_ordonnance_active"
-                        string="Ordonnance en cours"
+                <filter name="avec_ordonnance_active" string="Ordonnance en cours"
                         domain="[('cps_ordonnance_patient_ids.state', '=', 'en_cours')]"/>
-
                 <separator/>
                 <group expand="0" string="Grouper par">
-                    <filter name="g_ville"    string="Ville"
-                            context="{'group_by': 'city'}"/>
-                    <filter name="g_societe"  string="Société"
-                            context="{'group_by': 'company_id'}"/>
+                    <filter name="g_ville"   string="Ville"   context="{'group_by': 'city'}"/>
+                    <filter name="g_societe" string="Société" context="{'group_by': 'company_id'}"/>
                 </group>
             </search>
         </field>
     </record>
 
-
-    <!-- ══════════════════════════════════════════════════════════════════
-         Vues Praticien
-    ══════════════════════════════════════════════════════════════════════ -->
-    <record id="view_partner_praticien_form" model="ir.ui.view">
-        <field name="name">res.partner.praticien.form</field>
-        <field name="model">res.partner</field>
-        <field name="arch" type="xml">
-            <form string="Praticien CPS">
-                <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="action_view_feuilles_praticien" type="object"
-                                class="oe_stat_button" icon="fa-stethoscope">
-                            <field name="cps_feuille_praticien_count" widget="statinfo" string="Feuilles"/>
-                        </button>
-                        <button name="action_view_bordereaux" type="object"
-                                class="oe_stat_button" icon="fa-list-alt">
-                            <field name="cps_bordereau_count" widget="statinfo" string="Bordereaux"/>
-                        </button>
-                    </div>
-                    <div class="oe_title"><label for="name"/><h1><field name="name"/></h1></div>
-                    <group>
-                        <group string="Identification CPS">
-                            <field name="cps_vat_praticien"/>
-                            <field name="cps_profession" readonly="1" string="Profession"/>
-                            <field name="category_id" widget="many2many_tags"
-                                   options="{'color_field': 'color'}" string="Étiquettes"/>
-                        </group>
-                        <group string="Coordonnées">
-                            <field name="phone"/>
-                            <field name="mobile"/>
-                            <field name="email"/>
-                            <field name="street" string="BP / Adresse"/>
-                        </group>
-                    </group>
-                    <group string="Compte Odoo associé">
-                        <field name="user_id"/>
-                        <field name="company_id"/>
-                    </group>
-                </sheet>
-                <chatter/>
-            </form>
-        </field>
-    </record>
-
-    <record id="view_partner_praticien_list" model="ir.ui.view">
-        <field name="name">res.partner.praticien.list</field>
-        <field name="model">res.partner</field>
-        <field name="arch" type="xml">
-            <tree string="Praticiens CPS">
-                <field name="name"/>
-                <field name="cps_vat_praticien" string="Code auxiliaire (CPS)"/>
-                <field name="cps_profession"/>
-                <field name="phone"/>
-                <field name="user_id"/>
-                <field name="cps_feuille_praticien_count" string="Feuilles"/>
-                <field name="company_id" optional="show"/>
-            </tree>
-        </field>
-    </record>
-
-    <record id="action_praticien_partner" model="ir.actions.act_window">
-        <field name="name">Praticiens</field>
-        <field name="res_model">res.partner</field>
-        <field name="domain">[('category_id.name', '=', 'Praticien CPS'), ('is_company', '=', False)]</field>
-        <field name="context" eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_praticien'))], 'search_default_customer_rank': 0}"/>
-        <field name="view_mode">tree,form</field>
-        <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_praticien_list')}),
-            (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_praticien_form')})]"/>
-    </record>
-
-    <!-- ══════════════════════════════════════════════════════════════════
-         Vues Patient (form + liste)
-    ══════════════════════════════════════════════════════════════════════ -->
-    <record id="view_partner_patient_form" model="ir.ui.view">
-        <field name="name">res.partner.patient.form</field>
-        <field name="model">res.partner</field>
-        <field name="arch" type="xml">
-            <form string="Patient CPS">
-                <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="action_view_ordonnances_patient" type="object"
-                                class="oe_stat_button" icon="fa-file-text-o">
-                            <field name="cps_ordonnance_count" widget="statinfo" string="Ordonnances"/>
-                        </button>
-                        <button name="action_view_feuilles_patient" type="object"
-                                class="oe_stat_button" icon="fa-file-medical">
-                            <field name="cps_feuille_patient_count" widget="statinfo" string="Feuilles"/>
-                        </button>
-                        <button name="action_view_bordereaux_patient" type="object"
-                                class="oe_stat_button" icon="fa-list-alt">
-                            <field name="cps_bordereau_patient_count" widget="statinfo" string="Bordereaux"/>
-                        </button>
-                        <button name="action_view_prescripteurs_patient" type="object"
-                                class="oe_stat_button" icon="fa-user-md">
-                            <field name="cps_prescripteur_count" widget="statinfo" string="Prescripteurs"/>
-                        </button>
-                        <button name="action_view_praticiens_patient" type="object"
-                                class="oe_stat_button" icon="fa-stethoscope">
-                            <field name="cps_praticien_count" widget="statinfo" string="Praticiens"/>
-                        </button>
-                    </div>
-                    <div class="oe_title"><label for="name"/><h1><field name="name"/></h1></div>
-                    <group>
-                        <group string="Identité CPS">
-                            <field name="lastname"       string="Nom"/>
-                            <field name="firstname"      string="Prénom"/>
-                            <field name="cps_vat_patient"/>
-                            <field name="has_mutuelle"
-                                   widget="boolean_toggle"
-                                   string="Mutuelle"
-                                   help="Cocher si ce patient dispose d'une mutuelle prenant en charge la part restante après remboursement CPS."
-                            />
-                            <field name="birthdate_date" string="Date de naissance"/>
-                        </group>
-                        <group string="Coordonnées">
-                            <field name="phone"/>
-                            <field name="mobile"/>
-                            <field name="email"/>
-                            <field name="street" string="Adresse"/>
-                        </group>
-                    </group>
-                    <group string="Étiquettes">
-                        <field name="category_id" widget="many2many_tags"
-                               options="{'color_field': 'color'}" nolabel="1"/>
-                        <field name="company_id"/>
-                    </group>
-                </sheet>
-                <chatter/>
-            </form>
-        </field>
-    </record>
-
-    <record id="view_partner_patient_list" model="ir.ui.view">
-        <field name="name">res.partner.patient.list</field>
-        <field name="model">res.partner</field>
-        <field name="arch" type="xml">
-            <tree string="Patients CPS">
-                <field name="lastname"               string="Nom"/>
-                <field name="firstname"              string="Prénom"/>
-                <field name="cps_vat_patient"        string="N° DN"/>
-                <field name="birthdate_date"         string="Naissance"/>
-                <field name="phone"/>
-                <field name="cps_ordonnance_count"        string="Ord."     optional="show"/>
-                <field name="cps_feuille_patient_count"   string="Feuilles" optional="show"/>
-                <field name="cps_bordereau_patient_count" string="Bdx"      optional="show"/>
-            </tree>
-        </field>
-    </record>
-
-    <!-- ACTION Patient : kanban en premier, filtre 5 jours par défaut -->
+    <!-- ── Action patients ── -->
     <record id="action_patient_partner" model="ir.actions.act_window">
         <field name="name">Patients</field>
         <field name="res_model">res.partner</field>
@@ -346,23 +279,173 @@
         }"/>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_partner_patient_kanban')}),
-            (0, 0, {'view_mode': 'tree',   'view_id': ref('view_partner_patient_list')}),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_patient_list')}),
             (0, 0, {'view_mode': 'form',   'view_id': ref('view_partner_patient_form')})]"/>
     </record>
 
+
     <!-- ══════════════════════════════════════════════════════════════════
-         Vues Prescripteur
+         PRATICIEN — Formulaire standalone
+    ══════════════════════════════════════════════════════════════════════ -->
+    <record id="view_partner_praticien_form" model="ir.ui.view">
+        <field name="name">res.partner.praticien.cps.form</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="Praticien CPS">
+                <sheet>
+                    <!-- ── Boutons statistiques ── -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_feuilles_praticien" type="object"
+                                class="oe_stat_button" icon="fa-stethoscope">
+                            <field name="cps_feuille_praticien_count" widget="statinfo"
+                                   string="Feuilles"/>
+                        </button>
+                        <button name="action_view_bordereaux" type="object"
+                                class="oe_stat_button" icon="fa-list-alt">
+                            <field name="cps_bordereau_count" widget="statinfo"
+                                   string="Bordereaux"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Identification CPS">
+                            <field name="vat"          string="Code auxiliaire médical (CPS)"/>
+                            <field name="cps_profession" readonly="1" string="Profession"/>
+                            <field name="category_id"  widget="many2many_tags"
+                                   options="{'color_field': 'color'}" string="Étiquettes"/>
+                        </group>
+                        <group string="Coordonnées">
+                            <field name="phone"/>
+                            <field name="mobile"/>
+                            <field name="email"/>
+                            <field name="street" string="BP / Adresse"/>
+                        </group>
+                    </group>
+
+                    <group string="Compte Odoo associé">
+                        <field name="user_id"/>
+                        <field name="company_id"/>
+                    </group>
+
+                    <!-- ── Onglets ── -->
+                    <notebook>
+                        <page string="Feuilles de soins" name="feuilles">
+                            <field name="cps_feuille_praticien_ids" mode="tree" readonly="1">
+                                <tree string="Feuilles de soins"
+                                      decoration-success="state == 'paid'"
+                                      decoration-info="state == 'submitted'"
+                                      decoration-muted="state == 'cancelled'">
+                                    <field name="name"                string="N° Facture"/>
+                                    <field name="patient_id"          string="Patient"/>
+                                    <field name="patient_dn"          string="DN"/>
+                                    <field name="date_debut_soins"    string="Du"/>
+                                    <field name="date_fin_soins"      string="Au"/>
+                                    <field name="montant_tiers_payant" string="Part CPS"
+                                           sum="Total CPS"/>
+                                    <field name="montant_patient"     string="Part patient"
+                                           sum="Total patient"/>
+                                    <field name="montant_total"       string="Total"
+                                           sum="Total général"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'paid'"
+                                           decoration-info="state == 'submitted'"
+                                           decoration-warning="state == 'confirmed'"
+                                           decoration-muted="state == 'cancelled'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Bordereaux" name="bordereaux">
+                            <field name="cps_bordereau_ids" mode="tree" readonly="1">
+                                <tree string="Bordereaux"
+                                      decoration-success="state == 'closed'"
+                                      decoration-info="state == 'submitted'">
+                                    <field name="name"           string="N° Bordereau"/>
+                                    <field name="mois"           string="Période"/>
+                                    <field name="date_bordereau" string="Date"/>
+                                    <field name="nb_feuilles"    string="Feuilles"/>
+                                    <field name="total_cps"      string="Total CPS"
+                                           sum="Total CPS"/>
+                                    <field name="total_general"  string="Total général"
+                                           sum="Total général"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'closed'"
+                                           decoration-info="state == 'submitted'"
+                                           decoration-warning="state == 'validated'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Liste praticiens ── -->
+    <record id="view_partner_praticien_list" model="ir.ui.view">
+        <field name="name">res.partner.praticien.cps.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <tree string="Praticiens CPS">
+                <field name="name"/>
+                <field name="vat"                         string="Code auxiliaire (CPS)"/>
+                <field name="cps_profession"              string="Profession"/>
+                <field name="phone"/>
+                <field name="user_id"                     optional="hide"/>
+                <field name="cps_feuille_praticien_count" string="Feuilles"/>
+                <field name="cps_bordereau_count"         string="Bordereaux"/>
+                <field name="company_id"                  optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ── Action praticiens ── -->
+    <record id="action_praticien_partner" model="ir.actions.act_window">
+        <field name="name">Praticiens</field>
+        <field name="res_model">res.partner</field>
+        <field name="domain">[('category_id.name', '=', 'Praticien CPS'),
+                              ('is_company', '=', False)]</field>
+        <field name="context" eval="{'default_category_id':
+            [(4, ref('os_auxiliaire_medical.partner_category_praticien'))],
+            'search_default_customer_rank': 0}"/>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_praticien_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_praticien_form')})]"/>
+    </record>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         PRESCRIPTEUR — Formulaire standalone
     ══════════════════════════════════════════════════════════════════════ -->
     <record id="view_partner_prescripteur_form" model="ir.ui.view">
-        <field name="name">res.partner.prescripteur.form</field>
+        <field name="name">res.partner.prescripteur.cps.form</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <form string="Prescripteur">
                 <sheet>
-                    <div class="oe_title"><label for="name"/><h1><field name="name"/></h1></div>
+                    <!-- ── Bouton statistique ── -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_ordonnances_prescripteur" type="object"
+                                class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="cps_ordonnance_prescripteur_count"
+                                   widget="statinfo" string="Ordonnances"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+
                     <group>
                         <group string="Identification">
-                            <field name="cps_vat_prescripteur"/>
+                            <field name="vat"         string="Code AM / RPPS"/>
                             <field name="category_id" widget="many2many_tags"
                                    options="{'color_field': 'color'}" string="Étiquettes"/>
                         </group>
@@ -374,30 +457,56 @@
                             <field name="city"/>
                         </group>
                     </group>
+
+                    <!-- ── Onglet ordonnances ── -->
+                    <notebook>
+                        <page string="Ordonnances prescrites" name="ordonnances">
+                            <field name="cps_ordonnance_prescripteur_ids" mode="tree"
+                                   readonly="1">
+                                <tree string="Ordonnances prescrites"
+                                      decoration-danger="date_fin_validite and date_fin_validite &lt; context_today()"
+                                      decoration-warning="state == 'en_cours'">
+                                    <field name="name"              string="Référence"/>
+                                    <field name="patient_id"        string="Patient"/>
+                                    <field name="praticien_id"      string="Praticien"/>
+                                    <field name="date_prescription" string="Prescription"/>
+                                    <field name="date_fin_validite" string="Fin validité"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'terminee'"
+                                           decoration-warning="state == 'en_cours'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
             </form>
         </field>
     </record>
 
+    <!-- ── Liste prescripteurs ── -->
     <record id="view_partner_prescripteur_list" model="ir.ui.view">
-        <field name="name">res.partner.prescripteur.list</field>
+        <field name="name">res.partner.prescripteur.cps.list</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <tree string="Prescripteurs">
                 <field name="name"/>
-                <field name="cps_vat_prescripteur" string="Code AM/RPPS"/>
+                <field name="vat"   string="Code AM/RPPS"/>
                 <field name="phone"/>
                 <field name="city"/>
+                <field name="cps_ordonnance_prescripteur_count" string="Ordonnances"/>
             </tree>
         </field>
     </record>
 
+    <!-- ── Action prescripteurs ── -->
     <record id="action_prescripteur_partner" model="ir.actions.act_window">
         <field name="name">Prescripteurs</field>
         <field name="res_model">res.partner</field>
         <field name="domain">[('category_id.name', '=', 'Prescripteur')]</field>
-        <field name="context" eval="{'default_category_id': [(4, ref('os_auxiliaire_medical.partner_category_prescripteur'))], 'search_default_customer_rank': 0}"/>
+        <field name="context" eval="{'default_category_id':
+            [(4, ref('os_auxiliaire_medical.partner_category_prescripteur'))],
+            'search_default_customer_rank': 0}"/>
         <field name="view_mode">tree,form</field>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_prescripteur_list')}),

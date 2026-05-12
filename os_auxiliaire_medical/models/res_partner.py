@@ -131,17 +131,25 @@ class ResPartner(models.Model):
     cps_bordereau_ids = fields.One2many('cps.bordereau', 'praticien_id', string='Bordereaux')
     cps_bordereau_count = fields.Integer(compute='_compute_cps_counts')
 
+    # ── Relations prescripteur ───────────────────────────────────────────────────
+    cps_ordonnance_prescripteur_ids = fields.One2many(
+        'cps.ordonnance', 'prescripteur_id', string='Ordonnances prescrites',
+    )
+    cps_ordonnance_prescripteur_count = fields.Integer(compute='_compute_cps_counts')
+
     # ── Compute compteurs ─────────────────────────────────────────────────────
     @api.depends(
         'cps_feuille_patient_ids',
         'cps_feuille_praticien_ids',
         'cps_bordereau_ids',
+        'cps_ordonnance_prescripteur_ids',
     )
     def _compute_cps_counts(self):
         for rec in self:
             rec.cps_feuille_patient_count = len(rec.cps_feuille_patient_ids)
             rec.cps_feuille_praticien_count = len(rec.cps_feuille_praticien_ids)
             rec.cps_bordereau_count = len(rec.cps_bordereau_ids)
+            rec.cps_ordonnance_prescripteur_count = len(rec.cps_ordonnance_prescripteur_ids)
 
     @api.depends(
         'cps_ordonnance_patient_ids',
@@ -255,3 +263,14 @@ class ResPartner(models.Model):
                 'res_model': 'res.partner', 'view_mode': 'tree,form',
                 'domain': [('id', 'in', ids)],
                 'context': {'search_default_customer_rank': 0}}
+
+    def action_view_ordonnances_prescripteur(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Ordonnances prescrites'),
+            'res_model': 'cps.ordonnance',
+            'view_mode': 'tree,form',
+            'domain': [('prescripteur_id', '=', self.id)],
+            'context': {'default_prescripteur_id': self.id},
+        }

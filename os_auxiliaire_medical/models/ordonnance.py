@@ -1,5 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from datetime import timedelta
+
 import base64
 import requests
 
@@ -92,10 +94,9 @@ class CpsOrdonnance(models.Model):
                     'cps.ordonnance'
                 ) or '/'
             if not vals.get('date_fin_validite') and vals.get('date_prescription'):
-                from datetime import date, timedelta
                 validite = int(
                     self.env['ir.config_parameter'].sudo()
-                    .get_param('cps.ordonnance.validite_jours', 90)
+                    .get_param('cps.ordonnance.validite_jours', 1096)
                 )
                 d = fields.Date.from_string(vals['date_prescription'])
                 vals['date_fin_validite'] = (d + timedelta(days=validite)).isoformat()

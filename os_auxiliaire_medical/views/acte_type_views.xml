@@ -73,17 +73,22 @@
               <field name="type_supplement"/>
             </group>
           </group>
-          <group string="Paramètres de séance">
-            <field name="duree_seance"/>
-            <field name="nb_seances_defaut"/>
-            <field name="nb_seances_max"/>
-            <field name="delai_min_jours"/>
-          </group>
           <group>
-            <field name="sequence"/>
-            <field name="active"/>
-            <field name="company_id" />
-            <field name="is_company_override" invisible="1"/>
+            <group string="Paramètres de séance">
+              <field name="duree_seance"/>
+              <field name="nb_seances_defaut"/>
+              <field name="nb_seances_max"/>
+              <field name="delai_min_jours"/>
+            </group>
+            <group string="Paramètres techniques">
+              <field name="sequence"/>
+              <field name="active"/>
+              <field name="company_id" />
+              <field name="is_company_override" invisible="1"/>
+            </group>
+          </group>
+          <group string="Note" colspan="2">
+            <field name="note" widget="text" placeholder="Saisissez ici des notes internes (non imprimées sur les feuilles de soins)"/>
           </group>
         </sheet>
       </form>

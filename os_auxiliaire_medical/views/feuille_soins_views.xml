@@ -258,16 +258,17 @@
         <field name="arch" type="xml">
             <calendar string="Agenda des séances"
                       date_start="datetime_acte"
+                      date_delay="heure_acte"
                       color="patient_id"
                       mode="week"
-                      quick_create="0"
+                      quick_create="true"
                       event_limit="8">
                 <field name="patient_id"   string="Patient"/>
                 <field name="praticien_id" string="Praticien"/>
                 <field name="state_seance" string="Statut"/>
                 <field name="lettre_cle"   string="Acte"/>
                 <field name="coefficient"  string="Coefficient"/>
-                <field name="montant"      string="Montant (F)"/>
+                <field name="montant"      string="Montant"/>
             </calendar>
         </field>
     </record>

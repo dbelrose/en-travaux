@@ -5,8 +5,9 @@
         <record id="seq_feuille_soins" model="ir.sequence">
             <field name="name">Feuille de soins CPS</field>
             <field name="code">cps.feuille.soins</field>
-            <field name="prefix">FSA-%(year)s-</field>
-            <field name="padding">5</field>
+            <field name="prefix">O%(year)s%(month)s%(day)s</field>
+            <field name="use_date_range">True</field>
+            <field name="padding">3</field>
             <field name="number_next">1</field>
             <field name="number_increment">1</field>
         </record>
@@ -15,7 +16,7 @@
         <record id="seq_fsa_numero" model="ir.sequence">
             <field name="name">N° FSA25 (feuille de soins CPS)</field>
             <field name="code">cps.feuille.soins.fsa</field>
-            <field name="prefix"></field>
+            <field name="prefix"/>
             <field name="padding">6</field>
             <field name="number_next">1</field>
             <field name="number_increment">1</field>
@@ -25,8 +26,9 @@
         <record id="seq_bordereau" model="ir.sequence">
             <field name="name">Bordereau CPS</field>
             <field name="code">cps.bordereau</field>
-            <field name="prefix">BD-%(year)s%(month)s</field>
-            <field name="padding">4</field>
+            <field name="prefix">B%(year)s%(month)s</field>
+            <field name="use_date_range">True</field>
+            <field name="padding">3</field>
             <field name="number_next">1</field>
             <field name="number_increment">1</field>
         </record>
@@ -35,8 +37,9 @@
         <record id="seq_ordonnance" model="ir.sequence">
             <field name="name">Ordonnance CPS</field>
             <field name="code">cps.ordonnance</field>
-            <field name="prefix">ORD-%(year)s-</field>
-            <field name="padding">4</field>
+            <field name="prefix">P%(year)s%(month)s%(day)s</field>
+            <field name="use_date_range">True</field>
+            <field name="padding">3</field>
             <field name="number_next">1</field>
             <field name="number_increment">1</field>
         </record>

@@ -78,6 +78,8 @@ class CpsActeType(models.Model):
         help="Coché si cet acte est une personnalisation d'un acte partagé pour cette société.",
     )
 
+    note = fields.Text(string='Note', help="Note de référence aux textes.")
+
     @api.depends('coefficient_defaut', 'tarif_unitaire', 'type_supplement')
     def _compute_montant_indicatif(self):
         for rec in self:
