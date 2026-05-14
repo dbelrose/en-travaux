@@ -37,6 +37,7 @@
 
         'views/res_partner_cps_views.xml',      # ← FIX libellé VAT + multi-société
         'views/acte_type_views.xml',            # ← FIX filtre profession + personnalisation société
+        'views/acte_type_views_patch.xml',
         'views/ordonnance_views.xml',           # ← FIX quantité par défaut
         'views/bordereau_modele_views.xml',     # ← NOUVEAU
         'views/bordereau_views.xml',            # ← NOUVEAU sélection modèle document

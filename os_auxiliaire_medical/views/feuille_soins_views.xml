@@ -11,23 +11,40 @@
             <form string="Feuille de soins">
                 <header>
                     <button name="action_confirm" string="Confirmer" type="object"
-                            class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_submit" string="Soumettre à la CPS" type="object"
-                            class="btn-primary" invisible="state != 'confirmed'"/>
-                    <button name="action_paid" string="Marquer remboursée" type="object"
-                            invisible="state != 'submitted'"/>
-                    <button name="action_cancel" string="Annuler" type="object"
-                            invisible="state in ('cancelled', 'paid')"/>
-                    <button name="action_reset_draft" string="Remettre en brouillon" type="object"
+                            icon="fa-check" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_paid" string="Remboursée" type="object"
+                            icon="fa-euro" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="Remettre en brouillon"
+                            type="object" icon="fa-undo"
                             invisible="state != 'cancelled'"/>
-<!--                    <button name="os_pdf_report_generator.pdf_report_4" string="Imprimer"-->
-<!--                            type="action" icon="fa-print"/>-->
+                    <button name="action_print_facture_mutuelle"
+                            string="Facture mutuelle" type="object"
+                            icon="fa-file-text-o"
+                            invisible="not has_mutuelle"/>
+                    <button name="os_pdf_report_generator.pf_fsa25_feuille_soins_sans_fond"
+                            string="Imprimer sur formulaire"
+                            invisible="state != 'confirmed'"
+                            class="btn-primary"
+                            type="action"
+                            icon="fa-print"/>
+                    <button name="os_pdf_report_generator.pf_fsa25_feuille_soins_avec_fond"
+                            string="Imprimer sur page vierge"
+                            invisible="state != 'confirmed'"
+                            type="action"
+                            icon="fa-print"/>
+                    <button name="action_cancel" string="Annuler" type="object"
+                            icon="fa-ban"
+                            invisible="state in ('cancelled', 'paid')"/>
+                    <button name="action_submit" string="Soumettre à la CPS" type="object"
+                            icon="fa-paper-plane"
+                            invisible="state != 'confirmed'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,confirmed,submitted,paid"/>
                 </header>
                 <sheet>
 
-                    <!-- ── Alerte séances futures (brouillon forcé) ─────── -->
+                    <!-- ── Alerte séances futures ──────────────────── -->
                     <div class="alert alert-warning mb8"
                          invisible="not has_future_seances or state != 'draft'">
                         <i class="fa fa-clock-o me-2"/>
@@ -45,11 +62,12 @@
                     <field name="photo_feuille" widget="image" class="oe_avatar"
                            options="{'preview_image': 'photo_feuille'}"/>
 
+                    <!-- Ordonnance : exclut celles dont toutes les séances sont planifiées/réalisées -->
                     <group string="1 – Ordonnance (import automatique)">
                         <field name="ordonnance_id"
-                               domain="[('state', 'in', ['en_cours', 'brouillon'])]"
+                               domain="[('state', 'in', ['en_cours', 'brouillon']), ('has_seances_disponibles', '=', True)]"
                                options="{'no_create': False}"
-                               help="Sélectionnez l'ordonnance EN PREMIER : patient, praticien et prescription sont importés automatiquement."/>
+                               help="Sélectionnez l'ordonnance EN PREMIER : patient, praticien et prescription sont importés automatiquement. Seules les ordonnances ayant encore des séances disponibles sont proposées."/>
                     </group>
 
                     <group>
@@ -59,6 +77,8 @@
                                    options="{'quick_create': False}"
                                    readonly="ordonnance_id != False"/>
                             <field name="patient_dn" readonly="1" string="DN"/>
+                            <field name="has_mutuelle" widget="boolean_toggle"
+                                   string="Mutuelle" readonly="1"/>
                         </group>
                         <group string="3 – Auxiliaire médical">
                             <field name="auxiliaire_remplacant"/>
@@ -82,10 +102,10 @@
 
                     <group>
                         <group string="Prescription">
-                            <field name="parcours_soins"/>
+                            <!-- parcours_soins coché automatiquement si ordonnance sélectionnée -->
+                            <field name="parcours_soins" widget="boolean_toggle"/>
                             <field name="code_prescripteur"/>
                             <field name="date_prescription"/>
-                            <!-- Date de la feuille FSA25 (max today / last séance) -->
                             <field name="date_feuille"
                                    help="Date du formulaire FSA25 : au maximum entre la date du jour et la date de la dernière séance."/>
                         </group>
@@ -100,14 +120,15 @@
                         </group>
                     </group>
 
-                    <!-- Champs techniques (invisible, pour les rules de vue) -->
                     <field name="has_future_seances" invisible="1"/>
+                    <field name="has_mutuelle" invisible="1"/>
 
                     <notebook>
-                        <page string="Prestations des actes">
+                        <page string="Prestations des actes" name="actes">
                             <div class="mb8" invisible="state != 'draft'">
                                 <button name="action_open_date_wizard"
-                                        string="📅 Ajouter des séances par sélection de dates"
+                                        string="Ajouter des séances par sélection de dates"
+                                        icon="fa-calendar-plus-o"
                                         type="object" class="btn btn-secondary"/>
                             </div>
                             <field name="acte_ids">
@@ -123,7 +144,6 @@
                                     <field name="date_acte"/>
                                     <field name="heure_acte" widget="float_time" string="Heure"
                                            optional="show"/>
-                                    <!-- Statut de la séance -->
                                     <field name="state_seance"
                                            widget="badge"
                                            decoration-success="state_seance == 'effectuee'"
@@ -136,15 +156,22 @@
                                     <field name="ik"/>
                                     <field name="dimanche_ferie"/>
                                     <field name="nuit"/>
-                                    <field name="ordonnance_ligne_id" optional="show" string="Ord."/>
+                                    <field name="ordonnance_ligne_id" optional="show" string="Ligne ord."/>
+                                    <!-- Restantes officiel (sans planifiées) -->
                                     <field name="seances_restantes" optional="show" readonly="1"
+                                           string="Rest."
                                            decoration-danger="seances_restantes == 0"
                                            decoration-warning="seances_restantes &gt; 0 and seances_restantes &lt;= 3"/>
+                                    <!-- Restantes théoriques (planifiées comptées) -->
+                                    <field name="seances_theorique_restantes" optional="show" readonly="1"
+                                           string="Rest. (théor.)"
+                                           decoration-danger="seances_theorique_restantes == 0"
+                                           decoration-warning="seances_theorique_restantes &gt; 0 and seances_theorique_restantes &lt;= 3"/>
                                     <field name="montant" sum="Montant total"/>
                                 </tree>
                             </field>
                         </page>
-                        <page string="Facturation tiers payant">
+                        <page string="Facturation tiers payant" name="facturation">
                             <group>
                                 <field name="taux_remboursement"/>
                                 <field name="montant_total"        readonly="1"/>
@@ -152,7 +179,7 @@
                                 <field name="montant_patient"      readonly="1"/>
                             </group>
                         </page>
-                        <page string="Bordereau">
+                        <page string="Bordereau" name="bordereau">
                             <group>
                                 <field name="bordereau_id"     readonly="1"/>
                                 <field name="date_debut_soins" readonly="1"/>
@@ -250,31 +277,173 @@
     </record>
 
     <!-- ══════════════════════════════════════════════════════════════════
+         VUE FORMULAIRE – sur cps.feuille.soins.acte
+    ══════════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_feuille_soins_acte_form" model="ir.ui.view">
+        <field name="name">cps.feuille.soins.acte.form</field>
+        <field name="model">cps.feuille.soins.acte</field>
+        <field name="arch" type="xml">
+            <form string="Séance">
+                <header>
+                    <field name="state_seance" widget="statusbar"
+                           statusbar_visible="planifiee,effectuee"
+                           statusbar_clickable="1"/>
+                </header>
+                <sheet>
+
+                    <!-- ── Bandeau patient / feuille ──────────────────────── -->
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object"
+                                name="action_open_feuille"
+                                class="oe_stat_button"
+                                icon="fa-file-medical"
+                                invisible="not feuille_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Feuille</span>
+                                <span class="o_stat_value">
+                                    <field name="feuille_name" readonly="1"/>
+                                </span>
+                            </div>
+                        </button>
+                        <button type="object"
+                                name="action_open_feuille"
+                                class="oe_stat_button"
+                                icon="fa-euro"
+                                invisible="not feuille_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Part CPS</span>
+                                <span class="o_stat_value">
+                                    <field name="montant_cps" readonly="1"/> F
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- ── Titre dynamique ──────────────────────────────────── -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"
+                                   placeholder="Séance non nommée"/>
+                        </h1>
+                    </div>
+
+                    <!-- ── Bloc patient (lecture seule, provient de la feuille) ── -->
+                    <div class="alert alert-info mb16 d-flex align-items-center gap-3"
+                         style="border-left: 4px solid #1F6B3A;"
+                         invisible="not patient_id">
+                        <i class="fa fa-user-circle fa-2x" style="color:#1F6B3A;"/>
+                        <div>
+                            <strong>
+                                <field name="patient_nom"    readonly="1" nolabel="1"
+                                       class="d-inline text-uppercase"/>
+                                &#160;
+                                <field name="patient_prenom" readonly="1" nolabel="1"
+                                       class="d-inline"/>
+                            </strong>
+                            <span class="text-muted ms-2">
+                                DN&#160;<field name="patient_dn" readonly="1"
+                                               nolabel="1" class="d-inline"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <group>
+                        <!-- Colonne gauche : planification -->
+                        <group string="Planification">
+                            <field name="date_acte"/>
+                            <field name="heure_acte"    widget="float_time"
+                                   string="Heure de début"/>
+                            <field name="state_seance"  widget="radio"/>
+                            <field name="praticien_id"  readonly="1"
+                                   string="Praticien"/>
+                        </group>
+
+                        <!-- Colonne droite : acte et tarification -->
+                        <group string="Acte &amp; tarification">
+                            <field name="acte_type_id"
+                                   options="{'no_create': False}"
+                                   string="Type d'acte"/>
+                            <field name="lettre_cle"/>
+                            <field name="coefficient"   digits="[6,2]"/>
+                            <field name="montant"       string="Montant (F XPF)"/>
+                        </group>
+                    </group>
+
+                    <group string="Frais et majorations">
+                        <group>
+                            <field name="ifd"           string="IFD (unités)"/>
+                            <field name="ik"            string="IK (unités)"/>
+                            <field name="taux_majoration" string="Taux majoration (%)"/>
+                        </group>
+                        <group>
+                            <field name="dimanche_ferie" widget="boolean_toggle"
+                                   string="Dimanche / Jour férié"/>
+                            <field name="nuit"           widget="boolean_toggle"
+                                   string="Nuit"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Lien ordonnance ──────────────────────────────────── -->
+                    <group string="Ordonnance associée"
+                           invisible="not ordonnance_ligne_id">
+                        <field name="ordonnance_ligne_id" readonly="1"
+                               string="Ligne d'ordonnance"/>
+                        <field name="seances_restantes"   readonly="1"
+                               string="Restantes (officiel)"
+                               decoration-danger="seances_restantes == 0"
+                               decoration-warning="seances_restantes &gt; 0 and seances_restantes &lt;= 3"/>
+                        <field name="seances_theorique_restantes" readonly="1"
+                               string="Restantes (théoriques)"
+                               decoration-danger="seances_theorique_restantes == 0"
+                               decoration-warning="seances_theorique_restantes &gt; 0 and seances_theorique_restantes &lt;= 3"/>
+                    </group>
+
+                    <!-- ── Champs techniques cachés ─────────────────────────── -->
+                    <field name="feuille_id"            invisible="1"/>
+                    <field name="patient_id"            invisible="1"/>
+                    <field name="feuille_name"          invisible="1"/>
+                    <field name="montant_cps"           invisible="1"/>
+                    <field name="montant_patient_feuille" invisible="1"/>
+                    <field name="feuille_state"         invisible="1"/>
+                    <field name="datetime_acte"         invisible="1"/>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
          VUE CALENDRIER – sur cps.feuille.soins.acte
     ══════════════════════════════════════════════════════════════════════ -->
+<!--    quick_create_view_id="%(os_auxiliaire_medical.view_feuille_soins_acte_quick_create)d"-->
+<!--    form_view_id="%(os_auxiliaire_medical.view_feuille_soins_acte_form)d"-->
+
     <record id="view_acte_calendar" model="ir.ui.view">
         <field name="name">cps.feuille.soins.acte.calendar</field>
         <field name="model">cps.feuille.soins.acte</field>
         <field name="arch" type="xml">
             <calendar string="Agenda des séances"
                       date_start="datetime_acte"
-                      date_delay="heure_acte"
+                      date_delay="date_delay"
                       color="patient_id"
                       mode="week"
-                      quick_create="true"
-                      event_limit="8">
-                <field name="patient_id"   string="Patient"/>
-                <field name="praticien_id" string="Praticien"/>
-                <field name="state_seance" string="Statut"/>
+                      event_open_popup="1"
+                      quick_create="1"
+                      quick_create_view_id="%(os_auxiliaire_medical.view_feuille_soins_acte_form)d"
+            >
+                <field name="patient_id"   string="Patient" filters="1" avatar_field="avatar_128"/>
+                <field name="praticien_id" string="Praticien" filters="1"/>
+                <field name="state_seance" string="Statut" filters="1"/>
                 <field name="lettre_cle"   string="Acte"/>
-                <field name="coefficient"  string="Coefficient"/>
+                <field name="coefficient"  string="Coefficient" filters="1"/>
                 <field name="montant"      string="Montant"/>
             </calendar>
         </field>
     </record>
 
     <!-- ══════════════════════════════════════════════════════════════════
-         VUE RECHERCHE – Actes (pour le calendrier)
+         VUE RECHERCHE – Actes
     ══════════════════════════════════════════════════════════════════════ -->
     <record id="view_acte_search" model="ir.ui.view">
         <field name="name">cps.feuille.soins.acte.search</field>
@@ -285,7 +454,6 @@
                 <field name="praticien_id" string="Praticien"/>
                 <field name="date_acte"    string="Date"/>
                 <field name="lettre_cle"   string="Lettre clé"/>
-                <!-- Filtres par statut séance -->
                 <filter name="planifiees"       string="Planifiées"
                         domain="[('state_seance', '=', 'planifiee')]"/>
                 <filter name="effectuees"       string="Effectuées"
@@ -322,6 +490,17 @@
         </field>
     </record>
 
+    <!-- ── Action fenêtre (utile pour les liens smart buttons) ── -->
+
+    <record id="action_feuille_soins_acte_form" model="ir.actions.act_window">
+        <field name="name">Séances</field>
+        <field name="res_model">cps.feuille.soins.acte</field>
+        <field name="view_mode">list,form,calendar</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'form',
+                    'view_id': ref('view_feuille_soins_acte_form')})]"/>
+    </record>
+
     <!-- ══════════════════════════════════════════════════════════════════
          ACTION – Agenda des séances
     ══════════════════════════════════════════════════════════════════════ -->
@@ -337,7 +516,7 @@
     </record>
 
     <!-- ══════════════════════════════════════════════════════════════════
-         ACTION – Feuilles de soins (liste + formulaire)
+         ACTION – Feuilles de soins
     ══════════════════════════════════════════════════════════════════════ -->
     <record id="action_feuille_soins" model="ir.actions.act_window">
         <field name="name">Feuilles de soins</field>

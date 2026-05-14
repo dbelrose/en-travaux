@@ -1,15 +1,14 @@
 """
-Wizard de saisie groupée de séances par sélection calendaire – v10.
+Wizard de saisie groupée de séances par sélection calendaire – v9.
 
-Nouveautés v10 :
-  • duree_seance : durée de la séance en minutes, initialisée depuis l'acte type.
-  • auto_decaler : si coché, les séances en conflit sont automatiquement
-    décalées au premier créneau libre sur la même journée.
-  • Détection de conflit : signalétique rouge (has_conflict) sur chaque ligne,
-    avec info (conflict_info) indiquant le patient en conflit.
-  • Retour liste quand plusieurs feuilles FSA25 générées.
+Nouveautés v9 :
+  • Plus de limite à 16 séances : le wizard crée autant de feuilles FSA25
+    que nécessaire (16 actes par feuille = limite du formulaire papier).
+  • nb_seances initialisé depuis les séances restantes de l'ordonnance
+    (ou de l'acte sélectionné).
+  • Colonne « Feuille n° » prévisionnelle dans le tableau des dates.
 
-Règles du critère de fin (inchangées) :
+Règles du critère de fin :
   • date_fin seul  → toutes les dates jusqu'à date_fin
   • nb_seances seul → exactement N séances
   • aucun des deux  → séances restantes de l'ordonnance
@@ -19,6 +18,7 @@ import datetime
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
+# Nombre de lignes actes sur un formulaire FSA25 papier
 SEANCES_PAR_FEUILLE = 16
 
 
@@ -40,41 +40,24 @@ class WizardDateSelection(models.TransientModel):
         compute='_compute_actes_disponibles',
     )
 
-    ifd            = fields.Float(string='IFD (unités)', default=0)
-    dimanche_ferie = fields.Boolean(string='Dim./Férié')
-    nuit           = fields.Boolean(string='Nuit')
+    ifd             = fields.Float(string='IFD (unités)', default=0)
+    dimanche_ferie  = fields.Boolean(string='Dim./Férié')
+    nuit            = fields.Boolean(string='Nuit')
     delai_min_jours = fields.Integer(
         string='Délai min entre 2 séances (j)',
         compute='_compute_delai_min', store=True, readonly=False,
     )
 
-    # ── Durée de séance ────────────────────────────────────────────────────────
-    duree_seance = fields.Integer(
-        string='Durée de séance (min)',
-        default=30,
-        help='Durée de chaque séance en minutes. '
-             'Initialisée depuis la durée minimum du type d\'acte. '
-             'Utilisée pour la détection des conflits de créneaux dans l\'agenda.',
-    )
-
-    # ── Gestion des conflits ───────────────────────────────────────────────────
-    auto_decaler = fields.Boolean(
-        string='Décalage automatique si conflit',
-        default=True,
-        help='Si coché, les séances en conflit sont automatiquement décalées '
-             'au premier créneau libre sur la même journée.\n'
-             'Sinon, la séance est signalée en rouge pour révision manuelle.',
-    )
-
-    # ── Heure commune ─────────────────────────────────────────────────────────
+    # ── Heure commune à toutes les séances générées ───────────────────────────
     heure_debut = fields.Float(
         string='Heure de début',
         default=8.0,
         digits=(2, 2),
-        help='Heure de début commune à toutes les séances (ex : 8.5 = 8h30).',
+        help='Heure de début commune à toutes les séances (ex : 8.5 = 8h30). '
+             'Peut être ajustée ligne par ligne avant d\'appliquer.',
     )
 
-    # ── Critères de fin ────────────────────────────────────────────────────────
+    # ── Critères de fin (facultatifs, mutuellement exclusifs) ─────────────────
     date_debut = fields.Date(string='Du', required=True, default=fields.Date.today)
     date_fin   = fields.Date(
         string='Au',
@@ -84,7 +67,8 @@ class WizardDateSelection(models.TransientModel):
     nb_seances = fields.Integer(
         string='Nombre de séances',
         help='Optionnel – exclusif avec « Date de fin ».\n'
-             'Initialisé automatiquement depuis les séances restantes de l\'ordonnance.',
+             'Initialisé automatiquement depuis les séances restantes de l\'ordonnance.\n'
+             'Le wizard créera autant de feuilles FSA25 que nécessaire (16 actes / feuille).',
     )
 
     # ── Jours de la semaine ───────────────────────────────────────────────────
@@ -102,10 +86,8 @@ class WizardDateSelection(models.TransientModel):
     nb_non_assignees        = fields.Integer(compute='_compute_stats')
     nb_feuilles_necessaires = fields.Integer(compute='_compute_stats',
                                              string='Feuilles FSA25 nécessaires')
-    nb_conflits             = fields.Integer(compute='_compute_stats',
-                                             string='Conflits détectés')
 
-    # ── default_get ───────────────────────────────────────────────────────────
+    # ── default_get : initialise nb_seances depuis l'ordonnance ──────────────
 
     @api.model
     def default_get(self, fields_list):
@@ -116,7 +98,7 @@ class WizardDateSelection(models.TransientModel):
         )
         if ordonnance_id and 'nb_seances' in fields_list:
             ordonnance = self.env['cps.ordonnance'].browse(ordonnance_id)
-            total = sum(ordonnance.ligne_ids.mapped('nb_seances_theorique_restantes'))
+            total = sum(ordonnance.ligne_ids.mapped('nb_seances_restantes'))
             if total > 0:
                 res['nb_seances'] = total
         return res
@@ -136,8 +118,7 @@ class WizardDateSelection(models.TransientModel):
         for rec in self:
             rec.delai_min_jours = rec.acte_type_id.delai_min_jours if rec.acte_type_id else 0
 
-    @api.depends('ligne_ids.selected', 'ligne_ids.montant',
-                 'ligne_ids.acte_type_id', 'ligne_ids.has_conflict')
+    @api.depends('ligne_ids.selected', 'ligne_ids.montant', 'ligne_ids.acte_type_id')
     def _compute_stats(self):
         for rec in self:
             sel = rec.ligne_ids.filtered('selected')
@@ -145,7 +126,6 @@ class WizardDateSelection(models.TransientModel):
             rec.nb_selectionnees        = n
             rec.montant_total_estime    = sum(sel.mapped('montant'))
             rec.nb_non_assignees        = len(sel.filtered(lambda l: not l.acte_type_id))
-            rec.nb_conflits             = len(sel.filtered('has_conflict'))
             rec.nb_feuilles_necessaires = (
                 (n + SEANCES_PAR_FEUILLE - 1) // SEANCES_PAR_FEUILLE if n > 0 else 0
             )
@@ -154,76 +134,26 @@ class WizardDateSelection(models.TransientModel):
 
     @api.onchange('heure_debut')
     def _onchange_heure_debut(self):
+        """Propage l'heure commune sur toutes les lignes déjà générées."""
         for ligne in self.ligne_ids:
             ligne.heure_acte = self.heure_debut
 
     @api.onchange('acte_type_id')
     def _onchange_acte_type_id_seances(self):
-        """Met à jour nb_seances et duree_seance depuis l'acte type."""
-        if self.acte_type_id:
-            # Durée initialisée depuis la durée minimum de l'acte
-            self.duree_seance = self.acte_type_id.duree_seance or 30
-            if self.ordonnance_id:
-                ligne = self.ordonnance_id.ligne_ids.filtered(
-                    lambda l: l.acte_type_id == self.acte_type_id
-                )
-                if ligne:
-                    self.nb_seances = ligne[0].nb_seances_theorique_restantes
+        """Met à jour nb_seances depuis l'ordonnance lors du choix d'un type d'acte."""
+        if self.acte_type_id and self.ordonnance_id:
+            ligne = self.ordonnance_id.ligne_ids.filtered(
+                lambda l: l.acte_type_id == self.acte_type_id
+            )
+            if ligne:
+                self.nb_seances = ligne[0].nb_seances_restantes
         elif self.ordonnance_id and not self.acte_type_id:
+            # Totalité des séances restantes toutes lignes confondues
             self.nb_seances = sum(
-                self.ordonnance_id.ligne_ids.mapped('nb_seances_theorique_restantes')
+                self.ordonnance_id.ligne_ids.mapped('nb_seances_restantes')
             )
 
-    # ── Détection de conflits ─────────────────────────────────────────────────
-
-    def _check_conflict(self, praticien_id, date, heure_debut, duree_min):
-        """
-        Vérifie si le praticien a déjà une séance qui chevauche le créneau
-        [heure_debut, heure_debut + duree_min/60].
-
-        Retourne (has_conflict: bool, description: str).
-        """
-        if not praticien_id:
-            return False, ''
-        heure_fin = heure_debut + duree_min / 60.0
-        existing = self.env['cps.feuille.soins.acte'].search([
-            ('praticien_id', '=', praticien_id),
-            ('date_acte', '=', date),
-            ('state_seance', 'not in', ['annulee']),
-        ])
-        for ex in existing:
-            ex_debut = ex.heure_acte or 8.0
-            ex_duree_min = ex.acte_type_id.duree_seance if ex.acte_type_id else 30
-            ex_fin = ex_debut + ex_duree_min / 60.0
-            if heure_debut < ex_fin and heure_fin > ex_debut:
-                patient_name = ex.patient_id.name if ex.patient_id else '?'
-                return True, _('Conflit : %s à %s') % (
-                    patient_name, self._fmt_heure(ex_debut)
-                )
-        return False, ''
-
-    @staticmethod
-    def _fmt_heure(h):
-        hours = int(h)
-        mins = int(round((h - hours) * 60))
-        return '%02dh%02d' % (hours, mins)
-
-    def _find_free_slot(self, praticien_id, date, heure_debut, duree_min):
-        """
-        Cherche le premier créneau libre à partir de heure_debut sur la journée.
-        Retourne (heure_libre, decale: bool).
-        """
-        heure = heure_debut
-        max_heure = 19.0
-        while heure + duree_min / 60.0 <= max_heure + 1:
-            conflict, _ = self._check_conflict(praticien_id, date, heure, duree_min)
-            if not conflict:
-                return heure, heure != heure_debut
-            heure += duree_min / 60.0
-        # Aucun créneau libre : on retourne l'original avec signalement
-        return heure_debut, False
-
-    # ── Génération des dates ───────────────────────────────────────────────────
+    # ── Action principale ─────────────────────────────────────────────────────
 
     def action_generer_dates(self):
         self.ensure_one()
@@ -245,23 +175,25 @@ class WizardDateSelection(models.TransientModel):
         if not jours:
             raise UserError(_('Cochez au moins un jour de la semaine.'))
 
+        # Nombre max de séances à générer
         if has_nb_seances:
             nb_max = self.nb_seances
         elif not has_date_fin:
             if not self.ordonnance_id:
                 raise UserError(_(
-                    'Sans date de fin ni nombre de séances, une ordonnance est requise.'
+                    'Sans date de fin ni nombre de séances, une ordonnance est requise '
+                    'pour déterminer automatiquement le nombre de séances à planifier.'
                 ))
-            nb_max = sum(self.ordonnance_id.ligne_ids.mapped('nb_seances_theorique_restantes'))
+            nb_max = sum(self.ordonnance_id.ligne_ids.mapped('nb_seances_restantes'))
             if nb_max <= 0:
                 raise UserError(_("L'ordonnance ne contient plus de séances disponibles."))
         else:
-            nb_max = 9999
+            nb_max = 9999  # date_fin seule — pas de limite théorique
 
         # Génération des dates
         dates = []
         current = self.date_debut
-        safety  = 3650
+        safety  = 3650  # 10 ans max
         while safety > 0:
             safety -= 1
             if has_date_fin and current > self.date_fin:
@@ -277,8 +209,6 @@ class WizardDateSelection(models.TransientModel):
 
         IrParam = self.env['ir.config_parameter'].sudo()
         heure   = self.heure_debut
-        duree   = self.duree_seance or 30
-        praticien_id = self.feuille_id.praticien_id.id if self.feuille_id.praticien_id else False
 
         if self.acte_type_id:
             montant_u = self._montant_unitaire(self.acte_type_id, IrParam)
@@ -288,86 +218,35 @@ class WizardDateSelection(models.TransientModel):
                     lambda l: l.acte_type_id == self.acte_type_id
                 )
                 ord_ligne = ol[0] if ol else False
-            nouvelles = []
-            for d in dates:
-                actual_heure, decale, conflict, conflict_info = \
-                    self._resolve_slot(praticien_id, d, heure, duree)
-                if decale:
-                    conflict_info = _('Décalé à %s') % self._fmt_heure(actual_heure)
-                nouvelles.append((0, 0, {
-                    'date': d,
-                    'selected': True,
-                    'acte_type_id': self.acte_type_id.id,
-                    'ordonnance_ligne_id': ord_ligne.id if ord_ligne else False,
-                    'montant': montant_u,
-                    'heure_acte': actual_heure,
-                    'warning': '',
-                    'has_conflict': conflict,
-                    'conflict_info': conflict_info,
-                }))
+            nouvelles = [(0, 0, {
+                'date': d, 'selected': True,
+                'acte_type_id': self.acte_type_id.id,
+                'ordonnance_ligne_id': ord_ligne.id if ord_ligne else False,
+                'montant': montant_u, 'heure_acte': heure, 'warning': '',
+            }) for d in dates]
         elif self.ordonnance_id:
-            nouvelles = self._distribuer_dates_auto(dates, IrParam, heure, duree, praticien_id)
+            nouvelles = self._distribuer_dates_auto(dates, IrParam, heure)
         else:
-            nouvelles = []
-            for d in dates:
-                actual_heure, decale, conflict, conflict_info = \
-                    self._resolve_slot(praticien_id, d, heure, duree)
-                if decale:
-                    conflict_info = _('Décalé à %s') % self._fmt_heure(actual_heure)
-                nouvelles.append((0, 0, {
-                    'date': d,
-                    'selected': True,
-                    'acte_type_id': False,
-                    'ordonnance_ligne_id': False,
-                    'montant': 0.0,
-                    'heure_acte': actual_heure,
-                    'warning': _('Aucun acte assigné'),
-                    'has_conflict': conflict,
-                    'conflict_info': conflict_info,
-                }))
+            nouvelles = [(0, 0, {
+                'date': d, 'selected': True,
+                'acte_type_id': False, 'ordonnance_ligne_id': False,
+                'montant': 0.0, 'heure_acte': heure, 'warning': _('Aucun acte assigné'),
+            }) for d in dates]
 
         self.ligne_ids = [(5, 0, 0)] + nouvelles
         return self._reopen()
 
-    def _resolve_slot(self, praticien_id, date, heure, duree_min):
-        """
-        Détermine le créneau final selon la politique de conflit.
-
-        Retourne (actual_heure, decale, has_conflict, conflict_info).
-        """
-        conflict, info = self._check_conflict(praticien_id, date, heure, duree_min)
-        if not conflict:
-            return heure, False, False, ''
-        if self.auto_decaler:
-            free, decale = self._find_free_slot(praticien_id, date, heure, duree_min)
-            if decale:
-                return free, True, False, ''
-            # Aucun créneau libre après décalage
-            return heure, False, True, info + _(' (aucun créneau libre)')
-        else:
-            return heure, False, True, info
-
-    def _distribuer_dates_auto(self, dates, IrParam, heure, duree_min, praticien_id):
+    def _distribuer_dates_auto(self, dates, IrParam, heure):
         lignes_ord = self.ordonnance_id.ligne_ids.sorted(
             lambda l: (l.acte_type_id.sequence or 0, l.id)
-        ).filtered(lambda l: l.nb_seances_theorique_restantes > 0)
+        ).filtered(lambda l: l.nb_seances_restantes > 0)
         if not lignes_ord:
-            result = []
-            for d in dates:
-                actual_heure, decale, conflict, conflict_info = \
-                    self._resolve_slot(praticien_id, d, heure, duree_min)
-                if decale:
-                    conflict_info = _('Décalé à %s') % self._fmt_heure(actual_heure)
-                result.append((0, 0, {
-                    'date': d, 'selected': False, 'acte_type_id': False,
-                    'ordonnance_ligne_id': False, 'montant': 0.0,
-                    'heure_acte': actual_heure,
-                    'warning': _('Séances épuisées'),
-                    'has_conflict': conflict, 'conflict_info': conflict_info,
-                }))
-            return result
-
-        remaining    = {l.id: l.nb_seances_theorique_restantes for l in lignes_ord}
+            return [(0, 0, {
+                'date': d, 'selected': False, 'acte_type_id': False,
+                'ordonnance_ligne_id': False, 'montant': 0.0,
+                'heure_acte': heure, 'warning': _('Séances épuisées'),
+            }) for d in dates]
+        remaining    = {l.id: l.nb_seances_restantes for l in lignes_ord}
         last_date    = {l.id: l.get_last_seance_date() for l in lignes_ord}
         montants     = {l.id: self._montant_unitaire(l.acte_type_id, IrParam) for l in lignes_ord}
         delai_global = self.delai_min_jours
@@ -381,33 +260,22 @@ class WizardDateSelection(models.TransientModel):
                 last  = last_date.get(ligne.id)
                 if last and delai > 0 and (date - last).days < delai:
                     continue
-                actual_heure, decale, conflict, conflict_info = \
-                    self._resolve_slot(praticien_id, date, heure, duree_min)
-                if decale:
-                    conflict_info = _('Décalé à %s') % self._fmt_heure(actual_heure)
                 result.append((0, 0, {
                     'date': date, 'selected': True,
                     'acte_type_id': ligne.acte_type_id.id,
                     'ordonnance_ligne_id': ligne.id,
-                    'montant': montants[ligne.id],
-                    'heure_acte': actual_heure,
-                    'warning': '',
-                    'has_conflict': conflict,
-                    'conflict_info': conflict_info,
+                    'montant': montants[ligne.id], 'heure_acte': heure, 'warning': '',
                 }))
                 remaining[ligne.id] -= 1
                 last_date[ligne.id]  = date
                 assigned = True
                 break
             if not assigned:
-                actual_heure, decale, conflict, conflict_info = \
-                    self._resolve_slot(praticien_id, date, heure, duree_min)
                 result.append((0, 0, {
                     'date': date, 'selected': False,
                     'acte_type_id': False, 'ordonnance_ligne_id': False,
-                    'montant': 0.0, 'heure_acte': actual_heure,
+                    'montant': 0.0, 'heure_acte': heure,
                     'warning': _('Non assignée : épuisé ou délai non respecté'),
-                    'has_conflict': conflict, 'conflict_info': conflict_info,
                 }))
         return result
 
@@ -436,8 +304,10 @@ class WizardDateSelection(models.TransientModel):
         if not sel:
             raise UserError(_('Aucune date sélectionnée.'))
 
+        today              = fields.Date.today()
         feuille_principale = self.feuille_id
 
+        # Découpage en tranches de SEANCES_PAR_FEUILLE (16 lignes = formulaire FSA25)
         all_lignes = list(sel)
         chunks = [
             all_lignes[i:i + SEANCES_PAR_FEUILLE]
@@ -450,6 +320,8 @@ class WizardDateSelection(models.TransientModel):
             if idx == 0:
                 feuille = feuille_principale
             else:
+                # Nouvelle feuille calquée sur la feuille principale
+                last_date_chunk = max(l.date for l in chunk)
                 feuille = self.env['cps.feuille.soins'].create({
                     'patient_id':            feuille_principale.patient_id.id,
                     'praticien_id':          feuille_principale.praticien_id.id,
@@ -462,9 +334,11 @@ class WizardDateSelection(models.TransientModel):
                     'code_prescripteur':     feuille_principale.code_prescripteur,
                     'auxiliaire_remplacant': feuille_principale.auxiliaire_remplacant,
                     'accord_prealable':      feuille_principale.accord_prealable,
+                    # date_feuille sera calculée automatiquement depuis date_fin_soins
                 })
                 feuilles_crees.append(feuille)
 
+            # Ajout des actes dans cette feuille
             lignes_vals = [(0, 0, {
                 'acte_type_id':        l.acte_type_id.id if l.acte_type_id else False,
                 'date_acte':           l.date,
@@ -479,7 +353,7 @@ class WizardDateSelection(models.TransientModel):
             }) for l in chunk]
             feuille.write({'acte_ids': lignes_vals})
 
-        # Message chatter
+        # Message chatter sur la feuille principale
         msg = _(
             '%d séance(s) planifiée(s) répartie(s) sur %d feuille(s) FSA25.'
         ) % (len(sel), len(chunks))
@@ -488,17 +362,6 @@ class WizardDateSelection(models.TransientModel):
             msg += _('\nFeuilles supplémentaires créées : %s') % noms
         feuille_principale.message_post(body=msg)
 
-        # ── Retour : liste si plusieurs feuilles générées, formulaire sinon ───
-        if len(chunks) > 1:
-            all_ids = [feuille_principale.id] + [f.id for f in feuilles_crees]
-            return {
-                'type': 'ir.actions.act_window',
-                'name': _('%d feuilles FSA25 créées') % len(chunks),
-                'res_model': 'cps.feuille.soins',
-                'view_mode': 'list,form',
-                'domain': [('id', 'in', all_ids)],
-                'target': 'current',
-            }
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'cps.feuille.soins',
@@ -544,15 +407,7 @@ class WizardDateSelectionLigne(models.TransientModel):
         digits=(2, 2),
         help='Heure de début de la séance (ex : 8.5 = 8h30).',
     )
-    warning     = fields.Char(readonly=True)
-
-    # ── Conflit de créneau ────────────────────────────────────────────────────
-    has_conflict  = fields.Boolean(string='Conflit', default=False)
-    conflict_info = fields.Char(
-        string='Info conflit', readonly=True,
-        help='Description du conflit de créneau détecté.',
-    )
-
+    warning    = fields.Char(readonly=True)
     num_feuille = fields.Integer(
         compute='_compute_num_feuille',
         string='Feuille n°',
@@ -567,7 +422,7 @@ class WizardDateSelectionLigne(models.TransientModel):
 
     @api.depends('wizard_id.ligne_ids', 'wizard_id.ligne_ids.selected', 'selected', 'date')
     def _compute_num_feuille(self):
-        from . import wizard_date_selection as _m
+        # Grouper par wizard pour ne faire le calcul qu'une fois par wizard
         by_wizard = {}
         for rec in self:
             by_wizard.setdefault(rec.wizard_id.id, []).append(rec)
@@ -600,10 +455,10 @@ class WizardDateSelectionLigne(models.TransientModel):
                 planned_counts[aid] = planned_counts.get(aid, 0) + 1
         lignes_ord = wizard.ordonnance_id.ligne_ids.sorted(
             lambda l: (l.acte_type_id.sequence or 0, l.id)
-        ).filtered(lambda l: l.nb_seances_theorique_restantes > 0)
+        ).filtered(lambda l: l.nb_seances_restantes > 0)
         for ligne_ord in lignes_ord:
             aid = ligne_ord.acte_type_id.id
-            if planned_counts.get(aid, 0) < ligne_ord.nb_seances_theorique_restantes:
+            if planned_counts.get(aid, 0) < ligne_ord.nb_seances_restantes:
                 self.acte_type_id        = ligne_ord.acte_type_id
                 self.ordonnance_ligne_id = ligne_ord
                 self.montant = WizardDateSelection._montant_unitaire(

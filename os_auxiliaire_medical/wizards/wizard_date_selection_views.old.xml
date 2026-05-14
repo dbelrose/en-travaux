@@ -26,20 +26,18 @@
                         </group>
                     </group>
 
-                    <!-- ── Plage de dates, heure et durée ── -->
-                    <group string="Plage de dates, heure et durée">
+                    <!-- ── Plage de dates et heure ── -->
+                    <group string="Plage de dates et heure">
                         <group>
                             <field name="date_debut"/>
                             <field name="date_fin"/>
                             <field name="nb_seances"
-                                   help="Initialisé depuis les séances restantes (théoriques) de l'ordonnance."/>
+                                   help="Initialisé depuis les séances restantes de l'ordonnance. Le wizard créera autant de feuilles FSA25 que nécessaire (16 actes / feuille)."/>
+                            <!-- Heure commune : propagée sur toutes les lignes générées -->
                             <field name="heure_debut"
                                    widget="float_time"
                                    string="Heure de début (commune)"
                                    help="Appliquée à toutes les séances. Modifiable ligne par ligne ensuite."/>
-                            <!-- Durée de séance : initialisée depuis le type d'acte -->
-                            <field name="duree_seance"
-                                   help="Initialisée depuis la durée minimum du type d'acte. Utilisée pour la détection des conflits de créneaux dans l'agenda."/>
                         </group>
                         <group string="Jours à inclure" col="7">
                             <field name="lundi"         string="Lun"/>
@@ -52,33 +50,20 @@
                         </group>
                     </group>
 
-                    <!-- ── Option gestion des conflits ── -->
-                    <group string="Gestion des conflits de créneaux">
-                        <field name="auto_decaler"
-                               widget="boolean_toggle"
-                               help="Décale automatiquement les séances en conflit au premier créneau libre sur la même journée. Si décoché, les conflits sont signalés en rouge pour révision manuelle."/>
-                        <div class="text-muted small" colspan="2">
-                            <i class="fa fa-info-circle me-1"/>
-                            La détection vérifie l'agenda du praticien pour éviter deux patients
-                            en simultané. Un créneau est en conflit si deux séances se chevauchent
-                            selon leur durée respective.
-                        </div>
-                    </group>
-
                     <div class="alert alert-info mt4 mb4">
-                        <i class="fa fa-calendar me-1"/>
+                        <i class="fa fa-info-circle me-1"/>
                         Renseignez <strong>soit</strong> la date de fin,
                         <strong>soit</strong> le nombre de séances.
                         Si <strong>aucun</strong> n'est indiqué, toutes les séances restantes
-                        (théoriques) de l'ordonnance seront planifiées.
+                        de l'ordonnance seront planifiées.
                         Le wizard créera automatiquement autant de feuilles FSA25 que nécessaire
                         <strong>(16 actes maximum par feuille)</strong>.
+                        L'heure de début est commune mais peut être ajustée ligne par ligne.
                     </div>
 
                     <div class="text-center mb16">
                         <button name="action_generer_dates"
-                                string="Générer les dates"
-                                icon="fa-calendar-plus-o"
+                                string="🗓  Générer les dates"
                                 type="object"
                                 class="btn btn-primary btn-lg"/>
                     </div>
@@ -89,50 +74,40 @@
                                     border-top border-bottom py-2 px-3 bg-light mb4">
                             <div class="d-flex gap-3">
                                 <button name="action_tout_selectionner"
-                                        string="Tout cocher"
-                                        icon="fa-check-square-o"
+                                        string="☑ Tout cocher"
                                         type="object"
                                         class="btn btn-link btn-sm p-0"/>
                                 <button name="action_tout_deselectionner"
-                                        string="Tout décocher"
-                                        icon="fa-square-o"
+                                        string="☐ Tout décocher"
                                         type="object"
                                         class="btn btn-link btn-sm p-0"/>
                             </div>
 
                             <div class="text-center fw-bold">
-                                <i class="fa fa-clock-o me-1"/>
                                 <field name="nb_selectionnees" readonly="1" nolabel="1"
-                                       class="d-inline"/> séance(s) ·
+                                       class="d-inline"/> séance(s) sélectionnée(s)
+                                <span class="mx-2 text-muted">·</span>
                                 <field name="montant_total_estime" readonly="1" nolabel="1"
                                        class="d-inline"/> F XPF
                             </div>
 
+                            <!-- Compteur feuilles FSA25 nécessaires -->
                             <div class="d-flex align-items-center gap-3">
-                                <!-- Conflits -->
-                                <span invisible="nb_conflits == 0"
-                                      class="badge text-bg-danger fs-6">
-                                    <i class="fa fa-exclamation-triangle me-1"/>
-                                    <field name="nb_conflits" readonly="1"
-                                           nolabel="1" class="d-inline"/> conflit(s)
-                                </span>
-                                <!-- Feuilles FSA25 -->
                                 <span invisible="nb_feuilles_necessaires == 0"
-                                      class="badge text-bg-primary fs-6">
+                                      class="badge text-bg-primary fs-6"
+                                      title="Nombre de feuilles FSA25 qui seront créées (16 actes / feuille)">
                                     <i class="fa fa-files-o me-1"/>
                                     <field name="nb_feuilles_necessaires" readonly="1"
                                            nolabel="1" class="d-inline"/> feuille(s) FSA25
                                 </span>
-                                <!-- Non assignées -->
                                 <span invisible="nb_non_assignees == 0"
-                                      class="badge text-bg-warning">
-                                    <i class="fa fa-question-circle me-1"/>
-                                    <field name="nb_non_assignees" readonly="1"
+                                      class="badge text-bg-danger">
+                                    ⚠ <field name="nb_non_assignees" readonly="1"
                                               nolabel="1" class="d-inline"/> non assignée(s)
                                 </span>
-                                <span invisible="nb_non_assignees != 0 or nb_conflits != 0"
+                                <span invisible="nb_non_assignees != 0"
                                       class="text-success">
-                                    <i class="fa fa-check-circle me-1"/> Tout est OK
+                                    <i class="fa fa-check-circle"/> Tous les actes assignés
                                 </span>
                             </div>
                         </div>
@@ -142,30 +117,23 @@
                     <separator string="Dates générées – cochez les séances à créer"
                                invisible="not ligne_ids"/>
                     <field name="ligne_ids" nolabel="1">
-                        <tree editable="bottom"
-                              decoration-danger="has_conflict"
-                              decoration-warning="warning != '' and not has_conflict"
-                              decoration-muted="not selected">
+                        <tree editable="bottom">
                             <field name="selected"      string="✓"/>
-                            <field name="num_feuille"   string="FSA n°" readonly="1"
+                            <field name="num_feuille"   string="Feuille n°" readonly="1"
                                    optional="show"
-                                   decoration-info="num_feuille > 0"/>
+                                   decoration-info="num_feuille > 0"
+                                   help="Numéro prévisionnel de la feuille FSA25 (16 séances / feuille)"/>
                             <field name="date"/>
                             <field name="jour_semaine"  readonly="1"/>
+                            <!-- Heure ajustable par ligne -->
                             <field name="heure_acte"    string="Heure" widget="float_time"/>
                             <field name="acte_type_id"  string="Acte"
                                    options="{'no_create': False}"/>
                             <field name="ordonnance_ligne_id" string="Ligne ord."
                                    readonly="1" optional="show"/>
                             <field name="montant"       string="Montant (F)" sum="Total"/>
-                            <!-- Conflit de créneau -->
-                            <field name="has_conflict"  string="⚠ Conflit"
-                                   widget="boolean" readonly="1" optional="show"/>
-                            <field name="conflict_info" string="Détail conflit"
-                                   readonly="1" optional="show"
-                                   decoration-danger="has_conflict"/>
-                            <field name="warning"       readonly="1" string="⚠ Avert."
-                                   decoration-warning="warning != '' and not has_conflict"
+                            <field name="warning"       readonly="1" string="⚠"
+                                   decoration-danger="warning != ''"
                                    optional="show"/>
                         </tree>
                     </field>
@@ -173,8 +141,7 @@
                 </sheet>
                 <footer>
                     <button name="action_appliquer"
-                            string="Créer les séances"
-                            icon="fa-check"
+                            string="✅  Créer les séances"
                             type="object"
                             class="btn-primary"
                             invisible="nb_selectionnees == 0"/>

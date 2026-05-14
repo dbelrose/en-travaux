@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Patch vues acte_type – Ajout du champ duree_seance.
+  Intégrez ce snippet dans view_acte_type_form, dans le groupe
+  « Règles de prescription » (après nb_seances_max et delai_min_jours).
+-->
+<odoo>
+    <!-- Patch view_acte_type_form : ajout duree_seance -->
+    <record id="view_acte_type_patch_form" model="ir.ui.view">
+        <field name="name">cps.acte.type.form.patch.duree</field>
+        <field name="model">cps.acte.type</field>
+        <field name="priority" eval="16"/> <!-- Priorité supérieure à la vue d'origine (10) pour garantir l'application du patch -->
+        <field name="inherit_id" ref="os_auxiliaire_medical.view_acte_type_form"/>
+        <field name="arch" type="xml">
+            <!-- Insérer après delai_min_jours -->
+            <xpath expr="//field[@name='delai_min_jours']" position="after">
+                <field name="duree_seance"
+                       string="Durée séance (min)"
+                       help="Durée minimum de chaque séance en minutes.
+Utilisée par le wizard de dates pour initialiser la durée et détecter les conflits de créneaux."/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -22,16 +22,20 @@
                             invisible="state != 'cancelled'"/>
 <!--                    <button name="os_pdf_report_generator.pdf_report_4" string="Imprimer"-->
 <!--                            type="action" icon="fa-print"/>-->
-                    <button name="action_print_facture_mutuelle"
-                            string="Facture mutuelle"
-                            type="object"
-                            icon="fa-print"
-                            invisible="not has_mutuelle or state == 'draft'"
-                            title="Imprimer la facture destinée à la mutuelle complémentaire"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,confirmed,submitted,paid"/>
                 </header>
                 <sheet>
+
+                    <!-- ── Alerte séances futures (brouillon forcé) ─────── -->
+                    <div class="alert alert-warning mb8"
+                         invisible="not has_future_seances or state != 'draft'">
+                        <i class="fa fa-clock-o me-2"/>
+                        <strong>Séances planifiées dans le futur.</strong>
+                        Cette feuille ne pourra être confirmée qu'une fois toutes les séances
+                        passées ou marquées <em>Effectuée / Annulée / Non présentation</em>.
+                    </div>
+
                     <div class="oe_title">
                         <label for="name" string="N° Facture"/>
                         <h1><field name="name" readonly="1"/></h1>
@@ -42,7 +46,6 @@
                            options="{'preview_image': 'photo_feuille'}"/>
 
                     <group string="1 – Ordonnance (import automatique)">
-                        <!-- FIX : domaine corrigé — 'active' n'existe pas -->
                         <field name="ordonnance_id"
                                domain="[('state', 'in', ['en_cours', 'brouillon'])]"
                                options="{'no_create': False}"
@@ -56,9 +59,6 @@
                                    options="{'quick_create': False}"
                                    readonly="ordonnance_id != False"/>
                             <field name="patient_dn" readonly="1" string="DN"/>
-                            <field name="has_mutuelle" readonly="1"
-                                   widget="boolean_toggle"
-                                   string="Mutuelle complémentaire"/>
                         </group>
                         <group string="3 – Auxiliaire médical">
                             <field name="auxiliaire_remplacant"/>
@@ -85,6 +85,9 @@
                             <field name="parcours_soins"/>
                             <field name="code_prescripteur"/>
                             <field name="date_prescription"/>
+                            <!-- Date de la feuille FSA25 (max today / last séance) -->
+                            <field name="date_feuille"
+                                   help="Date du formulaire FSA25 : au maximum entre la date du jour et la date de la dernière séance."/>
                         </group>
                         <group string="Condition de prise en charge">
                             <field name="condition"/>
@@ -97,6 +100,9 @@
                         </group>
                     </group>
 
+                    <!-- Champs techniques (invisible, pour les rules de vue) -->
+                    <field name="has_future_seances" invisible="1"/>
+
                     <notebook>
                         <page string="Prestations des actes">
                             <div class="mb8" invisible="state != 'draft'">
@@ -105,15 +111,25 @@
                                         type="object" class="btn btn-secondary"/>
                             </div>
                             <field name="acte_ids">
-                                <tree editable="bottom">
+                                <tree editable="bottom"
+                                      decoration-muted="state_seance == 'annulee'"
+                                      decoration-warning="state_seance == 'non_presentation'"
+                                      decoration-success="state_seance == 'effectuee'"
+                                      decoration-info="state_seance == 'planifiee'">
                                     <field name="acte_type_id"
                                            domain="[('profession', 'in', [False, parent.praticien_profession])]"
                                            optional="show" string="Acte (catalogue)"
                                            options="{'no_create': False}"/>
                                     <field name="date_acte"/>
-                                    <!-- Heure de la séance — affichée au format HH:MM -->
                                     <field name="heure_acte" widget="float_time" string="Heure"
                                            optional="show"/>
+                                    <!-- Statut de la séance -->
+                                    <field name="state_seance"
+                                           widget="badge"
+                                           decoration-success="state_seance == 'effectuee'"
+                                           decoration-info="state_seance == 'planifiee'"
+                                           decoration-warning="state_seance == 'non_presentation'"
+                                           decoration-muted="state_seance == 'annulee'"/>
                                     <field name="lettre_cle"/>
                                     <field name="coefficient"/>
                                     <field name="ifd"/>
@@ -160,15 +176,19 @@
             <tree string="Feuilles de soins" default_order="date_debut_soins desc"
                   decoration-muted="state=='cancelled'"
                   decoration-success="state=='paid'"
-                  decoration-info="state=='submitted'">
+                  decoration-info="state=='submitted'"
+                  decoration-warning="has_future_seances and state == 'draft'">
                 <field name="name"/>
                 <field name="fsa_numero"          optional="show"/>
                 <field name="patient_id"/>
                 <field name="patient_dn"          string="DN"/>
                 <field name="praticien_id"/>
                 <field name="date_prescription"/>
+                <field name="date_feuille"        string="Date feuille" optional="show"/>
                 <field name="date_debut_soins"/>
                 <field name="date_fin_soins"/>
+                <field name="has_future_seances"  string="Séances futures" optional="show"
+                       widget="boolean"/>
                 <field name="montant_total"        sum="Total"/>
                 <field name="montant_tiers_payant" sum="Total CPS"/>
                 <field name="montant_patient"      sum="Total Patient"/>
@@ -200,6 +220,9 @@
                 <separator/>
                 <filter name="brouillon"     string="Brouillon"
                         domain="[('state', '=', 'draft')]"/>
+                <filter name="avec_seances_futures"
+                        string="Séances futures (brouillon bloqué)"
+                        domain="[('has_future_seances', '=', True), ('state', '=', 'draft')]"/>
                 <filter name="confirmee"     string="Confirmées"
                         domain="[('state', '=', 'confirmed')]"/>
                 <filter name="transmise"     string="Transmises"
@@ -228,9 +251,6 @@
 
     <!-- ══════════════════════════════════════════════════════════════════
          VUE CALENDRIER – sur cps.feuille.soins.acte
-         date_start = datetime_acte (Datetime store=True, UTC depuis Tahiti)
-         Une pastille par séance, colorée par patient_id
-         Popover : même structure en-tête vert que le kanban patient
     ══════════════════════════════════════════════════════════════════════ -->
     <record id="view_acte_calendar" model="ir.ui.view">
         <field name="name">cps.feuille.soins.acte.calendar</field>
@@ -238,19 +258,17 @@
         <field name="arch" type="xml">
             <calendar string="Agenda des séances"
                       date_start="datetime_acte"
+                      date_delay="heure_acte"
                       color="patient_id"
                       mode="week"
-                      quick_create="0"
+                      quick_create="true"
                       event_limit="8">
-
-                <!-- Seuls les champs stockés (store=True ou natifs) sont valides ici -->
                 <field name="patient_id"   string="Patient"/>
                 <field name="praticien_id" string="Praticien"/>
-<!--                <field name="date_acte"    string="Date"/>-->
-<!--                <field name="heure_acte"   string="Heure"  widget="float_time"/>-->
+                <field name="state_seance" string="Statut"/>
                 <field name="lettre_cle"   string="Acte"/>
                 <field name="coefficient"  string="Coefficient"/>
-                <field name="montant"      string="Montant (F)"/>
+                <field name="montant"      string="Montant"/>
             </calendar>
         </field>
     </record>
@@ -267,6 +285,16 @@
                 <field name="praticien_id" string="Praticien"/>
                 <field name="date_acte"    string="Date"/>
                 <field name="lettre_cle"   string="Lettre clé"/>
+                <!-- Filtres par statut séance -->
+                <filter name="planifiees"       string="Planifiées"
+                        domain="[('state_seance', '=', 'planifiee')]"/>
+                <filter name="effectuees"       string="Effectuées"
+                        domain="[('state_seance', '=', 'effectuee')]"/>
+                <filter name="non_presentation" string="Non présentation"
+                        domain="[('state_seance', '=', 'non_presentation')]"/>
+                <filter name="annulees"         string="Annulées"
+                        domain="[('state_seance', '=', 'annulee')]"/>
+                <separator/>
                 <filter name="cette_semaine" string="Cette semaine"
                         domain="[
                             ('date_acte', '&gt;=', (context_today() + relativedelta(weekday=0, weeks=-1)).strftime('%Y-%m-%d')),
@@ -285,6 +313,8 @@
                             context="{'group_by': 'patient_id'}"/>
                     <filter name="g_praticien" string="Praticien"
                             context="{'group_by': 'praticien_id'}"/>
+                    <filter name="g_statut"    string="Statut"
+                            context="{'group_by': 'state_seance'}"/>
                     <filter name="g_semaine"   string="Semaine"
                             context="{'group_by': 'date_acte:week'}"/>
                 </group>
@@ -293,14 +323,15 @@
     </record>
 
     <!-- ══════════════════════════════════════════════════════════════════
-         ACTION – Agenda des séances (calendrier actes, semaine par défaut)
+         ACTION – Agenda des séances
     ══════════════════════════════════════════════════════════════════════ -->
     <record id="action_feuille_soins_calendar" model="ir.actions.act_window">
         <field name="name">Agenda des séances</field>
         <field name="res_model">cps.feuille.soins.acte</field>
         <field name="view_mode">calendar,tree,form</field>
         <field name="search_view_id" ref="view_acte_search"/>
-        <field name="context">{'search_default_cette_semaine': 1}</field>
+        <field name="context">{'search_default_cette_semaine': 1,
+                               'search_default_planifiees': 1}</field>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_acte_calendar')})]"/>
     </record>

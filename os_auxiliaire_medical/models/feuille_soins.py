@@ -43,7 +43,7 @@ class CpsFeuillesSoins(models.Model):
 
     ordonnance_id = fields.Many2one(
         'cps.ordonnance', string='Ordonnance',
-        domain="[('state', 'in', ['en_cours', 'brouillon'])]",
+        domain="[('state', 'in', ['en_cours', 'brouillon']), ('has_seances_disponibles', '=', True)]",
         ondelete='set null', tracking=True,
     )
 
@@ -418,6 +418,7 @@ class CpsFeuillesSoins(models.Model):
     def _onchange_ordonnance_id(self):
         if not self.ordonnance_id:
             return
+        self.parcours_soins = True
         o = self.ordonnance_id
         self.patient_id = o.patient_id
         if o.praticien_id:
@@ -667,8 +668,18 @@ class CpsActe(models.Model):
     seances_restantes = fields.Integer(
         related='ordonnance_ligne_id.nb_seances_restantes', readonly=True,
     )
+    seances_theorique_restantes = fields.Integer(
+        string='Restantes (théor.)',
+        related='ordonnance_ligne_id.nb_seances_theorique_restantes',
+        readonly=True,
+    )
 
     date_acte = fields.Date(string='Date', required=True)
+    date_delay = fields.Float(
+        string='Durée', compute='_compute_date_delay', store=True,
+        help="Durée en jours de l'acte. "
+             "Calculé automatiquement à partir de la durée de la séance en minutes."
+    )
 
     # ── Statut de la séance ───────────────────────────────────────────────────
     state_seance = fields.Selection([
@@ -740,6 +751,11 @@ class CpsActe(models.Model):
     nuit = fields.Boolean(string='Nuit')
     taux_majoration = fields.Float(default=0)
     montant = fields.Float(required=True, digits=(10, 0))
+
+    @api.depends('acte_type_id', 'acte_type_id.duree_seance')
+    def _compute_date_delay(self):
+        for rec in self:
+            rec.date_delay = (rec.acte_type_id.duree_seance or 30) / 60 if rec.acte_type_id.duree_seance else 0.5
 
     @api.depends('patient_prenom', 'patient_nom', 'lettre_cle', 'coefficient')
     def _compute_name(self):
@@ -827,3 +843,16 @@ class CpsActe(models.Model):
         if self.ifd:
             montant += round(self.ifd * float(IrParam.get_param('cps.supplement.ifd', 250)), 0)
         self.montant = montant
+
+    # Ouvre la feuille de soins parente depuis le smart button.
+    def action_open_feuille(self):
+        self.ensure_one()
+        if not self.feuille_id:
+            return {}
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'cps.feuille.soins',
+            'res_id': self.feuille_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }

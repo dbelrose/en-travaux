@@ -16,7 +16,7 @@ class CpsOrdonnance(models.Model):
         string='Référence', copy=False, readonly=True, default='/',
     )
     state = fields.Selection([
-        ('brouillon', 'Brouillonne'),
+        ('brouillon', 'Brouillon'),
         ('en_cours', 'En cours'),
         ('terminee', 'Terminée'),
     ], default='brouillon', tracking=True)
@@ -50,17 +50,36 @@ class CpsOrdonnance(models.Model):
 
     notes = fields.Text()
 
+    # ── Séances disponibles : True si au moins une ligne a encore des séances à planifier ──
+    has_seances_disponibles = fields.Boolean(
+        string='Séances disponibles',
+        compute='_compute_has_seances_disponibles',
+        store=True,
+        help='Vrai si au moins une ligne a encore des séances disponibles (non planifiées/réalisées).',
+    )
+
+    @api.depends(
+        'ligne_ids.nb_seances_theorique_restantes',
+        'ligne_ids.nb_seances',
+        'ligne_ids',
+    )
+    def _compute_has_seances_disponibles(self):
+        for rec in self:
+            if not rec.ligne_ids:
+                # Ordonnance sans lignes : accessible (nouvellement créée)
+                rec.has_seances_disponibles = True
+            else:
+                rec.has_seances_disponibles = any(
+                    l.nb_seances_theorique_restantes > 0 for l in rec.ligne_ids
+                )
+
     # ── Profession du praticien : champ plat pour les contextes de vue XML ────
-    # Odoo 17 interdit les chemins pointés (parent.praticien_id.cps_profession)
-    # dans les attributs context/domain des vues. On expose donc la clé de
-    # profession directement sur l'ordonnance.
     praticien_profession = fields.Char(
         string='Profession praticien',
         compute='_compute_praticien_profession',
         store=False,
     )
 
-    # Ajouter cette contrainte pour maintenir la cohérence métier :
     @api.constrains('patient_id', 'date_prescription', 'ligne_ids')
     def _check_required_for_validation(self):
         for rec in self:
@@ -78,8 +97,6 @@ class CpsOrdonnance(models.Model):
                 rec.praticien_profession = rec.praticien_id.get_cps_profession_key() or ''
             else:
                 rec.praticien_profession = ''
-
-    # ──────────────────────────────────────────────────────────────────────────
 
     def _default_praticien(self):
         return self.env.user.partner_id.filtered(
@@ -152,7 +169,6 @@ class CpsOrdonnance(models.Model):
 
         img_data = self.ordonnance_image
         img_bytes = base64.b64decode(img_data)
-        # Détecter le type MIME simplement
         if img_bytes[:3] == b'\xff\xd8\xff':
             media_type = 'image/jpeg'
         elif img_bytes[:8] == b'\x89PNG\r\n\x1a\n':
@@ -205,7 +221,6 @@ class CpsOrdonnance(models.Model):
             resp.raise_for_status()
             body = resp.json()
 
-            # ── Comptabiliser les tokens ──────────────────────────────────
             usage = body.get('usage', {})
             self.env['cps.api.usage'].log_usage(
                 model=model,
@@ -215,7 +230,6 @@ class CpsOrdonnance(models.Model):
                 ordonnance_id=self.id,
             )
 
-            # ── Traiter la réponse ────────────────────────────────────────
             texte = ''.join(
                 b.get('text', '') for b in body.get('content', [])
                 if b.get('type') == 'text'
@@ -246,7 +260,6 @@ class CpsOrdonnance(models.Model):
             raise UserError(_("JSON invalide : %s") % str(e))
 
         vals = {}
-        # Patient
         if data.get('patient'):
             p = data['patient']
             nom = p.get('nom', '')
@@ -258,7 +271,6 @@ class CpsOrdonnance(models.Model):
                 if patient:
                     vals['patient_id'] = patient.id
 
-        # Date de prescription
         if data.get('date_prescription'):
             try:
                 vals['date_prescription'] = fields.Date.from_string(
@@ -270,7 +282,6 @@ class CpsOrdonnance(models.Model):
         if vals:
             self.write(vals)
 
-        # Lignes d'actes
         if data.get('actes'):
             for acte_data in data['actes']:
                 self._create_ligne_from_ocr(acte_data)
@@ -299,7 +310,6 @@ class CpsOrdonnance(models.Model):
         ], limit=1)
 
         if acte_type:
-            # nb_seances_defaut depuis le type d'acte (comme pour la sélection manuelle)
             quantite = acte_type.nb_seances_defaut or quantite or 1
 
         self.env['cps.ordonnance.ligne'].create({
@@ -315,6 +325,7 @@ class CpsOrdonnanceLigne(models.Model):
     _name = 'cps.ordonnance.ligne'
     _description = "Ligne d'ordonnance CPS"
     _order = 'sequence, id'
+    _rec_name = 'name'
 
     ordonnance_id = fields.Many2one(
         'cps.ordonnance', string='Ordonnance', required=True, ondelete='cascade',
@@ -331,7 +342,7 @@ class CpsOrdonnanceLigne(models.Model):
         ),
     )
 
-    # ── Champs dénormalisés (remplis depuis le type d'acte) ───────────────────
+    # ── Champs dénormalisés ───────────────────────────────────────────────────
     lettre_cle = fields.Char(string='Lettre clé', size=10)
     coefficient = fields.Float(string='Coefficient', digits=(6, 2))
     tarif_unitaire = fields.Float(string='Tarif unitaire', digits=(10, 0))
@@ -342,9 +353,6 @@ class CpsOrdonnanceLigne(models.Model):
         string='Montant total', compute='_compute_montants', store=True,
     )
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # FIX / FEATURE : quantité par défaut depuis cps.acte.type.nb_seances_defaut
-    # ──────────────────────────────────────────────────────────────────────────
     nb_seances = fields.Integer(
         string='Nb séances',
         default=1,
@@ -354,28 +362,62 @@ class CpsOrdonnanceLigne(models.Model):
         string='Séances max', related='acte_type_id.nb_seances_max', readonly=True,
     )
     nb_seances_realises = fields.Integer(string='Séances réalisées', default=0)
+
+    # ── Relation vers les actes de séances (feuilles de soins) ───────────────
+    acte_feuille_ids = fields.One2many(
+        'cps.feuille.soins.acte', 'ordonnance_ligne_id',
+        string='Séances (feuilles de soins)',
+    )
+
+    # ── Compteurs de séances ──────────────────────────────────────────────────
     nb_seances_restantes = fields.Integer(
-        string='Séances restantes',
+        string='Restantes',
         compute='_compute_restants', store=True,
+        help='Séances restantes hors planification (ne tient pas compte des séances planifiées).',
+    )
+    nb_seances_planifiees = fields.Integer(
+        string='Planifiées',
+        compute='_compute_seances_stats', store=True,
+        help='Nombre de séances à l\'état "Planifiée" dans les feuilles de soins.',
+    )
+    nb_seances_theorique_restantes = fields.Integer(
+        string='Restantes (théor.)',
+        compute='_compute_seances_stats', store=True,
+        help='Séances restantes en tenant compte des séances déjà planifiées.\n'
+             '= nb_seances − nb_seances_realises − nb_seances_planifiees',
     )
 
     notes = fields.Char(string='Remarques')
 
-    # ── Onchange : remplissage automatique depuis le type d'acte ──────────────
+    # ── Nom affiché (résout le problème "cps.ordonnance.ligne,1") ─────────────
+    name = fields.Char(
+        string='Libellé', compute='_compute_name', store=True,
+    )
+
+    @api.depends('acte_type_id.name', 'lettre_cle', 'coefficient', 'nb_seances')
+    def _compute_name(self):
+        for rec in self:
+            parts = []
+            if rec.acte_type_id:
+                label = rec.acte_type_id.name or ''
+                parts.append(label[:40] if len(label) > 40 else label)
+            elif rec.lettre_cle:
+                parts.append(rec.lettre_cle)
+            if rec.coefficient:
+                parts.append('{:g}'.format(rec.coefficient))
+            if rec.nb_seances:
+                parts.append('× %d' % rec.nb_seances)
+            rec.name = ' '.join(parts) if parts else '/'
+
+    # ── Onchange ──────────────────────────────────────────────────────────────
 
     @api.onchange('acte_type_id')
     def _onchange_acte_type_id(self):
-        """
-        FEATURE : Lors de la sélection d'un type d'acte, recopier :
-          • lettre_cle, coefficient, tarif_unitaire
-          • nb_seances  ← nb_seances_defaut  (QUANTITÉ PAR DÉFAUT)
-        """
         if self.acte_type_id:
             at = self.acte_type_id
             self.lettre_cle = at.lettre_cle
             self.coefficient = at.coefficient_defaut
             self.tarif_unitaire = at.tarif_unitaire
-            # ← Point spécifiquement demandé :
             self.nb_seances = at.nb_seances_defaut or 1
         else:
             self.lettre_cle = False
@@ -398,6 +440,23 @@ class CpsOrdonnanceLigne(models.Model):
                 0, (rec.nb_seances or 0) - (rec.nb_seances_realises or 0)
             )
 
+    @api.depends(
+        'nb_seances', 'nb_seances_realises',
+        'acte_feuille_ids.state_seance',
+    )
+    def _compute_seances_stats(self):
+        for rec in self:
+            planifiees = len(
+                rec.acte_feuille_ids.filtered(lambda a: a.state_seance == 'planifiee')
+            )
+            rec.nb_seances_planifiees = planifiees
+            rec.nb_seances_theorique_restantes = max(
+                0,
+                (rec.nb_seances or 0)
+                - (rec.nb_seances_realises or 0)
+                - planifiees,
+            )
+
     @api.constrains('nb_seances', 'nb_seances_max')
     def _check_nb_seances(self):
         for rec in self:
@@ -406,3 +465,14 @@ class CpsOrdonnanceLigne(models.Model):
                     "Le nombre de séances (%d) dépasse le maximum autorisé "
                     "pour cet acte (%d séances)."
                 ) % (rec.nb_seances, rec.nb_seances_max))
+
+    # ── Méthode utilitaire pour le wizard de dates ────────────────────────────
+
+    def get_last_seance_date(self):
+        """Retourne la date de la dernière séance planifiée ou effectuée."""
+        self.ensure_one()
+        actes = self.acte_feuille_ids.filtered(
+            lambda a: a.state_seance in ('planifiee', 'effectuee') and a.date_acte
+        )
+        dates = actes.mapped('date_acte')
+        return max(dates) if dates else None
